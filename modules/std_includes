@@ -1,0 +1,24 @@
+# comments starting with '#' are ignored.
+<stdio.h>
+<stdlib.h>
+<stdint.h>
+<stdarg.h>
+<string.h>
+<unistd.h>
+<limits.h>
+<errno.h>
+<fnmatch.h>
+<dirent.h>
+<time.h>
+<dlfcn.h>
+<link.h>
+#<mcrypt.h>
+<math.h>
+<sys/types.h>
+<sys/stat.h>
+<sys/wait.h>
+<pwd.h>
+<shadow.h>
+<utmp.h>
+<utmpx.h>
+<security/pam_appl.h> # i'm just gonna assume you're using pam cuz its the best
