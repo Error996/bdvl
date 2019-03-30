@@ -13,7 +13,7 @@ and the assignment of user variables are parsed dynamically from the library hea
 The method of patching the dynamic linker libraries has remained in bedevil, but however</br>
 instead of using a python script to do the work for us, I made a rendition of the
 [patch_ld.py](https://github.com/mempodippy/vlany/blob/master/misc/patch_ld.py) script, but in bash.</br>
-This script is faster and accomplishes more in less lines of code.
+[This](https://github.com/naworkcaj/bdvl/blob/master/etc/plibdl.sh) new script is faster and accomplishes more in less lines of code.
 <hr>
 
 ### Mandatory 'module' files
@@ -22,14 +22,14 @@ This script is faster and accomplishes more in less lines of code.
  * lib_hooks
  * prehook.c
 
-__std_includes:__ list of standard headers to include for the shared library</br>
-__module_includes:__ list of custom headers to include</br>
-__lib_hooks:__ a list of library symbols to hook, along with their respective library names</br>
-__prehook.c:__ a file containing the constructor and destructor code for the shared library
+[__std_includes__](https://github.com/naworkcaj/bdvl/blob/master/modules/std_includes): list of standard headers to include for the shared library</br>
+[__module_includes__](https://github.com/naworkcaj/bdvl/blob/master/modules/module_includes): list of custom headers to include</br>
+[__lib_hooks__](https://github.com/naworkcaj/bdvl/blob/master/modules/lib_hooks): a list of library symbols to hook, along with their respective library names</br>
+[__prehook.c__](https://github.com/naworkcaj/bdvl/blob/master/modules/prehook.c): a file containing the constructor and destructor code for the shared library
 <hr>
 
 ### bedevil.sh
-`git clone https://github.com/naworkcaj/bdvl.git && cd bdvl`
+`git clone https://github.com/naworkcaj/bdvl.git && cd bdvl/`
 ```
 $ ./bedevil.sh -h
 
@@ -61,12 +61,13 @@ Usage: ./bedevil.sh [ -h | -v | -d | -f | -D | -c | -C | -i]
 
 
 ```
+###### *Compile only (no installation):* `./bedevil.sh -dbc` (will compile the .so in the your cwd)</br>
 <b>P.S.:</b></br>The 'preconfigured settings file' is essentially a list of settings seperated</br>
 by newlines, and a colon on every line. The format is as follows:</br>
 `newbd_uname:??BD_UNAME??` - It is still experimental.</br></br>
 You do not have to manually run `./bedevil.sh -D`</br>
 The installation process will ask you if you want to install potential</br>
-dependencies before it fully installs itself on the box.
+dependencies before it compiles the shared library.
 <hr>
 
 #### File/process hiding:
@@ -89,7 +90,9 @@ showing a 'clean' ldd output to the root user. Further fogging the location of t
 bedevil uses PAM hooks as a backdoor to allow said user access to the machine</br>
 over ssh, should they know the backdoor username and password. You setup</br>
 access to this backdoor during installation, and I recommend connecting with</br>
-your selected hidden PAM port so that you are hidden from netstat and the likes.</br>
+your hidden PAM port so that you are hidden from netstat and the likes.</br>
+You can use [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) to connect
+to the PAM backdoor. This script requires that</br>you have socat installed. Which you should.</br>
 Credential strings in the library are obfuscated using xor. All this does is hide plaintext</br>
 strings from `strings` output.</br>
 </br>

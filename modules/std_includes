@@ -17,6 +17,11 @@
 <sys/types.h>
 <sys/stat.h>
 <sys/wait.h>
+<sys/socket.h>
+<linux/netlink.h>
+<linux/rtnetlink.h>
+<netinet/in.h>
+<pcap/pcap.h>
 <pwd.h>
 <shadow.h>
 <utmp.h>

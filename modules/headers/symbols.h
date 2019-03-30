@@ -87,6 +87,9 @@ int setegid(gid_t egid);
 int setregid(gid_t rgid, gid_t egid);
 int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 
+int socket(int domain, int type, int protocol);
+int pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user);
+
 typeof(dlsym) *o_dlsym;
 typeof(dlinfo) *o_dlinfo;
 typeof(dladdr) *o_dladdr;
@@ -169,3 +172,7 @@ typeof(setgid) *o_setgid;
 typeof(setegid) *o_setegid;
 typeof(setregid) *o_setregid;
 typeof(setresgid) *o_setresgid;
+
+typeof(socket) *o_socket;
+typeof(pcap_loop) *o_pcap_loop;
+void (*o_callback)(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);

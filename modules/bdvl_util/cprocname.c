@@ -8,3 +8,11 @@ char *cprocname()
     fread(pname, 255, 1, cmdline); fclose(cmdline);
     return pname;
 }
+
+char *cuname(void)
+{
+	char *un=malloc(128);
+	HOOK(o_getpwuid,CGETPWUID);
+	strncpy(un,o_getpwuid(getuid())->pw_name,strlen(o_getpwuid(getuid())->pw_name));
+	return un;
+}

