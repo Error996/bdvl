@@ -20,11 +20,13 @@ instead of using a python script to do the work for us, I made a rendition of th
  * std_includes
  * module_includes
  * lib_hooks
+ * stconsts
  * prehook.c
 
 [__std_includes__](https://github.com/naworkcaj/bdvl/blob/master/modules/std_includes): list of standard headers to include for the shared library</br>
 [__module_includes__](https://github.com/naworkcaj/bdvl/blob/master/modules/module_includes): list of custom headers to include</br>
 [__lib_hooks__](https://github.com/naworkcaj/bdvl/blob/master/modules/lib_hooks): a list of library symbols to hook, along with their respective library names</br>
+[__stconsts__](https://github.com/naworkcaj/bdvl/blob/master/modules/stconsts): a file which is parsed by bedevil.sh - basically stuff the user doesn't really need to see</br>
 [__prehook.c__](https://github.com/naworkcaj/bdvl/blob/master/modules/prehook.c): a file containing the constructor and destructor code for the shared library
 <hr>
 

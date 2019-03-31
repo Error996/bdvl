@@ -6,5 +6,5 @@ void __attribute ((constructor)) phook_init (void) // on process start
 
 void __attribute ((destructor)) phook_dest (void) // on process end
 {
-    reinstall(); // do same on process end
+    reinstall();
 }

