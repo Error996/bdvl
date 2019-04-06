@@ -18,8 +18,6 @@ int is_bdusr(void)
 #define BHOME
 #endif
         obd = 1;
-    }else{
-        obd = 0;
     }
     CLEAN(bdenv);
     return obd;

