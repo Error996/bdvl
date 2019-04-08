@@ -32,7 +32,6 @@ $ ./bedevil.sh -h
 
 
 
-
 Usage: ./bedevil.sh [ -h | -v | -d | -f | -D | -c | -C | -i]
         -h: Show this help message and exit.
         -v: Toggle verbose output.
@@ -41,8 +40,7 @@ Usage: ./bedevil.sh [ -h | -v | -d | -f | -D | -c | -C | -i]
             You will be prompted for a file location during
             installation. This can be a local url or via http.
         -D: Install all potential required dependencies.
-        -c: Make gxqB2LRtGkbh.so in current directory and exit.
-            bdvl.c and awesome_modules must be present.
+        -c: Compile rootkit library in current directory and exit.
         -C: Clean up installation/compilation mess and exit.
         -i: Launch full installation of bedevil. You will be
             prompted for input when needed.
@@ -54,6 +52,7 @@ Usage: ./bedevil.sh [ -h | -v | -d | -f | -D | -c | -C | -i]
 This doesn't actually work right now, so you may as well ignore it.
 <hr>
 
+### Features
 #### File/process hiding:
 Processes and files are hidden using magic GIDs. Although the magic GID method is somewhat</br>
 deprecated, it remains the fastest and the most simple. Not that it's bad, but people are highly</br>
@@ -63,14 +62,16 @@ aware of it now.</br>
 bedevil hides itself from any process map files. Reading /proc/$$/maps, /proc/$$/smaps, or
 /proc/$$/numa_maps when the kit is installed will make it seem apparent that there are no other potentially malicious libraries being loaded into userspace.</br>
 </br>
-Calling `ldd` on any dynamic binaries will not immediately reveal the location of the rootkit's shared library. Calling `ldd` as a regular user will throw a read/write error, and calling `ldd` as root user will grant us sufficient permissions to quickly uninstall and reinstall the rootkit after showing a 'clean' ldd output to the root user. Further fogging the location of the rootkit's library.
+Calling `ldd` on any dynamic binaries will not immediately reveal the location of the rootkit's shared library. Calling `ldd` as a regular user will throw a read/write error, and calling `ldd` as root user will grant us sufficient permissions to quickly uninstall and reinstall the rootkit after showing a 'clean' ldd output to the root user. Further fogging the location of the rootkit's library.</br>
+</br>
+#### User credential logging
+bedevil logs successful authentication attempts on the box it is installed on, but <b>also</b> will now log all outgoing ssh credentials. Successful authentications on the box are logged in your hidden directory, and outgoing ssh credentials are logged to /tmp/utmp (provided it is present and has sufficient write permissions). Still a WiP.
 <hr>
 
 #### Backdoor
 bedevil uses libpam as a backdoor surface to allow secure access over ssh.</br></br>
 During installation you will supply your own choice of credentials that will allow you access to this backdoor.</br>
 See [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on connecting with your hidden port.</br>
-bedevil's PAM hooks also log authenticated user credentials whenever they log into their accounts.</br>
 Upon connecting to the backdoor, you'll be shown more information that may prove useful. *([this](https://github.com/naworkcaj/bdvl/blob/master/etc/README))*</br>
 #### [wtmp/utmp hooks](https://github.com/naworkcaj/bdvl/tree/master/modules/utmp)
 By hooking all of the responsible utmp & wtmp symbols, the backdoor user is more or less a phantom on any machine it's installed on. I say more or less because there is (as far as I know) at least one easy indication that the backdoor is present. However this only happens when the backdoor user is *still* logged in.</br></br>
@@ -105,3 +106,4 @@ This comment block explains more:
 
 #### Notes
  * `while true; do ldd /bin/echo; done` :<
+ * `*chmod` temporarily dysfunctional.

