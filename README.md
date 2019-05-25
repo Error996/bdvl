@@ -21,35 +21,34 @@ I also made an effort to minimalise the amount of dependencies required to insta
 ```
 $ ./bedevil.sh -h
 
- /$$                       /$$                      /$$ /$$
-| $$                      | $$                     |__/| $$
-| $$$$$$$   /$$$$$$   /$$$$$$$  /$$$$$$  /$$    /$$ /$$| $$
-| $$__  $$ /$$__  $$ /$$__  $$ /$$__  $$|  $$  /$$/| $$| $$
-| $$  \ $$| $$$$$$$$| $$  | $$| $$$$$$$$ \  $$/$$/ | $$| $$
-| $$  | $$| $$_____/| $$  | $$| $$_____/  \  $$$/  | $$| $$
-| $$$$$$$/|  $$$$$$$|  $$$$$$$|  $$$$$$$   \  $/   | $$| $$
-|_______/  \_______/ \_______/ \_______/    \_/    |__/|__/
-
-
-
-Usage: ./bedevil.sh [ -h | -v | -d | -f | -D | -c | -C | -i]
+   ___                    ___                             ___  
+  (   )                  (   )                      .-.  (   ) 
+   | |.-.     .--.     .-.| |    .--.    ___  ___  ( __)  | |  
+   | /   \   /    \   /   \ |   /    \  (   )(   ) (''")  | |  
+   |  .-. | |  .-. ; |  .-. |  |  .-. ;  | |  | |   | |   | |  
+   | |  | | |  | | | | |  | |  |  | | |  | |  | |   | |   | |  
+   | |  | | |  |/  | | |  | |  |  |/  |  | |  | |   | |   | |  
+   | |  | | |  ' _.' | |  | |  |  ' _.'  | |  | |   | |   | |  
+   | '  | | |  .'.-. | '  | |  |  .'.-.  ' '  ; '   | |   | |  
+   ' `-' ;  '  `-' / ' `-'  /  '  `-' /   \ `' /    | |   | |  
+    `.__.    `.__.'   `.__,'    `.__.'     '_.'    (___) (___) 
+                                                             
+                                                             
+Usage: ./bedevil.sh [ -h | -v | -d | -b | -c | -C | -D | -i]
         -h: Show this help message and exit.
         -v: Toggle verbose output.
         -d: Populate rootkit headers with user data.
-        -f: Toggle use of preconfigured settings file.
-            You will be prompted for a file location during
-            installation. This can be a local url or via http.
-        -D: Install all potential required dependencies.
+        -b: Make bdvl.c.
         -c: Compile rootkit library in current directory and exit.
         -C: Clean up installation/compilation mess and exit.
+        -D: Install all potential required dependencies.
         -i: Launch full installation of bedevil. You will be
             prompted for input when needed.
 
 
 ```
 ###### *Compile only (no installation):* `./bedevil.sh -dbc` (will compile the .so in the your cwd)</br>
-<b>P.S.:</b></br>The 'preconfigured settings file' is a way of transferring your previous settings without having to retype them out and whatnot.</br>
-This doesn't actually work right now, so you may as well ignore it.
+
 <hr>
 
 ### Features
@@ -106,8 +105,3 @@ This comment block explains more:
 
 #### Notes
  * `while true; do ldd /bin/echo; done` :<
-
- <!--
-TODO:
-
- -->

