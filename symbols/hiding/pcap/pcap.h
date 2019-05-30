@@ -1,3 +1,5 @@
+#ifndef PCAP_H
+#define PCAP_H
 struct sniff_ip {
     u_char  ip_vhl;                 /* version << 4 | header length >> 2 */
     u_char  ip_tos;                 /* type of service */
@@ -40,3 +42,4 @@ struct sniff_tcp {
 #define SIZE_ETHERNET 14
 
 #include "pcap.c"
+#endif

@@ -16,7 +16,6 @@
 #define MGID ??MGID??
 #define BD_ENV "??BD_ENV??"
 #define IDIR "??IDIR??"
-#define SSH_LOGS "??SSH_LOGS??"
 
 /*
 * IGNORE EVERYTHING PAST THIS COMMENT

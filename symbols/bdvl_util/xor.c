@@ -1,4 +1,3 @@
-//#include "../libdl/libdl.h"
 #define CLEAN(var) memset(var, 0x00, strlen(var))
 void xor(char *p)
 {
