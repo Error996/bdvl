@@ -9,12 +9,12 @@ Ultimately my core aim is to tidy up the project (previously vlany), fix outstan
 I also made an effort to minimalise the amount of dependencies required to install the kit on a machine.</br>
 <hr>
 
-#### Mandatory 'module' files
- * [__std_includes__](https://github.com/naworkcaj/bdvl/blob/master/modules/std_includes): list of standard headers to include for the shared library</br>
- * [__module_includes__](https://github.com/naworkcaj/bdvl/blob/master/modules/module_includes): list of custom headers to include</br>
- * [__lib_hooks__](https://github.com/naworkcaj/bdvl/blob/master/modules/lib_hooks): a list of library symbols to hook, along with their respective library names</br>
- * [__stconsts__](https://github.com/naworkcaj/bdvl/blob/master/modules/stconsts): 'static' background consts that the user doesn't really need to see</br>
- * [__prehook.c__](https://github.com/naworkcaj/bdvl/blob/master/modules/prehook.c): a file containing the constructor and destructor code for the shared library
+#### Mandatory 'symbols' files
+ * [__std_includes__](https://github.com/naworkcaj/bdvl/blob/master/symbols/std_includes): list of standard headers to include for the shared library</br>
+ * [__symbol_includes__](https://github.com/naworkcaj/bdvl/blob/master/symbols/module_includes): list of custom headers to include</br>
+ * [__char_arrays__](https://github.com/naworkcaj/bdvl/blob/master/symbols/char_arrays): a list of char arrays to write, along with their respective array elements</br>
+ * [__stconsts__](https://github.com/naworkcaj/bdvl/blob/master/symbols/stconsts): 'static' background consts that the user doesn't really need to see</br>
+ * [__prehook.c__](https://github.com/naworkcaj/bdvl/blob/master/symbols/prehook.c): a file containing the constructor and destructor code for the shared library
 <hr>
 
 #### bedevil.sh
