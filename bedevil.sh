@@ -36,11 +36,6 @@ declare -a array APT_DEPS=("libpam-dev" "libpcap-dev" "gcc-multilib" "build-esse
 declare -a array PAC_DEPS=("pam" "libpcap" "base-devel")
 declare -a array CFILES=(".ascii" "etc/ssh.sh" "etc/eutils.sh" "etc/README") # files to copy over to the install dir
 
-# populated later on...
-declare -a array HOOKS=()
-declare -a array INT_VARS=()
-declare -a array STR_VARS=()
-
 asc() { printf '%d' "'$1"; }
 xenc()
 {
