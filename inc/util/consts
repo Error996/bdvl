@@ -1,0 +1,6 @@
+CMDLINE_PATH:/proc/%d/cmdline
+BD_VAR:BD_VAR
+SSHD_PROC_STR:sshd: %s [USE_PAM_BD]
+HOME_VAR_STR:HOME=%s
+BASH_PATH:/bin/bash
+BASH_STR:bash

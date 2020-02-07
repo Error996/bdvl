@@ -1,0 +1,4 @@
+SSH_LOGS:SSH_LOGS [LOG_SSH]
+SSH_STR:ssh [LOG_SSH]
+PW_STR:assword [LOG_SSH]
+FMT_STR:%s (%s)\n [LOG_SSH]

@@ -1,0 +1,5 @@
+# when in a rootkit shell, bedevil will unset the following environment variables
+unset_variables:HISTFILE,SAVEHIST,TMOUT,PROMPT_COMMAND
+
+# what to ignore when reading /proc
+process_blacklist:.\0,..\0,/\0,self,thread-self,net,fs,bus,irq,sys,tty,acpi,scsi,asound,driver,sysvipc,pressure
