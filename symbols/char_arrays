@@ -1,5 +1,0 @@
-libc_calls:pcap_loop,socket,getutent,getutxent,getutid,getutxid,getutmp,getutmpx,getutline,getutxline,pututline,pututxline,logwtmp,updwtmp,updwtmpx,openlog,syslog,__syslog_chk,vsyslog,ptrace,execve,execvp,chown,chmod,fchmod,fchmodat,setgid,setegid,setregid,setresgid,mkdir,rmdir,readdir,readdir64,opendir,opendir64,fdopendir,chdir,fchdir,readlink,readlinkat,symlink,symlinkat,unlink,unlinkat,open,open64,access,creat,fwrite,fwrite_unlocked,write,read,fopen,fopen64,stat,stat64,fstat,fstat64,fstatat,fsatat64,lstat,lstat64,__xstat,__xstat64,__fxstat,__fxstat64,__lxstat,__lxstat64,getpwnam,getpwuid,getspnam,getpwent,getpwnam_r
-libdl_calls:dlsym,dlinfo,dladdr
-libpam_calls:pam_syslog,pam_vsyslog,pam_authenticate,pam_open_session,pam_acct_mgmt
-hprocs:lsrootkit,ldd,unhide,rkhunter,chkproc,chkdirs,ltrace,strace,LD_AUDIT
-usetenvs:HISTFILE,SAVEHIST,TMOUT,PROMPT_COMMAND
