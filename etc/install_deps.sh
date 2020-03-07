@@ -10,6 +10,7 @@ declare -a array PAC_DEPS=("glibc" "base-devel")
 
 script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source $script_root/util.sh
+[ `id -u` != 0 ] && { eecho "Not root. Cannot continue..."; exit; }
 source $script_root/toggles.sh
 
 [ "`toggle_enabled HIDE_PORTS`" == "true" ] && { \
@@ -31,7 +32,9 @@ if [ -f /usr/bin/apt-get ]; then
     dpkg --add-architecture i386
     yes | apt-get update
     apt-get --yes --force-yes install ${APT_DEPS[*]}
-    [ "`toggle_enabled HIDE_PORTS`" == "true" ] && [ ! -z "$(apt-cache search libpcap0.8-dev)" ] && apt-get --yes --force-yes install libpcap0.8-dev
+    [ "`toggle_enabled HIDE_PORTS`" == "true" ] && \
+        [ ! -z "$(apt-cache search libpcap0.8-dev)" ] && \
+            apt-get --yes --force-yes install libpcap0.8-dev
     grep -i ubuntu /proc/version &>/dev/null && rm -f /etc/init/plymouth*
 fi
 secho "Finished installing dependencies"

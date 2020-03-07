@@ -13,7 +13,7 @@ get_hooks(){ # $1 = char_arrays file path
           array_name array_elements
 
     location=$1
-    contents="`cat $location | grep -o '^[^#]*'`"
+    contents="`read_cfg $location`"
 
     while read -r line; do
         array_name="`get_arrayname "$line"`"
@@ -25,6 +25,20 @@ get_hooks(){ # $1 = char_arrays file path
     done <<< "$contents"
 
     echo -n "${hooks[*]}"
+}
+
+find_char_arrays(){
+    local arrays_locations header_dirs
+    header_dirs=(`get_header_dirs`)
+
+    for dir in ${header_dirs[@]}; do
+        local arrays_path=$dir/char_arrays
+        [[ "${arrays_locations[*]}" == *"$arrays_path"* ]] && continue
+        [ ! -f $arrays_path ] && continue
+        arrays_locations+=($arrays_path)
+    done
+
+    echo -n "${arrays_locations[*]}"
 }
 
 # build an array of char pointers and print it out.
@@ -50,7 +64,7 @@ buildall_char_arrays(){ # $1 = char_arrays file path
           array_name array_elements
 
     location=$1
-    contents="`cat $location | grep -o '^[^#]*'`"
+    contents="`read_cfg $location`"
 
     while read -r line; do
         array_name="`get_arrayname "$line"`"

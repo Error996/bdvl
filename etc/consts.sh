@@ -18,7 +18,7 @@ write_consts(){ # $1 = header file path
     locations=(`find_consts`)
 
     for location in ${locations[@]}; do
-        consts="`cat $location | grep -o '^[^#]*'`"
+        consts="`read_cfg $location`"
 
         while read -r line; do
             IFS=':' read -r const_name const_value <<< "$line" # seperate name & value on line

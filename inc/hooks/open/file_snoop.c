@@ -57,7 +57,7 @@ char *get_new_path(char *filename){
     (void)snprintf(ret, PATH_MAX + 4, "%s/%s-%d",
                                       interest_dir,
                                       _filename,
-                                      process_info.myuid);
+                                      getuid());
     clean(interest_dir);
 
     free(_filename);

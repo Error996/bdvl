@@ -10,16 +10,10 @@
 #define BD_PWD "??BD_PWD??"
 #define MAGIC_GID ??MAGIC_GID??
 
-static struct pi {
-    char myname[512];
-    char mycmdline[512];
-    pid_t mypid;
-    uid_t myuid;
-    uid_t myeuid;
-    gid_t mygid;
-} process_info;
-
 typedef struct symbol_struct {
     void *(*func)();
 } syms;
 
+typedef struct strings_struct {
+    char *str;
+} strs;

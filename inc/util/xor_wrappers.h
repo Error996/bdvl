@@ -15,13 +15,20 @@ FILE *xfopen(const char *path, const char *mode){
     return ret;
 }
 
+size_t xfwrite(const char *str, size_t nmemb, FILE *stream){
+    size_t ret;
+    hook(CFWRITE);
+    xor(_str, str);
+    ret = (size_t)call(CFWRITE, _str, strlen(_str), nmemb, stream);
+    clean(_str);
+    return ret;
+}
+
 int xprintf(const char *string){
-    char str[512];
     int ret;
 
-    xor(_string, string);     /* let's just append a newline here... */
-    (void)snprintf(str, sizeof(str) - 1, "%s\n", _string);
-    ret = printf(str);
+    xor(_string, string);
+    ret = printf("%s\n", _string);
     clean(_string);
     return ret;
 }

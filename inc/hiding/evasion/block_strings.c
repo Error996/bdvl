@@ -16,8 +16,7 @@ int block_strings(char *const argv[]){
         return 0;
 
     for(int i = 0; argv[i] != NULL; i++)
-        if(scary_path(argv[i]))
-            return 1;
+        if(scary_path(argv[i])) return 1;
 
     return 0;
 }

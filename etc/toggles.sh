@@ -1,7 +1,6 @@
 script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source $script_root/util.sh
 toggles_file="$script_root/../inc/toggles.h"
-blacklist=("TOGGLES_H" "#endif" "//ignore")
 
 cut_toggle_str(){ # $1 = line
     # find status of toggle on said line. indicate we are to skip writing line
@@ -51,8 +50,10 @@ switch_toggle(){ # $1 = name
 }
 
 read_toggles(){
-    local toggles_contents current_toggle_name skip toggles
+    local toggles_contents current_toggle_name \
+          skip toggles blacklist
     toggles_contents="`cat $toggles_file`"
+    blacklist=("TOGGLES_H" "#endif" "//ignore")
 
     while read -r line; do
         skip=0
@@ -68,12 +69,30 @@ read_toggles(){
 set_toggles(){ # $1 = toggle name
     local toggles status
     toggles=(`read_toggles`)
-    necho "Decide what you want to enable/disable."
+    necho "Beginning toggle configuration..."
     for toggle in ${toggles[@]}; do
         status="`toggle_enabled $toggle`"
-        read -p "`secho "$toggle = $status. Switch? [Y/n]: "`" -n 1 -r
-        [ -z $REPLY ] && { switch_toggle $toggle; continue; }
-        [[ $REPLY =~ ^[Yy]$ ]] && switch_toggle $toggle
+        local response=$(show_yesno "$toggle = $status. Switch?")
+        [ -z $response ] && { switch_toggle $toggle; continue; }
+        [[ $response =~ ^[Yy]$ ]] && switch_toggle $toggle
         echo
+    done
+}
+
+dialog_set_toggles(){
+    local cmd options choices \
+          toggles status toggle_name
+    cmd=(dialog --title "bdvl setup" --separate-output --checklist "Select which toggles you would like to switch" 20 40 15)
+
+    toggles=(`read_toggles`)
+    for i in ${!toggles[@]}; do
+        status="`toggle_enabled ${toggles[$i]}`"
+        options+=($i "${toggles[$i]} ($status)" off)
+    done
+
+    choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+    for choice in $choices; do
+        toggle_name="${toggles[$choice]}"
+        switch_toggle $toggle_name
     done
 }
