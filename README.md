@@ -4,7 +4,7 @@
 <i>bedevil is designed to be more robust, faster and efficient than vlany.</i>
 
 ## Aim of bedevil
-Ultimately my core aim is to tidy up the project, fix outstanding issues and organise previous chaos into a more manageable system. This makes it heaps easier on me when it comes to managing the rootkit. I also made an effort to minimalise the amount of dependencies required to install the kit on a machine.
+Ultimately my core aim is to tidy up the project, fix outstanding issues and organise previous chaos into a more manageable system. This hopefully makes it heaps easier on (not just) me when it comes to managing the rootkit's different functionalities. I've also made an effort to optionally minimalise the amount of dependencies required to install the kit on a machine.
 
 </hr>
 
@@ -13,7 +13,7 @@ Ultimately my core aim is to tidy up the project, fix outstanding issues and org
  * [__toggles.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/toggles.h): rootkit functionality toggles. read for more info
  * [__stdincludes.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/stdincludes.h): just standard headers
  * [__includes.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/includes.h): read for info
- * [__prehook.c__](https://github.com/naworkcaj/bdvl/blob/master/inc/prehook.c): constructor and destructor for the rootkit
+ * [__bedevil.c__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.c): centre for all bedevil
 
 *(inc/\*)* (header include directories may have their own exclusive files)
  * __char_arrays__: list of char arrays to write, with their respective array elements
@@ -42,21 +42,21 @@ $ ./bedevil.sh -h
     `.__.    `.__.'   `.__,'    `.__.'     '_.'    (___) (___) 
                                                              
                                                              
-  Usage: ./bedevil.sh [option]
+  Usage: $0 [option(s)]
       Options:
-          -h: Show this help message and exit.
-          -t: Go through toggles and change any you may want before
-              compiling.
-          -d: Populate rootkit headers with user data.
-          -b: Make bedevil.c.
-          -c: Compile rootkit library in current directory and exit.
-          -C: Clean up any mess and exit.
-          -D: Install all potentially required dependencies. (REQUIRES ROOT)
-          -i: Launch installation. (REQUIRES ROOT)
+          -h: Show this help message & exit.
+          -e: Do an environment check.
+          -u: Enable use of 'dialog' throughout setup.
+          -t: Go through & switch rootkit toggles.
+          -C: Clean up installation/compilation mess.
+          -d: Configure rootkit headers & settings.
+          -c: Compile rootkit library in current directory & exit.
+          -D: Install all potential required dependencies. (REQUIRES ROOT)
+          -i: Launch full installation of bedevil. (REQUIRES ROOT)
 
 ```
- * *Compile only (no installation):* `./bedevil.sh -C(t)dbc` (will quickly compile the .so in the your cwd)  
- * *Changing variable values (example):* `BD_UNAME=... BD_PWD=... ./bedevil.sh -Cdbc`  
+ * *Compile only (no installation):* `./bedevil.sh -dc` (will quickly compile the .so in the your cwd)  
+ * *Changing variable values (example):* `BD_UNAME=my_uname BD_PWD=my_pwd ./bedevil.sh -dc`  
  * *Full installation:* `./bedevil.sh -ti` (will ask what you want to enable/disable then launch installation)
 
 </hr>
@@ -75,6 +75,7 @@ $ ./bedevil.sh -h
 | `FORGE_MAPS`     | hides rootkit presence from process map files                | on             | -          | yes        |
 | `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
+| `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
 | `BLOCK_STRINGS`  | prevents users from calling strings on certain files         | on             | -          | yes        |
 | `LOG_SSH`        | logs outgoing ssh logins to install dir                      | off            | -          | no         |
 | `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
@@ -114,13 +115,13 @@ bedevil logs successful authentication attempts on the box it is installed on, b
 Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section at the beginning of this README. There is a README inside the rootkit's installation directory that you may wish to consult from a backdoor shell. *([this](https://github.com/naworkcaj/bdvl/blob/master/etc/README))*  
 
 ### PAM
-By hijacking libpam's authentication functions, we can create a phantom user on the machine that can be logged into just the same as any other user.
+By hijacking libpam's authentication functions, we create a phantom user on the machine that can be logged into just the same as any other user.
   
 During installation you'll give a username and password which you'll be able to use to log into your backdoor, over ssh.
 See [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on connecting with your hidden port.  
 
 *[wtmp/utmp hooks](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp)  
-By hooking all of the responsible utmp & wtmp functions, any information that may give off indication of a PAM backdoor is throttled.  
+By hooking the responsible utmp & wtmp functions, information that may give off indication of a PAM backdoor is throttled.  
 see utmp/[putut.c](https://github.com/naworkcaj/bdvl/blob/master/inc/utmp/putut.c)*
 
 | Pros                        | Cons                           |
@@ -151,6 +152,6 @@ uid=0(root) gid=666 groups=666
 | :------------------------------------------- | :-------------------------------------- |
 | not as much need to worry about logs         | plaintext unless using SSL              |
 | fast                                         | not an interactive shell. but can be    |
-| doesn't require miscellaneous backdoor files | requires services running on open ports |
+| doesn't require miscellaneous backdoor files | requires running & infected services    |
 
 <!-- `while true; do ldd /bin/echo; done` :< -->

