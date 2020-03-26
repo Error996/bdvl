@@ -1,5 +1,6 @@
 #!/bin/bash
 
+tty -s && clear
 [ -f .ascii ] && { printf "\e[1m\e[31m`cat .ascii`\e[0m\n"; sleep 0.5; }
 
 source ./etc/dialog.sh
@@ -51,16 +52,16 @@ compile_bdvl(){
 
 install_bdvl(){
     [ `id -u` != 0 ] && { \
-        eecho "You cannot install bedevil without root, exiting"; \
+        eecho "Not root. Cannot continue..."; \
         exit; \
     }
 
     secho "Starting full installation!\n"
 
     local response="$(show_yesno "Patch dynamic linker libs?")"
-    [ "$response" == 0 ] && patch_libdl || echo
-    response="$(show_yesno "Install potential dependencies?")"
-    [ "$response" == 0 ] && etc/install_deps.sh || echo
+    [ "$response" == 0 ] && { echo; patch_libdl; } || echo
+    local response="$(show_yesno "Install potential dependencies?")"
+    [ "$response" == 0 ] && { echo; etc/install_deps.sh; } || echo
 
     populate_new_placeholders
     compile_bdvl
@@ -127,7 +128,7 @@ setup_home(){
 }
 
 USE_DIALOG=0
-HELPMSG="
+USAGE="
   Usage: $0 [option(s)]
       Options:
           -h: Show this help message & exit.
@@ -144,7 +145,7 @@ HELPMSG="
 while getopts "huetCdcDi?" opt; do
     case "$opt" in
     h)
-        echo "$HELPMSG"
+        echo "$USAGE"
         exit
         ;;
     u)
@@ -177,10 +178,10 @@ while getopts "huetCdcDi?" opt; do
         etc/install_deps.sh
         ;;
     ?)
-        echo "$HELPMSG"
+        echo "$USAGE"
         exit
         ;;
     esac
 done
 
-[ $OPTIND == 1 ] && echo "$HELPMSG"
+[ $OPTIND == 1 ] || [[ $1 != "-"* ]] && echo "$USAGE"

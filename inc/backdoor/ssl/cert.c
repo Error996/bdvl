@@ -1,5 +1,4 @@
-int gen_cert(X509 **cert, EVP_PKEY **key)
-{
+int gen_cert(X509 **cert, EVP_PKEY **key){
     RSA *rsa;
     X509_NAME *subj;
     X509_EXTENSION *ext;
@@ -18,7 +17,7 @@ int gen_cert(X509 **cert, EVP_PKEY **key)
     bn = BN_new();
     BN_set_word(bn, RSA_F4);
 
-    do {
+    do{
         rsa = RSA_new();
         RSA_generate_key_ex(rsa, 2048, bn, NULL);
         if(rsa == NULL) exit(0);

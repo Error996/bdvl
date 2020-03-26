@@ -1,4 +1,4 @@
 # bedevil will hide from the following...
-scary_variables:LD_TRACE_LOADED_OBJECTS,LD_DEBUG,LD_AUDIT [DO_REINSTALL]
-scary_paths:*/*ld-linux*.so.*,*ld-linux*.so.*,*/*ld-*.so,*ld-*.so,*/utmp,utmp [DO_REINSTALL]
-scary_procs:lsrootkit,ldd,unhide,rkhunter,chkproc,chkdirs,ltrace,strace [DO_REINSTALL]
+scary_variables:LD_TRACE_LOADED_OBJECTS,LD_DEBUG,LD_AUDIT [DO_EVASIONS]
+scary_paths:*/*ld-linux*.so.*,*ld-linux*.so.*,*/*ld-*.so,*ld-*.so,*/utmp,utmp [DO_EVASIONS]
+scary_procs:lsrootkit,ldd,unhide,rkhunter,chkproc,chkdirs,ltrace,strace [DO_EVASIONS]

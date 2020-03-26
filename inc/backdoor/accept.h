@@ -6,7 +6,7 @@
 #ifdef ACCEPT_USE_SSL
 #define SSL_ACCEPT_PORT ACCEPT_PORT + 1
 #define METHOD_SSL 0
-#include "accept/ssl/ssl.h"
+#include "ssl/ssl.h"
 #endif
 #define METHOD_PLAINTEXT 1
 
