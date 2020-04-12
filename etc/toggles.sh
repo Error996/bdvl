@@ -67,14 +67,13 @@ read_toggles(){
 }
 
 set_toggles(){ # $1 = toggle name
-    local toggles status
+    local toggles status response
     toggles=(`read_toggles`)
     necho "Beginning toggle configuration..."
     for toggle in ${toggles[@]}; do
         status="`toggle_enabled $toggle`"
-        local response=$(show_yesno "$toggle = $status. Switch?")
-        [ -z $response ] && { switch_toggle $toggle; continue; }
-        [[ $response =~ ^[Yy]$ ]] && switch_toggle $toggle
+        response=$(show_yesno "$toggle = $status. Switch?")
+        [ $response == 0 ] && switch_toggle $toggle
         echo
     done
 }

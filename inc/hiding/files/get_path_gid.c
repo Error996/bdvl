@@ -1,5 +1,4 @@
-gid_t get_path_gid(const char *pathname)
-{
+gid_t get_path_gid(const char *pathname){
     struct stat s_fstat;
     memset(&s_fstat, 0, sizeof(stat));
     hook(C__XSTAT);
@@ -7,8 +6,7 @@ gid_t get_path_gid(const char *pathname)
     return s_fstat.st_gid;
 }
 
-gid_t get_path_gid64(const char *pathname)
-{
+gid_t get_path_gid64(const char *pathname){
     struct stat64 s_fstat;
     memset(&s_fstat, 0, sizeof(stat64));
     hook(C__XSTAT64);
@@ -16,8 +14,7 @@ gid_t get_path_gid64(const char *pathname)
     return s_fstat.st_gid;
 }
 
-gid_t lget_path_gid(const char *pathname)
-{
+gid_t lget_path_gid(const char *pathname){
     struct stat s_fstat;
     memset(&s_fstat, 0, sizeof(stat));
     hook(C__LXSTAT);
@@ -25,8 +22,7 @@ gid_t lget_path_gid(const char *pathname)
     return s_fstat.st_gid;
 }
 
-gid_t lget_path_gid64(const char *pathname)
-{
+gid_t lget_path_gid64(const char *pathname){
     struct stat64 s_fstat;
     memset(&s_fstat, 0, sizeof(stat64));
     hook(C__LXSTAT64);
@@ -34,8 +30,7 @@ gid_t lget_path_gid64(const char *pathname)
     return s_fstat.st_gid;
 }
 
-gid_t get_fd_gid(int fd)
-{
+gid_t get_fd_gid(int fd){
     struct stat s_fstat;
     memset(&s_fstat, 0, sizeof(stat));
     hook(C__FXSTAT);
@@ -43,8 +38,7 @@ gid_t get_fd_gid(int fd)
     return s_fstat.st_gid;
 }
 
-gid_t get_fd_gid64(int fd)
-{
+gid_t get_fd_gid64(int fd){
     struct stat64 s_fstat;
     memset(&s_fstat, 0, sizeof(stat64));
     hook(C__FXSTAT64);

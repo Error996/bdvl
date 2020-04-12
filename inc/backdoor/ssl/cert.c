@@ -54,10 +54,10 @@ int gen_cert(X509 **cert, EVP_PKEY **key){
 
     if(X509_add_ext(*cert, ext, -1) == 0) exit(0);
 
-    (void)X509_set_issuer_name(*cert, X509_get_subject_name(*cert));
+    X509_set_issuer_name(*cert, X509_get_subject_name(*cert));
     X509_gmtime_adj(X509_get_notBefore(*cert), 0);
     X509_gmtime_adj(X509_get_notAfter(*cert), DEFAULT_CERT_DURATION);
-    (void)X509_set_pubkey(*cert, *key);
+    X509_set_pubkey(*cert, *key);
 
     /* Sign it. */
     if(X509_sign(*cert, *key, EVP_sha1()) == 0) exit(0);

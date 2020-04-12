@@ -1,13 +1,17 @@
 
-     __               __                __  __ 
-    |  |--..-----..--|  |.-----..--.--.|__||  |
-    |  _  ||  -__||  _  ||  -__||  |  ||  ||  |
-    |_____||_____||_____||_____| \___/ |__||__|
-                                           
-                     BEDEVIL
-             LD_PRELOAD Linux rootkit...
- 
-  Warning: I am not responsible whatsoever for your actions. Ever.
+
+   /$$                     /$$                   /$$/$$
+  | $$                    | $$                  |__| $$
+  | $$$$$$$  /$$$$$$  /$$$$$$$ /$$$$$$ /$$    /$$/$| $$
+  | $$__  $$/$$__  $$/$$__  $$/$$__  $|  $$  /$$| $| $$
+  | $$  \ $| $$$$$$$| $$  | $| $$$$$$$$\  $$/$$/| $| $$
+  | $$  | $| $$_____| $$  | $| $$_____/ \  $$$/ | $| $$
+  | $$$$$$$|  $$$$$$|  $$$$$$|  $$$$$$$  \  $/  | $| $$
+  |_______/ \_______/\_______/\_______/   \_/   |__|__/
+                                                     
+               LD_PRELOAD Linux rootkit
+               
+  Notice: I am not responsible whatsoever for your actions.
 
   General information:
     - File & process hiding is managed by a magic GID.
@@ -15,15 +19,15 @@
 
   Presence hiding:
     - The presence of the rootkit library is hidden from the
-      following:
+      following (by default):
       - /proc/*/maps
       - /proc/*/smaps
       - /proc/*/numa_maps
-      - Processes (default): lsrootkit, ldd, unhide, rkhunter,
-                             chkproc, chkdirs, ltrace, strace
-      - Paths (default): */*ld-linux*.so.*, *ld-linux*.so.*,
-                         */*ld-*.so, *ld-*.so, */utmp, utmp
-      - Vars (default): LD_TRACE_LOADED_OBJECTS, LD_DEBUG, LD_AUDIT
+      - Processes: lsrootkit, ldd, unhide, rkhunter,
+                   chkproc, chkdirs, ltrace, strace
+      - Paths: */*ld-linux*.so.*, *ld-linux*.so.*,
+               */*ld-*.so, *ld-*.so, */utmp, utmp
+      - Variables: LD_TRACE_LOADED_OBJECTS, LD_DEBUG, LD_AUDIT
 
   Port hiding:
     - Ports you want hidden should be written to '~/hide_ports'.

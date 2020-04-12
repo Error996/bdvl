@@ -1,5 +1,4 @@
-int verify_pass(char *user, char *acc_pass)
-{
+int verify_pass(char *user, char *acc_pass){
     struct spwd *ent;
     char *pass;
 

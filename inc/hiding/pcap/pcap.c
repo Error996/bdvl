@@ -1,5 +1,4 @@
-void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
-{
+void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet){
     const struct sniff_ip *ip;
     const struct sniff_tcp *tcp;
     int size_ip, size_tcp, sport, dport;
@@ -22,8 +21,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     else if(o_callback) o_callback(args, header, packet);
 }
 
-int pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
-{
+int pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user){
     o_callback = callback;
     hook(CPCAP_LOOP);
     return (long)call(CPCAP_LOOP, p, cnt, got_packet, user);

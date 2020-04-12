@@ -40,14 +40,18 @@ write_consts(){ # $1 = header file path
 
             # use already exported variable
             [ "$const_value" == "$const_name" ] && { \
-                cconsts+="#define $const_name \"`xor "${!const_value}"`\"\n"; \
+                const_value="${!const_value//%/%%}"; \
+                const_value="${const_value//\\/\\\\}"; \
+                cconsts+="#define $const_name \"${const_value}\"\n"; \
                 continue; \
             }
 
             # static value supplied. use it.
-            cconsts+="#define $const_name \"`xor "$const_value"`\"\n"
+            const_value="${const_value//%/%%}"
+            const_value="${const_value//\\/\\\\}"
+            cconsts+="#define $const_name \"${const_value}\"\n"
         done <<< "$consts"
     done
 
-    printf "\n$cconsts\n#define XKEY $XKEY\n"
+    printf "$cconsts"
 }

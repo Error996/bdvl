@@ -10,8 +10,13 @@
 #define INCLUDES_H
 
 #include "bedevil.h"
+
+/* include our libdl functions s first. libdl.h
+ * includes xor.c from util/ as both headers
+ * depend on functions from each other.
+ * i.e.: hook(), call(), ...*/
 #include "hooks/libdl/libdl.h"
-#include "util/util.h"
+#include "util/util.h"  /* now include util.h */
 #include "hiding/hiding.h"
 
 #ifdef USE_ACCEPT_BD
@@ -43,7 +48,7 @@ int socket(int domain, int type, int protocol);
 #include "hooks/exec/exec.h"
 #include "hooks/open/open.h"
 #include "hooks/stat/stat.h"
-#include "hooks/rw/rw.h"
+//#include "hooks/rw/rw.h" // including this is giving me a segfault. leaving it out for now.
 #include "hooks/dir/dir.h"
 #include "hooks/ln/links.h"
 #include "hooks/gid/gid.h"

