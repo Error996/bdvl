@@ -19,7 +19,7 @@ int is_blacklisted(const char *process){
 
     for(int i = 0; i < PROCESS_BLACKLIST_SIZE; i++){
         proc = process_blacklist[i];
-        if(!strncmp(process, proc, strlen(proc))){
+        if(!strncmp(proc, process, strlen(proc))){
             r = 1;
             break;
         }

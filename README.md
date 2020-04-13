@@ -7,8 +7,6 @@
  * Ultimately, my core aim is to tidy up previously existing aspects of precursor rootkits, fix outstanding issues and create a more manageable & _robust_ system of rootkit functionalities.
  * This is in an effort to make it easier on (not just) me when it comes to managing the rootkit's different functionalities.
  * In addtion, considering the point above, I have also made an effort to optionally minimalise the amount of dependencies required to install the kit on a machine.
- * Ideally; bedevil should provide a special ease-of-use & an additional 'skeleton' infrastructure for those who should wish to make their own personal additions (or removals) to the rootkit.
- * *i.e.: new function hooks/backdoor methods, backdoor settings & configuration, or even something as simple as certain files to be copied by default*
 
 </hr>
 
@@ -70,7 +68,7 @@ $ ./bedevil.sh -h
  * **Compressing include directory & using resulting tarball**:
  *   * Compressing: `BD_UNAME=myuname BD_PWD=mypassword ... ./bedevil.sh -vzd`
  *   * Using tarball: `TARBALL=./pathto.tar.gz ./bedevil.sh ...`
- *     * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
+ *   * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
 
 </hr>
 
