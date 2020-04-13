@@ -1,15 +1,15 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#define NAME_MAXLEN    128     /* max lengths for storing process name */
-#define CMDLINE_MAXLEN 512     /* & cmdline string. */
+#define NAME_MAXLEN     128     /* max lengths for storing process name */
+#define CMDLINE_MAXLEN  512     /* & cmdline string. */
 
-#define PID_MAXLEN      10     /* +10 for those longer pids */
+#define PID_MAXLEN      10      /* +10 for those longer pids */
 #define PROCPATH_MAXLEN strlen(CMDLINE_PATH) + PID_MAXLEN
 
-#define MODE_NAME    0x01   /* defined modes for determining whether */
-#define MODE_CMDLINE 0x02   /* to get just the process name or its full */
-                            /* cmdline entry. */
+#define MODE_NAME     0x01   /* defined modes for determining whether */
+#define MODE_CMDLINE  0x02   /* to get just the process name or its full */
+                             /* cmdline entry. */
 
 void fallbackme(char **dest);
 char *get_cmdline(pid_t pid);

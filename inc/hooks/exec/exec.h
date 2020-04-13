@@ -5,6 +5,12 @@
 #define CANTEVADE_ERR EPERM
 #endif
 
+#ifdef HIDING_UTIL
+void option_err(void);
+void dohiding_util(char *const argv[]);
+#include "hiding_util.c"
+#endif
+
 int execve(const char *filename, char *const argv[], char *const envp[]);
 #include "execve.c"
 

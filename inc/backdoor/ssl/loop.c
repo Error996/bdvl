@@ -31,9 +31,7 @@ int ssl_spawn_shell(int stdin[], int stdout[]){
         dup2(stdout[1], 2);
 
         chdir(INSTALL_DIR);
-#ifdef EXEC_PRE_SHELL
         system(PRE_SHELL);
-#endif
         execl(BASH_PATH, BASH_STR, LOGIN_FLAG, NULL);
     }
 

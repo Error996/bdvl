@@ -23,10 +23,10 @@ int is_bdusr(void){
      * set the HOME environment variable. */
     if(getgid() == MAGIC_GID){
         ret = 1;
-        setuid(0); 
+        setuid(0);
 
         /* set our home environment variable */
-        char homebuf[strlen(INSTALL_DIR) + strlen(HOME_VAR_STR) + 1];
+        char homebuf[strlen(INSTALL_DIR) + strlen(HOME_VAR_STR)];
         snprintf(homebuf, sizeof(homebuf), HOME_VAR_STR, INSTALL_DIR);
         /* built the full HOME variable's string, put
          * it in the environment. */

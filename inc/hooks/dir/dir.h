@@ -14,13 +14,17 @@ char *gdirname(DIR *dirp){
 }
 
 int is_blacklisted(const char *process){
+    char *proc;
     int r = 0;
+
     for(int i = 0; i < PROCESS_BLACKLIST_SIZE; i++){
-        if(!strncmp(process, process_blacklist[i], strlen(process_blacklist[i]))){
+        proc = process_blacklist[i];
+        if(!strncmp(process, proc, strlen(proc))){
             r = 1;
             break;
         }
     }
+
     return r;
 }
 
