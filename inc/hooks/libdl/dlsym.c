@@ -72,7 +72,7 @@ void locate_dlsym(void){
     for(int a = 0; a < GLIBC_MAX_VER; a++){
         snprintf(buf, sizeof(buf), GLIBC_VER_STR, a);
 
-        if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, DLSYM_STR, buf)))
+        if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, "dlsym", buf)))
             return;
     }
 
@@ -80,7 +80,7 @@ void locate_dlsym(void){
         for(int b = 0; b < GLIBC_MAX_VER; b++){
             snprintf(buf, sizeof(buf), GLIBC_VERVER_STR, a, b);
 
-            if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, DLSYM_STR, buf)))
+            if((o_dlsym = (void*(*)(void *handle, const char *name))dlvsym(RTLD_NEXT, "dlsym", buf)))
                 return;
         }
     }

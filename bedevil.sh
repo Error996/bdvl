@@ -29,10 +29,6 @@ source ./etc/headers.sh
 # xor'd arrays within rootkit include directories.
 source ./etc/arrays.sh
 
-# functions responsible for locating & writing
-# xor'd consts within rootkit include directories.
-source ./etc/consts.sh
-
 # the functions within this script handle setting up
 # ports & ranges to be hidden before writing them
 # to a destination.

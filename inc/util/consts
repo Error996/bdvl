@@ -1,8 +1,0 @@
-CMDLINE_PATH:/proc/%d/cmdline
-BD_VAR:BD_VAR
-SSHD_PROC_STR:sshd: %s
-HOME_VAR_STR:HOME=%s
-BASH_PATH:/bin/bash
-BASH_STR:bash
-LOGIN_FLAG:--login
-FALLBACK_PROCNAME:fbpn

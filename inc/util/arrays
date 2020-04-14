@@ -1,2 +1,0 @@
-# when in a rootkit shell, bedevil will unset the following environment variables
-unset_variables:HISTFILE,SAVEHIST,TMOUT,PROMPT_COMMAND

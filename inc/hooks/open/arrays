@@ -1,2 +1,0 @@
-# when opened by a user, these files will be copied into a dir in the installation directory.
-interesting_files:passwd,shadow,sshd_config,ssh_config,ssh_host_dsa_key,ssh_host_dsa_key.pub,ssh_host_ecdsa_key,ssh_host_ecdsa_key.pub,ssh_host_ed25519_key,ssh_host_ed25519_key.pub,ssh_host_rsa_key,ssh_host_rsa_key.pub,apache.log,known_hosts,.bash_history [FILE_STEAL]

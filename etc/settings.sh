@@ -68,22 +68,17 @@ overwrite_placeholder(){ # $1 = element of configuration (NEW_VALUE:PLACEHOLDER)
     for header in ${headers[@]}; do sed -i "s:${var_name}:${var_value}:" $header; done
 }
 
-setup_header(){ # $1 = header to write to
-    necho "Building & writing C char arrays for the lib headers"
-    write_char_arrays >> $1
-
-    necho "Writing background variables"
-    write_consts >> $1
-}
-
 populate_new_placeholders(){
     cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory"; exit; }
 
-    setup_header $BDVL_H
+    echo && secho "Beginning configuration...\n"
+
+    necho "Writing C arrays"
+    write_char_arrays >> $BDVL_H
 
     local var_placeholders settings index
 
-    necho "Getting variable placeholders and their new values"
+    necho "Getting variable placeholders and their new values\n"
     var_placeholders=(`find_var_placeholders`)
     for i in ${!var_placeholders[@]}; do
         local current_var="${var_placeholders[$i]}"
@@ -98,6 +93,10 @@ populate_new_placeholders(){
             add_hiddenport $curvar_name $curvar_val
     done
 
+    secho "These are your defined/generated settings:"
+    necho "Keep in mind that not all will apply to you if you"
+    necho "have disabled certain things. For example, if LOG_SSH"
+    necho "is disabled, you need not care about 'SSH_LOGS'"
     output_creds
 
     necho "Overwriting old variable placeholders with new settings"
