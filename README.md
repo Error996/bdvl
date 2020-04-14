@@ -18,16 +18,6 @@
  * [__bedevil.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.h): essential rootkit header, handled solely by bedevil.sh
  * [__bedevil.c__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.c): centre for all bedevil
 
-*(inc/\*)* (header include directories may have their own exclusive files)
- * __arrays__: list of arrays to write, with respective array elements
- * __consts__: background consts that the user doesn't really need to see
-
- *(examples)*
- * [__inc/hooks/libdl/arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/libdl/arrays) (contains arrays of function names)
- * [__inc/hiding/arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/arrays) (scary things to hide from)
- * [__inc/hooks/open/arrays__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/open/arrays) (files of interest to potentially steal)
- * [__inc/hooks/open/consts__](https://github.com/naworkcaj/bdvl/blob/master/inc/hooks/open/consts) (files & paths to intercept)
-
 </hr>
 
 ## bedevil.sh
