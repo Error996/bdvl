@@ -34,7 +34,7 @@
 
 /* this defines whether or not a backdoor user can hide & unhide
  * files on-the-fly via the exec hooks. (execve & execvp)
- * absolutely useless if HIDE_SELF is undefined. */
+ * absolutely useless without HIDE_SELF. */
 #define HIDING_UTIL //ignore
 
 /* requires PAM. logs successful user authentications by hooking

