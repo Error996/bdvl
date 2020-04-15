@@ -52,8 +52,13 @@ int socket(int domain, int type, int protocol);
 #include "hooks/gid/gid.h"
 #include "hooks/perms/perms.h"
 #ifdef USE_PAM_BD
-#include "hooks/audit/audit.h" // [USE_PAM_BD]
 #include "hooks/pwd/pwd.h" // [USE_PAM_BD]
+
+/* the functions in the following includes
+ * are responsible for thwarting writing &
+ * reading of logs when the backdoor user
+ * is logged in. */
+#include "hooks/audit/audit.h" // [USE_PAM_BD]
 #include "hooks/utmp/utmp.h" // [USE_PAM_BD]
 #endif
 

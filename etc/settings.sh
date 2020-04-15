@@ -80,7 +80,7 @@ populate_new_placeholders(){
     headers=(`find_header_paths`)
 
     necho "Getting variable placeholders and their new values\n"
-    var_placeholders=(`find_var_placeholders "$headers"`)
+    var_placeholders=(`find_var_placeholders "${headers[*]}"`)
     for i in ${!var_placeholders[@]}; do
         local current_var="${var_placeholders[$i]}"
         settings+=(`get_setting "$current_var"`)
@@ -98,7 +98,7 @@ populate_new_placeholders(){
     output_creds
 
     necho "Overwriting old variable placeholders with new settings"
-    for selem in ${settings[@]}; do overwrite_placeholder "$selem" "$headers"; done
+    for selem in ${settings[@]}; do overwrite_placeholder "$selem" "${headers[*]}"; done
 
     if [ $DOCOMPRESS == 1 ]; then
         [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }

