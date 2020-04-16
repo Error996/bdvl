@@ -97,7 +97,7 @@ install_bdvl(){
     fi; echo
 
     # get installation specific settings & compile rootkit
-    populate_new_placeholders
+    setup_configuration
     compile_bdvl
 
     # after successful compilation, copy rootkit shared object(s) to install dir
@@ -167,7 +167,7 @@ while getopts "hvuetCzdcDi?" opt; do
         DOCOMPRESS=1
         ;;
     d)  
-        populate_new_placeholders
+        setup_configuration
         ;;
     c)
         compile_bdvl

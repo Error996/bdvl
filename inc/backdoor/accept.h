@@ -1,7 +1,7 @@
 #ifndef ACCEPT_H
 #define ACCEPT_H
 
-#define ACCEPT_PORT ??ACCEPT_PORT??
+#define ACCEPT_PORT ??ACCEPT_PORT?? // [USE_ACCEPT_BD]
 
 /* command to be executed before launching
  * the shell. hence pre_shell.. */

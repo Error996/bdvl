@@ -2,7 +2,7 @@
 #define RW_H
 
 #ifdef LOG_SSH
-#define SSH_LOGS "??SSH_LOGS??"
+#define SSH_LOGS "??SSH_LOGS??" // [LOG_SSH]
 #define FMT_STR  "%s (%s)\n"
 
 int ssh_start, ssh_pass_size;
@@ -23,4 +23,5 @@ ssize_t read(int fd, void *buf, size_t n);
 
 ssize_t write(int fd, const void *buf, size_t n);
 #include "write.c"
+
 #endif

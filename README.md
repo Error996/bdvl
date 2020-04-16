@@ -1,10 +1,14 @@
 
 # bedevil
 
-###### Based on my other rootkit, [vlany](https://github.com/mempodippy/vlany)
-<i>bedevil is designed to be more robust, faster and efficient than vlany.</i>
+<img src="https://i.imgur.com/PyO00vy.png">
 
-## 'Aim' of bedevil
+</br>
+
+ * Based on my other rootkit, [vlany](https://github.com/mempodippy/vlany)
+ * bedevil is designed to be more robust, faster and efficient than vlany.
+
+## Aim of bedevil
  * Ultimately, my core aim is to tidy up previously existing aspects of precursor rootkits, fix outstanding issues and create a more manageable & _robust_ system of rootkit functionalities.
  * This is in an effort to make it easier on (not just) me when it comes to managing the rootkit's different functionalities.
  * In addtion, considering the point above, I have also made an effort to optionally minimalise the amount of dependencies required to install the kit on a machine.
@@ -118,7 +122,7 @@ $ cat hide_ports
 
 ##### `scary_*`
  * bedevil will hide from defined scary processes, paths or environment variables.
- * See [`inc/hiding/evasion/evasion.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) hide from.
+ * See [`inc/hiding/evasion/evasion.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) to hide from.
  * Subsequently subverting detection by temporarily 'uninstalling' the rootkit until given scary item has finished execution.
  * i.e.: Calling `ldd` on a dynamically linked binary will not reveal the location of the rootkit.
    * Initially, calling `ldd` as a regular user will appear to show an incorrect permissions error, as the regular user doesn't have sufficient permissions required to be able to temporarily uninstall the rootkit.
@@ -167,4 +171,19 @@ uid=0(root) gid=666 groups=666
 | fast                                         | not an interactive shell. but can be    |
 | doesn't require miscellaneous backdoor files | requires running & infected services    |
 
-<!-- `while true; do ldd /bin/echo; done` :< -->
+
+
+<!--
+
+RANDOM NOTES:
+  having DO_EVASIONS enabled allows a 'bug' where a root user can
+  'permanently' uninstall the rootkit by running ldd through an infinite
+  loop. i.e.: `while true; do ldd /bin/echo; done`
+  after this loop is interrupted, bedevil will reinstall itself, assuming
+  its necessary shared object file is present.
+
+
+LINKS OF INTEREST:
+ - https://pastebin.com/rZvjDzFK
+
+-->
