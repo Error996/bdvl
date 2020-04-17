@@ -18,9 +18,16 @@
 # for its/your variables. not everything in that file will be useful to you.
 # for exmaple SSH_LOGS or INTEREST_DIR. that's why i've added some user specific
 # settings, see below. (ESSENTIAL SETTINGS)
-
+#
 # example setup file (INSTALL_DIR=/tmp/install_test, LDSO_PRELOAD=/tmp/fakepreload):
 #   https://pastebin.com/raw/jegd2JuV
+#
+# lastly, just a quick comment; this script is free of depending on functions
+# within bedevil.sh's includes - that was essentially the whole point of this
+# script. all you need is this script and a b64'd tar.gz uploaded somewhere.
+# and fyi, this script deletes itself and the extracted include directory after
+# installation has finished. just in case you're wondering where it's went after
+# running this.
 
 # ESSENTIAL SETTINGS THAT MUST BE EDITED DEPENDING ON YOUR SETUP:
 # USES TYPICAL BINARY VALUES.
