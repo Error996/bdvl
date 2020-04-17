@@ -56,6 +56,7 @@ $ ./bedevil.sh -h
           -i: Launch full installation of bedevil. (REQUIRES ROOT)
 
 ```
+ * __The order in which you use the flags is essential.__
  * *Compile only (no installation):* `./bedevil.sh -dc` (will quickly compile the .so in the your cwd)  
  * *Changing variable values (example):* `BD_UNAME=my_uname BD_PWD=my_pwd ./bedevil.sh -dc`  
  * *Full installation:* `./bedevil.sh -ti` (will ask what you want to enable/disable then launch installation)
@@ -73,8 +74,9 @@ $ ./bedevil.sh -h
 
 | Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
 | :-------------   | :----------------------------------------------------------- | :------------- | :--------- | :--------- |
-| `USE_ACCEPT_BD`  | allows backdoor connection via running (& infected) services | off            | -          | no         |
 | `USE_PAM_BD`     | allows interactive login as a backdoor user via ssh          | off            | libpam     | no         |
+| `USE_ACCEPT_BD`  | allows backdoor connection via running (& infected) services | off            | -          | no         |
+| `ACCEPT_USE_SSL` | to use SSL or not for the accept hook backdoor               | off            | libssl     | no         |
 | `LOG_LOCAL_AUTH` | log local successful user authentications                    | off            | libpam     | no         |
 | `HIDE_SELF`      | hides files and processes based on rootkit magic GID         | on             | -          | yes        |
 | `HIDE_HOOKS`     | hides malicious function hooking from dlsym                  | on             | -          | yes        |
@@ -82,13 +84,11 @@ $ ./bedevil.sh -h
 | `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
 | `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
-| `BLOCK_STRINGS`  | prevents users from calling strings on certain files         | on             | -          | yes        |
 | `HIDING_UTIL`    | allows backdoor user to hide & unhide files on-the-fly       | on             | -          | yes        |
 | `LOG_SSH`        | logs outgoing ssh logins to install dir                      | off            | -          | no         |
 | `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
 | `LINK_IF_ERR`    | link said FoI if we can't copy it                            | off            | -          | yes        |
 | `USE_CRYPT`      | to use or not to use libcrypt                                | on             | libcrypt   | yes        |
-| `ACCEPT_USE_SSL` | to use SSL or not for the accept hook backdoor               | off            | libssl     | no         |
 
 </hr>
 
@@ -113,7 +113,7 @@ $ cat hide_ports
 1000-1003
 ```
 *Where a hyphen represents a range...*
- * During configuration, `bedevil.sh` will write which ports or port ranges should be hidden to the `hide_ports` file.
+ * Upon installation, `bedevil.sh` will write which ports or port ranges should be hidden to the `hide_ports` file.
 
 #### Rootkit presence hiding
  * bedevil will hide itself from the process memory map files upon being read.

