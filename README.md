@@ -87,6 +87,7 @@ Usage: ./auto.sh <option> <path or url>
    * File is written as base64 by bedevil.sh for the sake of easier transfers between machines.
  * This script depends solely on the contents and the format of the 'settings' file within the compressed include directory.
  * Additionally, there should be no need to edit anything within `auto.sh`.
+ * At the stage this script is currently in, utilising the dynamic linker patch isn't as straight forward as it should/I'd like it to be.
 
 ### Full example installation using `auto.sh` after `bedevil.sh`
  * `BD_UNAME=[...] BD_PWD=[...] [...] ./bedevil.sh -vdz`
@@ -150,7 +151,7 @@ $ cat hide_ports
  * Reading `/proc/*/*maps`, when bedevil is fully installed will make it seem apparent that there is no malicious libraries being preloaded.
  * _HOWEVER_, should dependencies be required by the rootkit's compiled shared object, the dependent libraries will be visible in output. (namely; libcrypt & libssl)
 
-##### `scary_*`
+##### Scary things
  * bedevil will hide from defined scary processes, paths or environment variables.
  * See [`inc/hiding/evasion/evasion.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) to hide from.
  * Subsequently subverting detection by temporarily 'uninstalling' the rootkit until given scary item has finished execution.
@@ -171,11 +172,6 @@ When bedevil detects that a backdoor user is logged in, it automatically unsets 
  * *By hooking the responsible [utmp & wtmp functions](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
  * *On boxes that use `systemd` (which is most), when a user (real-or-not) is logged in, a process called `(sd-pam)` will be visible.*
 
-| Pros                              | Cons                           |
-| :-------------------------------- | :----------------------------- |
-| secure connection over ssh        | wtmp and utmp logging          |
-| fully interactive shell           | PAM logins can be disabled     |
-
 ##### accept() hook
  * By intercepting and hijacking libc's accept(), we can connect to existing services (__assuming they have been restarted upon installation__) on a box and have them drop us a reverse shell if special conditions are met.
  * When using `ACCEPT_PORT` as your local source port when connecting to said box, bedevil will drop you the shell when you correctly enter your backdoor password. (`BD_PWD`)
@@ -195,12 +191,6 @@ uid=0(root) gid=666 groups=666
 ...
 ```
 
-| Pros                                         | Cons                                    |
-| :------------------------------------------- | :-------------------------------------- |
-| not as much need to worry about logs         | plaintext unless using SSL              |
-| fast                                         | not an interactive shell. but can be    |
-| doesn't require miscellaneous backdoor files | requires running & infected services    |
-
 
 
 <!--
@@ -215,5 +205,7 @@ RANDOM NOTES:
 
 LINKS OF INTEREST:
  - https://pastebin.com/rZvjDzFK
+
+asddsadsad
 
 -->

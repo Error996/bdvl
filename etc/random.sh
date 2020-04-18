@@ -38,7 +38,8 @@ random_path(){
         for dir in ${blacklist[@]}; do [[ $target_dir == *"$dir"* ]] && target_dir=""; done
     done
 
-    echo -n "$target_dir`random 'a-z' 2`"
+    local rand_chrs=`random '1-3' 1`
+    echo -n "$target_dir`random 'a-z' $rand_chrs`"
 }
 
 random_name(){
