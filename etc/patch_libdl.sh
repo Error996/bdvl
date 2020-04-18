@@ -19,6 +19,12 @@ source $script_root/random.sh
 # to wherever you would like the preload file to live.
 O_PRELOAD="/etc/ld.so.preload"
 
+[ ! -f "`bin_path xxd`" ] && { \
+    eecho "xxd not found."; \
+    eecho "Cannot continue..."; \
+    exit; \
+}
+
 get_ld_libs(){
     local lib_dir
     for current_dir in ${LIB_DIRS[@]}; do
