@@ -12,6 +12,7 @@ declare -a array LD_LIBS=() # later stores paths of dynamic linker libraries to 
 
 script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source $script_root/util.sh
+source $script_root/random.sh
 
 get_ld_libs(){
     local lib_dir
@@ -35,7 +36,7 @@ find_preload_location(){
 }
 
 # builds new location string for the preload file.
-get_new_preload(){ echo -n "`$script_root/get_rand_path.sh 2`.`random 'A-Za-z0-9' 8`"; }
+get_new_preload(){ echo -n "`random_path 2`.`random 'A-Za-z0-9' 8`"; }
 hstr(){ local HS="`xxd -p <<< "$1"`"; echo -n "${HS::${#HS}-2}00" | awk '{print toupper($0)}'; }
 
 patch_lib(){ # $1 = target lib, $2 = old preload file, $3 = new preload file
