@@ -101,7 +101,6 @@ $ ./bedevil.sh -h
 | `ACCEPT_USE_SSL` | to use SSL or not for the accept hook backdoor               | off            | libssl     | no         |
 | `LOG_LOCAL_AUTH` | log local successful user authentications                    | off            | libpam     | no         |
 | `HIDE_SELF`      | hides files and processes based on rootkit magic GID         | on             | -          | yes        |
-| `HIDE_HOOKS`     | hides malicious function hooking from dlsym                  | on             | -          | yes        |
 | `FORGE_MAPS`     | hides rootkit presence from process map files                | on             | -          | yes        |
 | `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
