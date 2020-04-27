@@ -36,7 +36,7 @@ necho(){
 }
 verbose(){
     [ -z $VERBOSE ] || [ $VERBOSE == 0 ] && return
-    printf " \e[35m[+]\e[0m $1\n"
+    printf " \e[35m[++]\e[0m $1\n"
 }
 
 # if we can use python, use it. if not, try openssl.

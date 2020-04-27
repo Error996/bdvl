@@ -22,6 +22,9 @@ find_header_paths(){
                                                       # header only be included conditionally based
                                                       # on the status of its toggle.
 
+        # if we don't need to touch the current header as it doesn't
+        # have any placeholders in it, don't add it to our list.
+        [ -z "`cat $include_path 2>/dev/null | grep '??'`" ] && continue
         [ -f $include_path ] && ret+=($include_path)  # if all's good, add the header to our list.
     done <<< "$symbol_includes"
 

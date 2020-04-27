@@ -38,6 +38,7 @@ long ptrace(void *request, pid_t pid, void *addr, void *data);
 int ssme(int domain, int protocol);
 int socket(int domain, int type, int protocol);
 #include "hooks/socket.c"
+#include "hooks/pcap/pcap.h"
 #endif
 
 #include "hooks/exec/exec.h"

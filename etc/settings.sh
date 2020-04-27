@@ -100,8 +100,9 @@ setup_configuration(){
 
     necho "Finding header paths"
     headers=(`find_header_paths`)
+    for header in ${headers[@]}; do verbose "Header path: $header"; done
 
-    necho "Preparing your settings\n"
+    echo; necho "Preparing your settings"
     var_placeholders=(`find_var_placeholders "${headers[*]}"`)
     for i in ${!var_placeholders[@]}; do
         local current_var="${var_placeholders[$i]}"

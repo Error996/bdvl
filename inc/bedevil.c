@@ -8,7 +8,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 #include <errno.h>
 #include <fnmatch.h>
 #include <dirent.h>
