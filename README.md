@@ -16,10 +16,10 @@
 
 ## Important files
 *(inc/)*
- * [__toggles.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/toggles.h): rootkit functionality toggles. read for more info
- * [__includes.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/includes.h): read for info
- * [__bedevil.h__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.h): essential rootkit header, handled solely by bedevil.sh
- * [__bedevil.c__](https://github.com/naworkcaj/bdvl/blob/master/inc/bedevil.c): centre for all bedevil
+ * [__toggles.h__](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h): rootkit functionality toggles. read for more info
+ * [__includes.h__](https://github.com/kcaaj/bdvl/blob/master/inc/includes.h): read for info
+ * [__bedevil.h__](https://github.com/kcaaj/bdvl/blob/master/inc/bedevil.h): essential rootkit header, handled solely by bedevil.sh
+ * [__bedevil.c__](https://github.com/kcaaj/bdvl/blob/master/inc/bedevil.c): centre for all bedevil
 
 </hr>
 
@@ -90,8 +90,8 @@ $ ./bedevil.sh -h
 </hr>
 
 ## Rootkit toggles
- * [`inc/toggles.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/toggles.h) is just exactly as it sounds. By (un)defining different toggle definitions, you have more control what bedevil can & will do upon installation. Comments available.  
- * [`etc/toggles.sh`](https://github.com/naworkcaj/bdvl/blob/master/etc/toggles.sh) is used by bedevil.sh to read, parse, and make changes to toggles.h without manual editing.
+ * [`inc/toggles.h`](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h) is just exactly as it sounds. By (un)defining different toggle definitions, you have more control what bedevil can & will do upon installation. Comments available.  
+ * [`etc/toggles.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/toggles.sh) is used by bedevil.sh to read, parse, and make changes to toggles.h without manual editing.
 
 | Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
 | :-------------   | :----------------------------------------------------------- | :------------- | :--------- | :--------- |
@@ -142,23 +142,23 @@ $ cat hide_ports
 
 ##### Scary things
  * bedevil will hide from defined scary processes, paths or environment variables.
- * See [`inc/hiding/evasion/evasion.h`](https://github.com/naworkcaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) to hide from.
+ * See [`inc/hiding/evasion/evasion.h`](https://github.com/kcaaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) to hide from.
  * Subsequently subverting detection by temporarily 'uninstalling' the rootkit until given scary item has finished execution.
  * i.e.: Calling `ldd` on a dynamically linked binary will not reveal the location of the rootkit.
    * Initially, calling `ldd` as a regular user will appear to show an incorrect permissions error, as the regular user doesn't have sufficient permissions required to be able to temporarily uninstall the rootkit.
    * Calling `ldd` with sufficient permissions will uninstall the rootkit, show "clean" output to the user, then will reinstall. Obscuring the location of the rootkit.
 
 #### Backdoor
-Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section closer to the beginning of this README. Also, there is a [README inside the rootkit's installation directory](https://github.com/naworkcaj/bdvl/blob/master/etc/BD_README) that you may wish to consult.  
-When bedevil detects that a backdoor user is logged in, it automatically unsets specified environment variables, for the sake of remaining hidden... See [`inc/util/bdusr.c`](https://github.com/naworkcaj/bdvl/blob/master/inc/util/bdusr.c) for the things that bedevil will unset in the environment upon detecting a present backdoor user/general rootkit process.
+Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section closer to the beginning of this README. Also, there is a [README inside the rootkit's installation directory](https://github.com/kcaaj/bdvl/blob/master/etc/BD_README) that you may wish to consult.  
+When bedevil detects that a backdoor user is logged in, it automatically unsets specified environment variables, for the sake of remaining hidden... See [`inc/util/bdusr.c`](https://github.com/kcaaj/bdvl/blob/master/inc/util/bdusr.c) for the things that bedevil will unset in the environment upon detecting a present backdoor user/general rootkit process.
 
 ##### PAM
  * By hijacking libpam's authentication functions, we create a phantom user on the machine that can be logged into just the same as any other user.
  * During setup, you'll be given a username and password which can be used to log into the backdoor, over ssh.
    * To reiterate, by default the username and password are randomly generated, but you can specify a username and password of your own by setting them before running `bedevil.sh`.
      * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
- * See [`etc/ssh.sh`](https://github.com/naworkcaj/bdvl/blob/master/etc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
- * *By hooking the responsible [utmp & wtmp functions](https://github.com/naworkcaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
+ * See [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
+ * *By hooking the responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
  * *On boxes that use `systemd` (which is most), when a user (real-or-not) is logged in, a process called `(sd-pam)` will be visible.*
 
 ##### accept() hook
