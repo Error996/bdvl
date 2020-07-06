@@ -1,3 +1,4 @@
+#!/bin/bash
 find_var_placeholders(){ # $1 = header paths
     local headers current_var \
           header_vars vars toggle_name
@@ -13,17 +14,17 @@ find_var_placeholders(){ # $1 = header paths
             [ -z "$line" ] && continue
 
             # name of variable placeholder
-            current_var="`echo -n "$line" | awk -F" " '{print $3}'`"
+            current_var="`echo -n "$line" | awk -F' ' '{print $3}'`"
             [ -z $current_var ] && continue
 
             # if the variable placeholder's relative toggle
             # is disabled, don't bother fetching it.
             toggle_name="`get_toggle_name "$line"`"
-            [ "`toggle_enabled $toggle_name`" == "false" ] && continue
+            [ "`toggle_enabled $toggle_name`" == 'false' ] && continue
 
             # add the variable placeholder's name to our list
             # so we can overwrite it very shortly.
-            vars+=($current_var)
+            vars+=("$current_var")
         done <<< "$header_vars"
     done
 

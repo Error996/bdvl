@@ -57,7 +57,7 @@ compile_bdvl(){
     optimization_flags=(-O0 -g0)
     options=(-fomit-frame-pointer -fPIC)
     linker_options=(-Wl,--build-id=none)
-    linker_flags=(-ldl)
+    linker_flags=(-lc -ldl -lpcap)
     [ `toggle_enabled USE_CRYPT` == "true" ] && linker_flags+=(-lcrypt)
     [ `toggle_enabled ACCEPT_USE_SSL` == "true" ] && linker_flags+=(-lssl)
     [ $PLATFORM == "armv7l" ] && PLATFORM="v7l"
@@ -166,7 +166,7 @@ while getopts "hvuetCzdcDi?" opt; do
             eecho "Could not find dialog..." || USE_DIALOG=1
         ;;
     e)
-        etc/environ.sh
+        bash etc/environ.sh
         ;;
     t)
         [ $USE_DIALOG == 1 ] && \

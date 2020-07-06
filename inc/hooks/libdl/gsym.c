@@ -20,7 +20,7 @@ void get_symbol_pointer(int symbol_index, void *handle){
         //printf("failed getting %s\n", symbol_name);
         //exit(0);
 
-        return;  // kill me
+        return;  // ??
     }
 
     symbols[symbol_index].func = fptr;

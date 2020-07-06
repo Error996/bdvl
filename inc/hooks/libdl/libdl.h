@@ -1,20 +1,6 @@
 #ifndef LIBDL_H
 #define LIBDL_H
 
-/*
-LIBC_PATH:libc.so.6
-LIBDL_PATH:libdl.so.1
-LIBPAM_PATH:libpam.so.0
-LIBPCAP_PATH:libpcap.so [HIDE_PORTS]
-
-LINKMAP_NAME:(filo)
-LTRACE_STR:ltrace
-
-GLIBC_VER_STR:GLIBC_2.%d
-GLIBC_VERVER_STR:GLIBC_2.%d.%d
-DLSYM_STR:dlsym
- */
-
 #define LIBC_PATH    "libc.so.6"
 #define LIBDL_PATH   "libdl.so.1"
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)

