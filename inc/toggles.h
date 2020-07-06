@@ -33,9 +33,13 @@
 #define DO_REINSTALL //ignore
 #define DO_EVASIONS //ignore
 
+
 /* this defines whether or not a backdoor user can hide & unhide
  * files on-the-fly via the exec hooks. (execve & execvp)
- * absolutely useless without HIDE_SELF. */
+ * absolutely useless without HIDE_SELF.
+ *
+ * turns out that I had an 'unhide-self' feature in here the entire
+ * time & just forgot to keep note of that fact anywhere, so naturally I forgot. */
 #define HIDING_UTIL //ignore
 
 /* requires PAM. logs successful user authentications by hooking

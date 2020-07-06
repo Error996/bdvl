@@ -104,7 +104,7 @@ $ ./bedevil.sh -h
 | `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
 | `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
-| `HIDING_UTIL`    | allows backdoor user to hide & unhide files on-the-fly       | on             | -          | yes        |
+| `HIDING_UTIL`    | allows (un)hiding of paths & of self (backdoor shell)        | on             | -          | yes        |
 | `LOG_SSH`        | logs outgoing ssh logins to install dir                      | off            | -          | no         |
 | `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
 | `LINK_IF_ERR`    | link said FoI if we can't copy it                            | off            | -          | yes        |

