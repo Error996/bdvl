@@ -109,7 +109,7 @@ setup_configuration(){
         local current_var="${var_placeholders[$i]}"
         settings+=(`get_setting "$current_var"`)
 
-        [ `toggle_enabled HIDE_PORTS` == "false" ] && continue  # don't if we don't need to
+        [ "`toggle_enabled HIDE_PORTS`" == "false" ] && continue  # don't if we don't need to
         IFS=':' read -r curvar_val curvar_name <<< "${settings[$i]}"
         [[ "$curvar_name" == *"PORT"* ]] && add_hiddenport $curvar_name $curvar_val
     done

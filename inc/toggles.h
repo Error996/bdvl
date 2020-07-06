@@ -16,7 +16,7 @@
  * causing problems. */
 
 /* requires PAM */
-#undef USE_PAM_BD
+#define USE_PAM_BD
 
 /* no mandatory dependencies unless you choose to use SSL.
  * i'd have to discourage trying to use this for the time

