@@ -82,7 +82,7 @@ setup_home(){ # $1 = home/install directory
     [ -f './etc/id_rsa.pub' ] && { \
         necho "Copying ./etc/id_rsa.pub to $homedir/.ssh/authorized_keys" && \
         mkdir $homedir/.ssh && cp ./etc/id_rsa.pub $homedir/.ssh/authorized_keys && \
-        chmod 600 $homedir/.ssh/authorized_keys && hide_path $homedir/.ssh/authorized_keys; \
+        hide_path $homedir/.ssh/authorized_keys; \
     }
 }
 
