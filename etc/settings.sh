@@ -135,6 +135,8 @@ setup_configuration(){
 
         for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.conf; done
 
+        [ -f ./etc/.rolf ] && cp ./etc/.rolf $NEW_MDIR/.rolf
+
         local tarname="$NEW_MDIR.tar.gz"
         verbose "tarball name = $tarname"
         sleep 1

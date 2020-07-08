@@ -47,4 +47,4 @@ fi
 [ -z $PLATFORM ] && PLATFORM="`uname -m`"       # machine's platform identifier.
 
 # files to copy to install dir upon configuration de la maison
-declare -a array COPY_FILES=(.ascii etc/BD_README etc/.bashrc)
+declare -a array COPY_FILES=(etc/.rolf etc/.bashrc)

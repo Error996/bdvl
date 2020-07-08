@@ -83,11 +83,16 @@
 <img src=https://i.imgur.com/QPCxDRP.png/>
 <img src=https://i.imgur.com/jzmvsiM.png/>
 
- * Something worth noting is that `patch_sshdconfig` doesn't exist here.
- * Whereas it normally would, and be executed, with `bedevil.sh`.
- * Small price to pay.
- * If this proves to be problematic, you can do it yourself.
- * See `etc/postinstall.sh` for this function.
+ * The good thing about this is that you can use the same `.b64` file, pretty much everywhere you like.
+ * No longer will you have to remember or note down 20 different credentials for 20 different boxes.
+ * You can use the same username, password & hidden port for all.
+   * 'One-command-does-all'
+ * That, and installation takes a matter of seconds with this method.
+
+#### Notes
+ * The `patch_sshdconfig` function from `etc/postinstall.sh` is present in this script.
+ * But the line which executes it is commented out.
+ * Uncomment it, or change where it gets called, yourself if you like.
 
 <hr>
 
@@ -101,14 +106,14 @@
 | Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
 | :-------------   | :----------------------------------------------------------- | :------------- | :--------- | :--------- |
 | `USE_PAM_BD`     | allows interactive login as a backdoor user via ssh          | on            | libpam     | no         |
-| `LOG_LOCAL_AUTH` | log successful user authentications on the box                   | off            | libpam     | no         |
+| `LOG_LOCAL_AUTH` | log successful user authentications on the box               | off            | libpam     | no         |
 | `HIDE_SELF`      | hides files and processes based on rootkit magic GID         | on             | -          | yes        |
 | `FORGE_MAPS`     | hides rootkit presence from process map files                | on             | -          | yes        |
 | `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
 | `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
 | `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
-| `HIDING_UTIL`    | allows (un)hiding of paths & of self        | on             | -          | yes        |
-| `LOG_SSH`        | logs login attempts from over ssh                      | off            | -          | yes         |
+| `HIDING_UTIL`    | allows (un)hiding of paths & of self                         | on             | -          | yes        |
+| `LOG_SSH`        | logs login attempts from over ssh                            | off            | -          | yes         |
 | `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
 | `LINK_IF_ERR`    | link said FoI if we can't copy it                            | off            | -          | yes        |
 | `USE_CRYPT`      | to use or not to use libcrypt                                | on             | libcrypt   | yes        |
