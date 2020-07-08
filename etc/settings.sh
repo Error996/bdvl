@@ -152,7 +152,7 @@ setup_configuration(){
             [ -f `bin_path curl` ] && local addr_q="curl -s $addr_src"
             [ -f `bin_path wget` ] && local addr_q="wget -q -O - $addr_src"
             echo -e "\n\tAfter bdvl is installed:"
-            echo -e "\t\e[32mbash etc/ssh.sh $BD_UNAME `$addr_q` $PAM_PORT # $BD_PWD\e[0m\n"
+            echo -e "\t\e[32mbash etc/ssh.sh $BD_UNAME <TARGET> $PAM_PORT # $BD_PWD\e[0m\n"
         fi
     fi
 }
