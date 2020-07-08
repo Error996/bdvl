@@ -27,12 +27,6 @@ declare -a array PAC_DEPS=("glibc" "base-devel")
     PAC_DEPS+=("pam");                               \
 }
 
-[ "`toggle_enabled ACCEPT_USE_SSL`" == "true" ] && { \
-    YUM_DEPS+=("openssl-devel");                     \
-    APT_DEPS+=("libssl-dev" "libssl-dev:i386");      \
-    PAC_DEPS+=("openssl");                           \
-}
-
 necho "Installing dependencies"
 [ -f /usr/bin/yum ] && yum install -e 0 ${YUM_DEPS[*]}
 [ -f /usr/bin/pacman ] && pacman -Syy && pacman -S ${PAC_DEPS[*]}

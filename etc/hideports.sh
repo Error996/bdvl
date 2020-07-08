@@ -35,10 +35,4 @@ add_hiddenport(){ # $1 = variable name, $2 = variable value
 
     [ $underscores == 2 ] && range_hide_ports+=($value)
     [ $underscores == 1 ] && hide_ports+=($value)
-
-    # if the user wishes to have the option of using SSL within the accept
-    # backdoor, we need to hide the SSL port too.
-    [[ "$name" == *"ACCEPT_PORT"* ]] && \
-        [ `toggle_enabled ACCEPT_USE_SSL` == "true" ] && \
-            hide_ports+=($(( value + 1 )))
 }

