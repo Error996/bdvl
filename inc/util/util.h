@@ -9,7 +9,7 @@
 #define NAME_MAXLEN       128     /* max lengths for storing process name */
 #define CMDLINE_MAXLEN    512     /* & cmdline string. */
 
-#define PID_MAXLEN      16      /* maximum length a pid can be */
+#define PID_MAXLEN      30      /* max length in bytes a pid can be */
 #define PROCPATH_MAXLEN strlen(CMDLINE_PATH) + PID_MAXLEN
 
 #define MODE_NAME     0x01   /* defined modes for determining whether */

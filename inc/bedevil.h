@@ -11,7 +11,7 @@
 #define SOPATH "??SOPATH??"
 #define LDSO_PRELOAD "??LDSO_PRELOAD??"
 
-#define PATH_MAX 4096
+//#define PATH_MAX 4096
 #define LINE_MAX 2048
 
 typedef struct symbol_struct {

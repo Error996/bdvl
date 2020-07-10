@@ -48,8 +48,6 @@
 
 <img src=https://i.imgur.com/e5Oc8kt.png alt="Example installation result"/>
 
-* If `etc/id_rsa.pub` exists before installation, it will be copied to your installation directory as an authorized key for ssh login.
-
 ### Logging in to new backdoor user
  * Upon successful installation you can log in to the box using your backdoor credentials.
 
@@ -58,6 +56,10 @@
  * _emule_ is just a box I've got running on my local network.
  * If the box you're trying to log into has their ssh service open on a different port (not 22) you can specify a different port to use by changing the value of `SSH_PORT`, either at runtime or edit it in the script.
  * Example: `bash SSH_PORT=23 etc/ssh.sh ...`
+ * There is functionality right now within bedevil where, if it exists, `./etc/id_rsa.pub` will be copied to `$INSTALL_DIR/.ssh/authorized_keys`.
+  * This is so that we don't have to force the option of password authentication in the box's sshd_config in order to access the backdoor.
+  * Due to the fact that functions are being hooked to grant backdoor access, this does not work as of yet.
+  * It isn't just a matter of storing a public key & having it authenticate you when logging in.
 
 <hr>
 
@@ -72,7 +74,6 @@
    * Both of these files are written by `bedevil.sh` during compression.
    * This method of storing settings could be better than what it is right now.
    * But considering the purpose, this is ok.
- * At the stage this script is currently in, utilising the dynamic linker patch isn't as straight forward as it should/I'd like it to be.
 
 ### Example
  * `BD_UNAME=sexand BD_PWD=lovegod ./bedevil.sh -vzd`
@@ -91,8 +92,12 @@
 
 #### Notes
  * The `patch_sshdconfig` function from `etc/postinstall.sh` is present in this script.
- * But the line which executes it is commented out.
- * Uncomment it, or change where it gets called, yourself if you like.
+ * It previously used to be that this function would not get executed.
+   * This is no longer the case.
+   * This function will now be executed upon successful installation.
+   * This will continue to be the case until authentication via a public key is a fully functioning option.
+ * At the stage this script is currently in, utilising the dynamic linker patch isn't as straight forward as it should/I'd like it to be.
+ * This script will automatically install required dependencies for the rootkit to work. If you aren't a fan of this you can comment out the line responsible for this.
 
 <hr>
 
@@ -127,7 +132,12 @@
    * You can specify a username and/or password of your own by setting them before running `bedevil.sh`.
      * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
  * [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
- * The responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/master/inc/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
+ * The responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/master/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
+ * Additionally the functions responsible for writing authentication logs have been hooked & intercepted to totally stop any sort of logs being written upon backdoor login.
+   * See these hooks, [here (syslog)](https://github.com/kcaaj/bdvl/tree/master/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/kcaaj/bdvl/blob/master/inc/backdoor/pam/pam_syslog.c).
+   * _If the parent process of whatever is trying to write said auth log is that of a hidden process, the function in question simply does nothing._
+   * Previously in bedevil, when interacting with the PAM backdoor, a log would be written stating that a session had been opened/closed for the root user.
+   * So now this is no longer the case...
 
 #### Credential logging
  * `LOG_LOCAL_AUTH`

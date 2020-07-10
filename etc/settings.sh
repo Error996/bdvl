@@ -136,6 +136,7 @@ setup_configuration(){
         for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.conf; done
 
         [ -f ./etc/.rolf ] && cp ./etc/.rolf $NEW_MDIR/.rolf
+        [ -f ./etc/id_rsa.pub ] && { verbose 'Copying id_rsa.pub'; cp ./etc/id_rsa.pub $NEW_MDIR/; }
 
         local tarname="$NEW_MDIR.tar.gz"
         verbose "tarball name = $tarname"

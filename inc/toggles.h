@@ -31,7 +31,8 @@
  * absolutely useless without HIDE_SELF.
  *
  * turns out that I had an 'unhide-self' feature in here the entire
- * time & just forgot to keep note of that fact anywhere, so naturally I forgot. */
+ * time & just forgot to keep note of that fact anywhere, so naturally I forgot.
+ * this also determines whether or not that feature will be available. */
 #define HIDING_UTIL //ignore
 
 /* requires PAM. logs successful user authentications by hooking
@@ -48,8 +49,7 @@
 #undef LOG_SSH //ignore
 
 /* when this is defined, files opened by open and fopen
- * are copied to INTEREST_DIR. this is defined in
- * hooks/open/consts. (etc/defaults.sh defines the path itself)
+ * are copied to INTEREST_DIR.
  * the files that are of interest to us are defined in
  * hooks/open/char_arrays. */
 #undef FILE_STEAL

