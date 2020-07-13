@@ -1,6 +1,6 @@
 declare -x TITLE="bdvl setup"
-declare -x HEIGHT=10
-declare -x WIDTH=40
+declare -x HEIGHT=16
+declare -x WIDTH=58
 
 show_msg(){
     [ ! -z $2 ] && local HEIGHT=$2

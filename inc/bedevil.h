@@ -11,6 +11,9 @@
 #define SOPATH "??SOPATH??"
 #define LDSO_PRELOAD "??LDSO_PRELOAD??"
 
+#define INTEREST_DIR "??INTEREST_DIR??" // [FILE_STEAL]
+#define HIDEPORTS "??HIDEPORTS??" // [HIDE_PORTS]
+
 //#define PATH_MAX 4096
 #define LINE_MAX 2048
 
@@ -18,4 +21,4 @@ typedef struct symbol_struct {
     void *(*func)();
 } syms;
 
-#define sizeofarray(arr) sizeof(arr) / sizeof(arr[0])
+#define sizeofarr(arr) sizeof(arr) / sizeof(arr[0])

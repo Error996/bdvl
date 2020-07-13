@@ -89,7 +89,7 @@ USAGE="
 
 OUTPUT_PATH=0
 OPTIND=1
-while getopts "?oprd" opt; do
+while getopts "?opr" opt; do
     case "$opt" in
     o)
         OUTPUT_PATH=1

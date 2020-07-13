@@ -70,7 +70,7 @@
      * See `B64TARGZ_LOCATION`.
    * `wget`/`curl` is required for downloading the file.
      * You could instruct the script to use a file available locally, instead of trying to download one.
- * This script relies on the contents & format of the 'settings' & 'toggles.conf' files.
+ * This script relies on the contents & format of the 'settings.cfg' & 'toggles.cfg' files.
    * Both of these files are written by `bedevil.sh` during compression.
    * This method of storing settings could be better than what it is right now.
    * But considering the purpose, this is ok.
@@ -91,11 +91,6 @@
  * That, and installation takes a matter of seconds with this method.
 
 #### Notes
- * The `patch_sshdconfig` function from `etc/postinstall.sh` is present in this script.
- * It previously used to be that this function would not get executed.
-   * This is no longer the case.
-   * This function will now be executed upon successful installation.
-   * This will continue to be the case until authentication via a public key is a fully functioning option.
  * At the stage this script is currently in, utilising the dynamic linker patch isn't as straight forward as it should/I'd like it to be.
  * This script will automatically install required dependencies for the rootkit to work. If you aren't a fan of this you can comment out the line responsible for this.
 
@@ -108,22 +103,33 @@
    * Ample details within comments. 
  * See the table below.
 
-| Toggle           | Info                                                         | Default status | Dependency | Ignored(?) |
-| :-------------   | :----------------------------------------------------------- | :------------- | :--------- | :--------- |
-| `USE_PAM_BD`     | allows interactive login as a backdoor user via ssh          | on            | libpam     | no         |
-| `LOG_LOCAL_AUTH` | log successful user authentications on the box               | off            | libpam     | no         |
-| `HIDE_SELF`      | hides files and processes based on rootkit magic GID         | on             | -          | yes        |
-| `FORGE_MAPS`     | hides rootkit presence from process map files                | on             | -          | yes        |
-| `HIDE_PORTS`     | hides ports & port ranges defined in 'hide_ports' file       | on             | -          | yes        |
-| `DO_REINSTALL`   | maintains the rootkit's preload file                         | on             | -          | yes        |
-| `DO_EVASIONS`    | hides rootkit presence from unsavoury processes              | on             | -          | yes        |
-| `HIDING_UTIL`    | allows (un)hiding of paths & of self                         | on             | -          | yes        |
-| `LOG_SSH`        | logs login attempts from over ssh                            | off            | -          | yes         |
-| `FILE_STEAL`     | attempts to steal FoI when opened by open/fopen              | off            | -          | no         |
-| `LINK_IF_ERR`    | link said FoI if we can't copy it                            | off            | -          | yes        |
-| `USE_CRYPT`      | to use or not to use libcrypt                                | on             | libcrypt   | yes        |
+| Toggle                 | Info                                                           | Default status | Dependency | Ignored(?) |
+| :--------------------- | :------------------------------------------------------------- | :------------- | :--------- | :--------- |
+| __USE_PAM_BD__         | allows interactive login as a backdoor user via ssh            | on             | libpam     | no         |
+| __LOG_LOCAL_AUTH__     | log successful user authentications on the box                 | off            | libpam     | no         |
+| __HIDE_SELF__          | hides files and processes based on rootkit magic GID           | on             | -          | yes        |
+| __FORGE_MAPS__         | hides rootkit presence from process map files                  | on             | -          | yes        |
+| __HIDE_PORTS__         | hides ports & port ranges defined in 'hide_ports' file         | on             | -          | yes        |
+| __DO_REINSTALL__       | maintains the rootkit's preload file                           | on             | -          | yes        |
+| __DO_EVASIONS__        | hides rootkit presence from unsavoury processes                | on             | -          | yes        |
+| __FAKE_LDD__           | rootkit location filtered from `ldd` output. for any user.     | on             | -          | yes        |
+| __READ_GID_FROM_FILE__ | magic GID value is changeable from backdoor shell via command. | on             | -          | no         |
+| __PATCH_SSHD_CONFIG__  | this will keep `UsePAM` & `PasswordAuthentication` enabled     | on             | -          | no         |
+| __BACKDOOR_UTIL__      | allows access to a host of backdoor utilities. see comments.   | on             | -          | yes        |
+| __LOG_SSH__            | logs login attempts from over ssh                              | off            | -          | yes        |
+| __FILE_STEAL__         | attempts to steal FoI when opened by open/fopen                | on             | -          | no         |
+| __LINK_IF_ERR__        | link said FoI if we can't copy it                              | off            | -          | yes        |
+| __USE_CRYPT__          | to use or not to use libcrypt                                  | on             | libcrypt   | yes        |
 
 <hr>
+
+#### Magic GID
+ * By default, __READ_GID_FROM_FILE__ is enabled in the rootkit & allows changing of the rootkit's magic GID whenever you like.
+ * There is a command available from within the backdoor for changing the rootkit's GID.
+   * `./bdv changegid`
+
+##### Example changing magic GID
+<img src=https://i.imgur.com/vo4yn29.png alt="gid change example"/>
 
 #### PAM backdoor
  * By hijacking libpam & libc's authentication functions, we are able to create a phantom backdoor user.
@@ -138,12 +144,15 @@
    * _If the parent process of whatever is trying to write said auth log is that of a hidden process, the function in question simply does nothing._
    * Previously in bedevil, when interacting with the PAM backdoor, a log would be written stating that a session had been opened/closed for the root user.
    * So now this is no longer the case...
+ * A problem with using this is that `UsePAM` & `PasswordAuthentication` must be enabled in the sshd config.
+   * __PATCH_SSHD_CONFIG__ takes care of this problem.
+   * See [here](https://github.com/kcaaj/bdvl/blob/master/inc/backdoor/sshdpatch/sshdcheck.c) on the how & when this functionality works.
 
 #### Credential logging
- * `LOG_LOCAL_AUTH`
+ * __LOG_LOCAL_AUTH__
    * bedevil will intercept `pam_vprompt` and log successful authentications on the box.
    * Log results are available in your installation directory.
- * `LOG_SSH`
+ * __LOG_SSH__
    * bedevil intercepts `read` and `write` in order to log login attempts over ssh.
    * Again, logs are available in your installation directory.
 

