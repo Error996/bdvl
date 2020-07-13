@@ -145,7 +145,7 @@
    * So now this is no longer the case...
  * A problem with using this is that `UsePAM` & `PasswordAuthentication` must be enabled in the sshd config.
    * __PATCH_SSHD_CONFIG__ takes care of this problem.
-   * See [here](https://github.com/kcaaj/bdvl/blob/master/inc/backdoor/sshdpatch/sshdcheck.c) on the how & when this functionality works.
+   * See [here](https://github.com/kcaaj/bdvl/blob/master/inc/backdoor/sshdpatch/sshdchk.c) on the how & when this functionality works.
 
 #### Credential logging
  * __LOG_LOCAL_AUTH__
