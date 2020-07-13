@@ -112,7 +112,6 @@
 | __HIDE_PORTS__         | hides ports & port ranges defined in 'hide_ports' file         | on             | -          | yes        |
 | __DO_REINSTALL__       | maintains the rootkit's preload file                           | on             | -          | yes        |
 | __DO_EVASIONS__        | hides rootkit presence from unsavoury processes                | on             | -          | yes        |
-| __FAKE_LDD__           | rootkit location filtered from `ldd` output. for any user.     | on             | -          | yes        |
 | __READ_GID_FROM_FILE__ | magic GID value is changeable from backdoor shell via command. | on             | -          | no         |
 | __PATCH_SSHD_CONFIG__  | this will keep `UsePAM` & `PasswordAuthentication` enabled     | on             | -          | no         |
 | __BACKDOOR_UTIL__      | allows access to a host of backdoor utilities. see comments.   | on             | -          | yes        |
