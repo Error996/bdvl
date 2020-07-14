@@ -42,7 +42,7 @@ random_path(){
 
     local newdir="/"
     while [ -d "$newdir" ]; do
-        local rand_chrs=`random '1-3' 1`
+        local rand_chrs=`random '2-4' 1`
         newdir="$target_dir`random 'a-z' $rand_chrs`"
     done
     echo -n "$newdir"

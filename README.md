@@ -113,6 +113,7 @@
 | __DO_REINSTALL__       | maintains the rootkit's preload file                           | on             | -          | yes        |
 | __DO_EVASIONS__        | hides rootkit presence from unsavoury processes                | on             | -          | yes        |
 | __READ_GID_FROM_FILE__ | magic GID value is changeable from backdoor shell via command. | on             | -          | no         |
+| __AUTO_GID_CHANGER__   | the magic GID will refresh every so often. see comments.       | on             | -          | no         |
 | __PATCH_SSHD_CONFIG__  | this will keep `UsePAM` & `PasswordAuthentication` enabled     | on             | -          | no         |
 | __BACKDOOR_UTIL__      | allows access to a host of backdoor utilities. see comments.   | on             | -          | yes        |
 | __LOG_SSH__            | logs login attempts from over ssh                              | off            | -          | yes        |
@@ -123,9 +124,13 @@
 <hr>
 
 #### Magic GID
- * By default, __READ_GID_FROM_FILE__ is enabled in the rootkit & allows changing of the rootkit's magic GID whenever you like.
- * There is a command available from within the backdoor for changing the rootkit's GID.
+ * __READ_GID_FROM_FILE__ allows changing of the rootkit's magic GID whenever you like.
+ * There is a command available from within the backdoor for manual changing of the rootkit's GID.
    * `./bdv changegid`
+ * __AUTO_GID_CHANGER__ is more or less what it sounds like. The rootkit will refresh its magic GID __at least__ every `GID_CHANGE_MINTIME` seconds.
+   * This value can be found in [`inc/toggles.h`](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h)
+   * The rootkit will not automatically change its GID when there are still rootkit processes running.
+   * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
 
 ##### Example changing magic GID
 <img src=https://i.imgur.com/vo4yn29.png alt="gid change example"/>

