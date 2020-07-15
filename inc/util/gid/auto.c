@@ -61,7 +61,8 @@ void writelastchange(int curtime){  // writes the *new* last change.
     if(fp == NULL) return;
 
     snprintf(timbuf, sizeof(timbuf), "%d", curtime);
-    fwrite(timbuf, 1, strlen(timbuf), fp);
+    hook(CFWRITE);
+    call(CFWRITE, timbuf, 1, strlen(timbuf), fp);
     fclose(fp);
 }
 

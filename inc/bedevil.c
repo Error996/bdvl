@@ -17,6 +17,10 @@
 #error "AUTO_GID_CHANGER defined without READ_GID_FROM_FILE"
 #endif
 
+#if defined(BACKDOOR_PKGMAN) && !defined(BACKDOOR_UTIL)
+#error "BACKDOOR_PKGMAN defined without BACKDOOR_UTIL"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

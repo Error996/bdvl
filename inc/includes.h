@@ -40,7 +40,7 @@ int socket(int domain, int type, int protocol);
 #include "hooks/exec/exec.h"
 #include "hooks/open/open.h"
 #include "hooks/stat/stat.h"
-//#include "hooks/rw/rw.h"
+#include "hooks/rw/rw.h"
 #include "hooks/dir/dir.h"
 #include "hooks/ln/links.h"
 #include "hooks/gid/gid.h"

