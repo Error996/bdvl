@@ -74,7 +74,7 @@ setup_home(){ # $1 = home/install directory
         write_hideports $HIDEPORTS;
     }
 
-    [ "`toggles READ_GID_FROM_FILE`" == 'true' ] && {
+    [ "`toggle_enabled READ_GID_FROM_FILE`" == 'true' ] && {
         necho 'Setting up magic GID file' &&
         touch $GID_PATH && chmod 644 $GID_PATH &&
         echo -n "$MAGIC_GID" > $GID_PATH;
