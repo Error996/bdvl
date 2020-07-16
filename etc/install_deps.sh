@@ -9,7 +9,7 @@ source $script_root/toggles.sh
 declare -a array YUM_DEPS=('gcc' 'newt' 'libgcc.i686'
                            'glibc-devel.i686' 'glibc-devel'
                            'vim-common')
-declare -a array APT_DEPS=('gcc-multilib' 'build-essential')
+declare -a array APT_DEPS=('vim-common' 'gcc-multilib' 'build-essential')
 declare -a array PAC_DEPS=('glibc' 'base-devel')
 
 [ "`toggle_enabled HIDE_PORTS`" == 'true' ] && {
