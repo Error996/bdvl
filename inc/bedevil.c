@@ -76,7 +76,7 @@ int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_
 #ifdef DO_REINSTALL
     reinstall();
 #endif
-#ifdef PATCH_SSHD_CONFIG
+#if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
     sshdpatch(REG_USR);
 #endif
 
