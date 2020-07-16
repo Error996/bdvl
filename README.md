@@ -14,8 +14,11 @@
    * Fix outstanding issues. (from vlany)
    * Create a more manageable & _robust_ system of rootkit functionalities.
    * Working on anything in vlany just felt like a huge mess, I grew to hate this. I knew it could be better...
- * The only dependency inherently required is bash, for running all of the setup scripts.
-   * This won't be the case for much longer...
+ * The only dependency inherently required is bash, for running all of the setup scripts. (not really the case anymore)
+   * I have created the [nobash branch](https://github.com/kcaaj/bdvl/tree/nobash) which... eliminates any use of bash.
+   * The setup process is totally different & is designed to have all of the toggles enabled by default.
+   * The only manual configuration required is the editing of `BD_UNAME`, `BD_PWD` & `PAM_PORT` in `setup.py`.
+   * After that it's just a case of a `make` & using `auto.sh` to install on the target box.
  * When it comes to actual rootkit dependencies, there are only a few.
    * Most will already be installed.
    * Those that aren't can be installed with the available script.
