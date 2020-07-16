@@ -126,7 +126,7 @@ install_bdvl(){
     secho "Installation complete!"
     cleanup_bdvl
 
-    if [ `toggle_enabled "USE_PAM_BD"` == 'true' ]; then
+    if [ "`toggle_enabled "USE_PAM_BD"`" == 'true' ]; then
         local addr_src='http://wtfismyip.com/text'
         [ -f `bin_path curl` ] && local addr_q="curl -s $addr_src"
         [ -f `bin_path wget` ] && local addr_q="wget -q -O - $addr_src"

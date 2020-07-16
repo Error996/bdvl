@@ -127,6 +127,11 @@
 
 <hr>
 
+#### Backdoor utility commands
+ * By hooking the execve & execvp wrappers bdvl provides rootkit-related commands from a backdoor shell, accessible by running `./bdv`.
+
+<img src=https://i.imgur.com/oErGMrL.png alt="available backdoor commands in bdvl"/>
+
 #### Magic GID
  * __READ_GID_FROM_FILE__ allows changing of the rootkit's magic GID whenever you like.
  * There is a command available from within the backdoor for manual changing of the rootkit's GID.

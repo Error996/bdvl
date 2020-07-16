@@ -10,7 +10,7 @@
 #endif
 
 #if defined(READ_GID_FROM_FILE) && !defined(BACKDOOR_UTIL)
-#warning "READ_GID_FROM_FILE is defined without BACKDOOR_UTIL. you won't be able to change GID."
+#warning "GID changing is not safely possible without BACKDOOR_UTIL defined."
 #endif
 
 #if !defined(READ_GID_FROM_FILE) && defined(AUTO_GID_CHANGER)
