@@ -31,10 +31,8 @@
  * available for refreshing the rootkit's current GID & subsequently rehiding
  * its files.
  *
- * files you have personally created that do not technically belong to the
- * rootkit will not be rehidden. if i discover a way of efficiently & sanely
- * keeping track of files created (by you) in the backdoor then great. until
- * then this will continue to be the way it is.
+ * when/if enabled, HIDE_MY_ASS will keep track of files created outside of
+ * the installation directory as to rehide them when changing GID.
  *
  * if the file cannot be read for whatever reason, the original (MAGIC_GID)
  * value will be used instead.. if this is the case, should rootkit files need
@@ -47,6 +45,11 @@
 #define AUTO_GID_CHANGER
 #define GID_CHANGE_MINTIME 60 * 30 // change GID at least every 30 mins.
 
+/* keep track of all files created by (you) the backdoor user. used so we
+ * can make sure files created by us outside of the installation directory
+ * are hidden & stay hidden. files kept track of are stored in 'my_ass' (lolol)
+ * within the installation directory. */
+#define HIDE_MY_ASS
 
 
 

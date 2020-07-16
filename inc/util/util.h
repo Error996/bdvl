@@ -45,6 +45,19 @@ int not_user(int id){
     return 0;
 }
 
+char *gdirname(int fd){
+    int readlink_status;
+    char path[PATH_MAX], *filename = malloc(sizeof(path));
+    memset(filename, 0, PATH_MAX);
+
+    snprintf(path, sizeof(path) - 1, "/proc/self/fd/%d", fd);
+
+    hook(CREADLINK);
+    readlink_status = (long)call(CREADLINK, path, filename, sizeof(path) - 1);
+    if(readlink_status < 0) return NULL;
+    return filename;
+}
+
 /* if PAM is being used... */
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
 char *get_username(const pam_handle_t *pamh){
