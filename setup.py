@@ -130,16 +130,12 @@ class Definitions():
     # returns a new identifier definition based on name & index.
     # where index is the current index of the target array.
     def getident(self, nam, index):
-        # remove prefixed 'X' & underscores. ideally these
-        # names should be much shorter.
         rlnam = nam.upper()
         ident = '#define C{0} {1}\n'
         ident = ident.format(rlnam, str(index))
         return ident
 
     # gets all identifiers for data in the target array
-    # using self.getident for each element. used for referencing
-    # data, encrypted & plain from the rootkit & installer respectively.
     def getidents(self):
         idents = ''
         for i in range(self.list_len):
