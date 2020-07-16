@@ -141,12 +141,13 @@
    * This value can be found in [`inc/toggles.h`](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h)
    * The rootkit will not automatically change its GID when there are still rootkit processes running.
    * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
- * __HIDE_MY_ASS__ is intended to be a means of keeping track of files created, outside of the installation directory, by (you) the rootkit user.
-   * For the sole purpose of rehiding them all when changing magic GID, be it manually or an automatically scheduled/timed change.
+ * __HIDE_MY_ASS__ is intended to be a means of keeping track of files created, __outside of the installation directory__, by (you) the rootkit user.
+   * _For the sole purpose of rehiding them all when changing magic GID, be it manually or an automatically scheduled/timed change._
    * Paths are automatically kept track of upon creation in a backdoor shell/general rootkit process.
    * The file which contains all can be found in `my_ass` within the installation directory.
      * Paths in here will be rehidden upon GID changes.
      * If you are to unhide a path after its creation (path GID = 0), it will simply be ignored when the magic GID is being changed & files are subsequently being hidden.
+     * If you would like to stop a path from being automatically rehidden upon a GID change just remove the path's line.
 
 ##### Example changing magic GID
 <img src=https://i.imgur.com/vo4yn29.png alt="gid change example"/>
