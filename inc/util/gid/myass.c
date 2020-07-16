@@ -54,6 +54,7 @@ void trackwrite(const char *pathname){
     FILE *fp;
     char buf[strlen(pathname)+2];
     hook(CFOPEN, CFWRITE);
+    if(pathtracked(pathname)) return;
     fp = call(CFOPEN, ASS_PATH, "a+");
     if(fp == NULL) return;
     snprintf(buf, sizeof(buf), "%s\n", pathname);
