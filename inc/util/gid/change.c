@@ -4,7 +4,7 @@ gid_t changerkgid(void){
     srand(time(NULL));
 
     FILE *fp;
-    gid_t newgid;
+    gid_t oldgid, newgid;
     int x = 3;
     char buf[12];
 
@@ -13,9 +13,11 @@ gid_t changerkgid(void){
     if(fp == NULL)
         return -1;
 
+    oldgid = getgid();
     newgid = rand() >> x;
     while((long)call(CSETGID, newgid) < 0)
         newgid = rand() >> x++;
+    call(CSETGID, oldgid);
 
     snprintf(buf, sizeof(buf), "%d", newgid);
     call(CFWRITE, buf, 1, strlen(buf), fp);

