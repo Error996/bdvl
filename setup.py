@@ -3,11 +3,10 @@
 
 # SETTINGS
 
-# if you would like any of these credentials to have random values just set them to 'None'.
-# they get shown to you beforehand anyway.
-BD_UNAME = 'super'
-BD_PWD   = 'hacker'
-PAM_PORT = 7971
+# by default the password & port are random values. you can change this.
+BD_UNAME = 'changeme'
+BD_PWD   = None
+PAM_PORT = None
 
 # END OF SETTINGS
 
