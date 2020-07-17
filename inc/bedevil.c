@@ -64,7 +64,16 @@
 #include <syslog.h>
 #endif
 
+#define LINE_MAX 2048
+
+typedef struct {
+    void *(*func)();
+} syms;
+
+#define sizeofarr(arr) sizeof(arr) / sizeof(arr[0])
+
 #include "includes.h"
+
 
 int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_av, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void (*stack_end)){
     if(not_user(0))

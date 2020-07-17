@@ -18,4 +18,4 @@ kit: $(NEW_INC)/bedevil.c
 	strip $(SONAME)*
 
 clean:
-	rm -rf $(SONAME)* $(NEW_INC)*
+	rm -rf $(SONAME)* $(NEW_INC)* *.b64

