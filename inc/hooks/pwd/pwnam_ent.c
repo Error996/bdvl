@@ -21,7 +21,7 @@ struct passwd *getpwuid(uid_t uid){
 
         bpw->pw_uid = magicgid;
         bpw->pw_gid = magicgid;
-        bpw->pw_dir = INSTALL_DIR;
+        bpw->pw_dir = HOMEDIR;
         bpw->pw_shell = "/bin/bash";
         return bpw;
     }

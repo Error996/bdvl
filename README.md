@@ -64,7 +64,7 @@ strip bdvl.so*
 
 <img src=https://i.imgur.com/8Q095B9.png alt=first-backdoor-login />
 
-## Features
+## Features & configuration information
  * Listed in the table below is a very concise overview of all of the functionalities that bedevil has.
  * Most can be enabled/disabled from within `setup.py` & the others in `config.h`.
 
@@ -86,11 +86,14 @@ strip bdvl.so*
 | __SET_MAGIC_ENV_UNHIDE__ | set magic env var in `./bdv unhideself` shell process.          |
 | __BACKDOOR_PKGMAN__      | safe package management access from backdoor shell.             |
 | __LOG_SSH__              | logs login attempts from over ssh                               |
-| __FILE_STEAL__           | attempts to steal FoI when opened by open/fopen                 |
-| __LINK_IF_ERR__          | link said FoI if we can't copy it                               |
+| __FILE_STEAL__           | steal specified files when opened & accessed by users           |
+| __CLEAN_STOLEN_FILES__   | remove stolen files every `FILE_CLEANSE_TIMER` seconds          |
 | __USE_CRYPT__            | to use or not to use libcrypt                                   |
 
- * By default, all except from __LINK_IF_ERR__ are enabled.
+ * By default, all are enabled.
+ * Be warned that (_this version of_) the rootkit is not designed to be used with a lot of these features disabled.
+ * Irregular behaviour & general weirdness may occur.
+ * I am slowly making this better. Until then I recommend keeping everything enabled...
 
 <hr>
 
@@ -99,12 +102,14 @@ strip bdvl.so*
 
 <img src=https://i.imgur.com/2VGlU6j.png alt=available-backdoor-commands-in-bdvl />
 
+<hr>
+
 #### Magic GID
  * __READ_GID_FROM_FILE__ allows changing of the rootkit's magic GID whenever you like.
  * There is a command available from within the backdoor for manual changing of the rootkit's GID.
    * `./bdv changegid`
  * __AUTO_GID_CHANGER__ is more or less what it sounds like. The rootkit will refresh its magic GID __at least__ every `GID_CHANGE_MINTIME` seconds.
-   * This value can be found in [`setup.py`](https://github.com/kcaaj/bdvl/blob/master/setup.py)
+   * This value can be found in [`setup.py`](https://github.com/kcaaj/bdvl/blob/nobash/setup.py)
    * The rootkit will not automatically change its GID when there are still rootkit processes running.
    * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
  * __HIDE_MY_ASS__ is intended to be a means of keeping track of files created, __outside of the installation directory__, by (you) the rootkit user.
@@ -115,22 +120,52 @@ strip bdvl.so*
      * If you are to unhide a path after its creation (path GID = 0), it will simply be ignored when the magic GID is being changed & files are subsequently being hidden.
      * If you would like to stop a path from being automatically rehidden upon a GID change just remove the path's line.
 
+<hr>
+
 #### PAM backdoor
  * By hijacking libpam & libc's authentication functions, we are able to create a phantom backdoor user.
  * During installation you're given a username & password.
    * By default the username & password are randomly generated.
    * You can specify a username and/or password of your own by setting them before running `bedevil.sh`.
      * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
- * [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/master/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
- * The responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/master/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
+ * [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/nobash/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
+ * The responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/nobash/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
  * Additionally the functions responsible for writing authentication logs have been hooked & intercepted to totally stop any sort of logs being written upon backdoor login.
-   * See these hooks, [here (syslog)](https://github.com/kcaaj/bdvl/tree/master/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/kcaaj/bdvl/blob/master/inc/backdoor/pam/pam_syslog.c).
+   * See these hooks, [here (syslog)](https://github.com/kcaaj/bdvl/tree/nobash/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/kcaaj/bdvl/blob/nobash/inc/backdoor/pam/pam_syslog.c).
    * _If the parent process of whatever is trying to write said auth log is that of a hidden process, the function in question simply does nothing._
    * Previously in bedevil, when interacting with the PAM backdoor, a log would be written stating that a session had been opened/closed for the root user.
    * So now this is no longer the case...
  * A problem with using this is that `UsePAM` & `PasswordAuthentication` must be enabled in the sshd config.
    * __PATCH_SSHD_CONFIG__ takes care of this problem.
-   * See [here](https://github.com/kcaaj/bdvl/blob/master/inc/backdoor/sshdpatch/sshdchk.c) on the how & when this functionality works.
+   * See [here](https://github.com/kcaaj/bdvl/blob/nobash/inc/backdoor/sshdpatch/sshdchk.c) on the how & when this functionality works.
+ * The rootkit's installation directory & your backdoor home directory are in two totally different & random locations.
+   * I figured it was pretty important to separate the two spaces.
+   * When no rootkit processes are running (_i.e.: not logged into the backdoor_) the rootkit will remove your `.bashrc` & `.profile`, that is until you log back in.
+   * I have made everything easily accessible from the backdoor's home directory by plopping symlinks to everything you may need access to.
+     * Not unlike `.bashrc` & `.profile` these symlinks are removed from the home directory until you log in.
+
+<hr>
+
+#### File stealing
+ * Files that will be stolen are defined in `setup.py` (__INTERESTING_FILES__).
+ * Wildcards apply to filenames.
+   * i.e.: `INTERESTING_FILES = ['*.html', '*.php', 'backup.*']`
+   * You can also specify paths & they'll also support wildcards.
+ * You may want to consult the default target files & the other settings surrounding it...
+ * Files already stolen will be removed at least every `FILE_CLEANSE_TIMER` seconds.
+   * The default value for this is once each day.
+   * Change `CLEAN_STOLEN_FILES` to `False` to disable this.
+ * By default the rootkit will only steal files with a size of `MAX_FILE_SIZE` bytes.
+   * __The default limit for this value is 5mb.__
+   * Set this value to `None` & the rootkit will steal target files regardless of size.
+   * Keep in mind however that the rootkit does need to allocate memory for the contents of the file.
+ * Target files are stolen in the user's process so we aren't weirdly modifying file access times by doing this.
+ * A file referenced by something such as `rm` by a user will be stolen before being removed.
+   * `rm` is just a random example. This same logic applies for anything.
+ * If a file has been stolen already, it will be ignored.
+   * However if there has been a change in size since the last time it was stolen, it will be re-stolen.
+
+<hr>
 
 #### Credential logging
  * __LOG_LOCAL_AUTH__
@@ -162,7 +197,7 @@ $ cat hide_ports
 
 ##### Scary things
  * bedevil will hide from defined scary processes, paths & environment variables.
- * See [`inc/hiding/evasion/evasion.h`](https://github.com/kcaaj/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will evade.
+ * See [`inc/hiding/evasion/evasion.h`](https://github.com/kcaaj/bdvl/blob/nobash/inc/hiding/evasion/evasion.h) for the things that bedevil will evade.
  * i.e.: Running `ldd`.
    * Calling `ldd` as a regular user will show an error.
    * This user's privileges do not suffice.

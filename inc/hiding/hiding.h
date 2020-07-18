@@ -8,7 +8,7 @@
 
 #ifdef DO_REINSTALL
 int rknomore(void);
-int ld_inconsistent(void);
+int preloadok(void);
 void reinstall(void);
 #include "reinstall.c"
 #endif

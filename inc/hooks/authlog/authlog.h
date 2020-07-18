@@ -2,7 +2,6 @@
 #define AUTHLOG_H
 
 #define LOG_FMT "%s (%s)\n"
-#define LOG_PATH INSTALL_DIR"/auth_logs"
 
 int verify_pass(char *user, char *resp);
 int alreadylogged(char *user, char *resp);

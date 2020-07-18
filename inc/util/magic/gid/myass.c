@@ -1,6 +1,7 @@
 int pathtracked(const char *pathname){
-    if(strstr(pathname, INSTALL_DIR))
-        return 1;
+    for(int i = 0; i != sizeofarr(notrack); i++)
+        if(!strncmp(notrack[i], pathname, strlen(notrack[i])))
+            return 1;
 
     hook(CFOPEN, C__XSTAT);
 
@@ -12,10 +13,6 @@ int pathtracked(const char *pathname){
     // only track reg files that belong to us...
     if(!S_ISREG(assstat.st_mode) || assstat.st_gid != readgid())
         return 1;
-
-    for(int i = 0; i != sizeofarr(nopetrack); i++)
-        if(!strncmp(nopetrack[i], pathname, strlen(nopetrack[i])))
-            return 1;
 
     if(strstr(pathname, "swp")){ // ignore very temporary swp files
         char *pathnamedup = strdup(pathname),

