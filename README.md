@@ -124,10 +124,6 @@ strip bdvl.so*
 
 #### PAM backdoor
  * By hijacking libpam & libc's authentication functions, we are able to create a phantom backdoor user.
- * During installation you're given a username & password.
-   * By default the username & password are randomly generated.
-   * You can specify a username and/or password of your own by setting them before running `bedevil.sh`.
-     * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
  * [`etc/ssh.sh`](https://github.com/kcaaj/bdvl/blob/nobash/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
  * The responsible [utmp & wtmp functions](https://github.com/kcaaj/bdvl/tree/nobash/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
  * Additionally the functions responsible for writing authentication logs have been hooked & intercepted to totally stop any sort of logs being written upon backdoor login.
