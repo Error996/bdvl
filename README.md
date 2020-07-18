@@ -9,9 +9,10 @@
 
 ## Overview
  * This is an LD_PRELOAD rootkit. Therefore, this rootkit runs in userland.
- * This is the same as the [original bdvl](https://github.com/kcaaj/bdvl) but however this version eliminates the need for bash.
+ * This is the same as the [original bdvl](https://github.com/kcaaj/bdvl/tree/master) but however this version eliminates the need for bash.
    * So naturally this repository is much different from the original.
-   * You can view the original [here]().
+   * The original version on the master branch will not continue to be updated.
+   * Therefore updates from this day on will __only__ be in this branch.
  * During the creation of this rootkit I had some goals in mind.
    * Tidy up previously existing aspects of precursor (LD_PRELOAD) rootkits.
    * Fix outstanding issues. (from vlany)
