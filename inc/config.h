@@ -5,9 +5,6 @@
 #define HIDE_PORTS // hide hidden ports specified from a file.
 #define DO_REINSTALL // make sure the rootkit stays installed.
 
-// if the rootkit's installation directory is removed for whatever reason the
-// rootkit will instead use one out of a handful of other directories we have
-// installed to.
 #define DO_EVASIONS
 
 #define ROOTKIT_BASHRC // the rootkit writes, maintains & removes .bashrc & .profile. somethings won't work properly wihout this.
