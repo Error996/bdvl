@@ -1,4 +1,4 @@
-int scary_path(char *string){
+int scary_path(const char *string){
     char *path;
     for(int i = 0; i < SCARY_PATHS_SIZE; i++){
         path = scary_paths[i];
@@ -12,14 +12,10 @@ int scary_path(char *string){
 }
 
 int block_strings(const char *filename, char *const argv[]){
-    if(argv[0] == NULL) return 0;
-
-    int is_strings = !fnmatch("*/strings", filename, FNM_PATHNAME);
-    if(!is_strings) return 0;
-
-    for(int i = 0; argv[i] != NULL; i++)
-        if(scary_path(argv[i]))
-            return 1;
+    if(!strcmp("strings", filename) || !fnmatch("*/strings", argv[0], FNM_PATHNAME))
+        for(int i = 1; argv[i] != NULL; i++)
+            if(scary_path(argv[i]))
+                return 1;
 
     return 0;
 }

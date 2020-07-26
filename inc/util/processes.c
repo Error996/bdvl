@@ -37,7 +37,7 @@ char *process_info(pid_t pid, int mode){
 
             for(int i = 0; i < c; i++)         /* replace null terminators with spaces  */
                 if(process_info[i] == 0x00)    /* so that we can actually use the whole */
-                    process_info[i] = 0x20;    /* 'cmdline' string.                     */
+                    process_info[i] = 0x20;
             break;
     }
 

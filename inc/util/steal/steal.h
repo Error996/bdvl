@@ -1,11 +1,7 @@
 #ifdef FILE_STEAL
 
-#if defined FILE_CLEANSE_TIMER && defined CLEAN_STOLEN_FILES
+#if defined FILE_CLEANSE_TIMER
 void rmstolens(void);
-FILE *opencleanedtimepath(const char *mode);
-int getlastclean(void);
-void writelastclean(int curtime);
-int getlastcleandiff(int curtime);
 void cleanstolen(void);
 #include "clean.c"
 #endif

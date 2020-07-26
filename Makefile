@@ -10,7 +10,7 @@ all: setup kit
 
 setup:
 	rm -rf $(NEW_INC)
-	python setup.py
+	python3 setup.py
 
 kit: $(NEW_INC)/bedevil.c
 	$(CC) -std=gnu99 $(WARNING_FLAGS) -I$(NEW_INC) $(OPTIMIZATION_FLAGS) -shared -Wl,-soname,$(SONAME).$(PLATFORM) -fPIC $(NEW_INC)/bedevil.c $(R_LFLAGS) -o $(SONAME).$(PLATFORM)

