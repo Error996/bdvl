@@ -6,14 +6,6 @@
 #define PATH_VISIBLE_STR  "path now visible"
 #define ERR_UNHIDING_PATH "error unhiding path"
 
-#ifdef BACKDOOR_ROLF
-#if defined LOG_LOCAL_AUTH || defined LOG_SSH
-int logcount(const char *path);
-#endif
-void dorolfpls(void);
-#include "rolf.c"
-#endif
-
 void option_err(char *a0);
 void eradicatedir(const char *target);
 void uninstallbdv(void);

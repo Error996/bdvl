@@ -35,9 +35,10 @@ char *process_info(pid_t pid, int mode){
             process_info = malloc(CMDLINE_MAXLEN);
             c = (long)call(CREAD, fd, process_info, CMDLINE_MAXLEN);
 
-            for(int i = 0; i < c; i++)         /* replace null terminators with spaces  */
-                if(process_info[i] == 0x00)    /* so that we can actually use the whole */
+            for(int i = 0; i < c; i++)
+                if(process_info[i] == 0x00)
                     process_info[i] = 0x20;
+            process_info[c-1]='\0';
             break;
     }
 
@@ -46,7 +47,7 @@ end_processinfo:
     return process_info;
 }
 
-// macros defined are used here
+// these functions have macros..
 int cmp_process(char *name){
     char *myname = process_name();
     int status = strncmp(myname, name, strlen(myname));

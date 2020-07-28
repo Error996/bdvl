@@ -2,10 +2,6 @@
 #define EVASION_H
 
 
-int scary_path(const char *string);
-int block_strings(const char *filename, char *const argv[]);
-#include "block_strings.c"
-
 #define VINVALID_PERM 0
 #define VFORK_ERR    -1
 #define VFORK_SUC     2

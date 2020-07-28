@@ -1,5 +1,3 @@
-#include "bedevil.h"
-
 /* we need libdl.h right now as it provides essential
  * symbol resolving functions. (hook, call, getsym)
  * not to mention the dlsym hook itself. */

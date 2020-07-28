@@ -1,10 +1,7 @@
 #ifndef AUTHLOG_H
 #define AUTHLOG_H
 
-#define LOG_FMT "%s (%s)\n"
-
 int verify_pass(char *user, char *resp);
-int alreadylogged(char *user, char *resp);
 void log_auth(pam_handle_t *pamh, char *resp);
 #include "log.c"
 

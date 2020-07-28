@@ -1,6 +1,12 @@
 #define _GNU_SOURCE
 
 #include "config.h"
+
+typedef struct {
+    void *(*func)();
+} syms;
+
+#include "bedevil.h"
 #include "sanity.h"
 
 #include <stdio.h>
@@ -49,11 +55,6 @@
 #endif
 
 #define LINE_MAX 2048
-
-typedef struct {
-    void *(*func)();
-} syms;
-
 #define sizeofarr(arr) sizeof(arr) / sizeof(arr[0])
 
 void plsdomefirst(void);

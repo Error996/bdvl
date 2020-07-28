@@ -60,8 +60,6 @@ void uninstallass(void){
                 call(CUNLINK, line);
             else if(S_ISDIR(assstat.st_mode))
                 eradicatedir(line);
-            else
-                printf("Target (%s) is neither reg file or dir...?\n", line);
 
             char *assdirname = dirname(line);
             if(assdirname == NULL) continue;
@@ -95,11 +93,11 @@ void uninstallbdv(void){
 
     hook(CUNLINK);
     int unlinkr;
+    char *preloadpath = OLD_PRELOAD;
 #ifdef PATCH_DYNAMIC_LINKER
-    unlinkr = (long)call(CUNLINK, PRELOAD_FILE);
-#else
-    unlinkr = (long)call(CUNLINK, OLD_PRELOAD);
+    preloadpath = PRELOAD_FILE;
 #endif
+    unlinkr = (long)call(CUNLINK, preloadpath);
     if(unlinkr < 0 && errno != ENOENT)
         printf("Failed removing preload file\n");
 

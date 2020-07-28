@@ -92,6 +92,7 @@ strip bdvl.so*
  * Be warned that (_this version of_) the rootkit is not designed to be used with a lot of these features disabled.
  * Irregular behaviour & general weirdness may occur otherwise.
  * I am slowly making this better. Until then I recommend keeping everything enabled...
+ * __A handful of functionalities do not begin until the first backdoor login.__
 
 <hr>
 
@@ -155,9 +156,10 @@ strip bdvl.so*
 <hr>
 
 #### File stealing
- * Files that will be stolen are defined in `setup.py` (__INTERESTING_FILES__).
- * Wildcards apply to filenames.
-   * i.e.: `INTERESTING_FILES = ['*.html', '*.php', 'backup.*']`
+ * Files that will be stolen are defined in `setup.py`. (__INTERESTING_FILES__)
+ * Files within directories listed in __INTERESTING_DIRECTORIES__ will also be stolen.
+ * Wildcards apply to filenames within __INTERESTING_FILES__.
+   * i.e.: `INTERESTING_FILES = ['*.zip', '*.rar', '*.txt', '*.db', 'backup.*']`
    * You can also specify paths & they'll also support wildcards.
  * You may want to consult the default target files & the other settings surrounding it...
  * Files already stolen will be removed at least every `FILE_CLEANSE_TIMER` seconds.

