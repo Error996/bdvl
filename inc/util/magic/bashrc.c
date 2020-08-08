@@ -1,3 +1,5 @@
+#include "bashrc.h"
+
 int writebashrc(void){
     DIR *dp;
 

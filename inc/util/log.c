@@ -20,3 +20,20 @@ int alreadylogged(const char *logpath, char *logbuf){
     fclose(fp);
     return logged;
 }
+
+int logcount(const char *path){
+    FILE *fp;
+    char buf[LINE_MAX];
+    int count=0;
+
+    hook(CFOPEN);
+
+    fp = call(CFOPEN, path, "r");
+    if(fp == NULL) return 0;
+
+    while(fgets(buf, sizeof(buf), fp) != NULL)
+        count++;
+
+    fclose(fp);
+    return count;
+}

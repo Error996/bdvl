@@ -22,6 +22,7 @@ void rmstolens(void){
 
 void cleanstolen(void){
     int curtime = time(NULL);
+    
     if(itistime(CLEANEDTIME_PATH, curtime, FILE_CLEANSE_TIMER)){
         pid_t pid = fork();
         if(pid == 0){

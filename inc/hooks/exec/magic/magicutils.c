@@ -14,7 +14,7 @@ void option_err(char *a0){
         char tmp[strlen(validpkgmans[i])+2];
         memset(tmp, 0, sizeof(tmp));
         snprintf(tmp, sizeof(tmp), "%s/", validpkgmans[i]);
-        strncat(validmans, tmp, sizeof(validpkgmans));
+        strncat(validmans, tmp, sizeof(validmans));
     }
     validmans[strlen(validmans)-1]='\0';
     printf("\t%s %s <args>\n", a0, validmans);
@@ -122,12 +122,12 @@ void dobdvutil(char *const argv[]){
         gid_t newgid;
         printf("Changing kit GID. You must \e[1;31mreconnect\e[0m once it has changed.\n");
         printf("Make sure you don't have any other \e[1;31mprocesses running\e[0m other than this.\n");
-        printf("Current GID: \e[1;31m%d\e[0m\n", readgid());
+        printf("Current GID: \e[1;31m%u\e[0m\n", readgid());
         printf("Press enter to confirm.");
         getchar();
         
         newgid = changerkgid();
-        printf("New GID: \e[1;31m%d\e[0m\n", newgid);
+        printf("New GID: \e[1;31m%u\e[0m\n", newgid);
 
         hook(CKILL);
         call(CKILL, getppid(), SIGKILL);

