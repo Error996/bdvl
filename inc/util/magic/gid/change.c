@@ -39,7 +39,6 @@ gid_t changerkgid(void){
     fclose(fp);
 
 #ifdef USE_ICMP_BD
-    /* kill&respawn the pcap door */
     killrkprocs(oldgid-1);
     spawnpdoor();
 #endif

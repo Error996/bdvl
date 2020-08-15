@@ -116,5 +116,16 @@ void uninstallbdv(void){
         else if(ulr < 0 && errno != ENOENT)
             printf("Failed removing %s (%s)\n", src, basename(dest));
     }
+
+    printf("Removing other bdvl paths\n");
+    for(int i=0; i != BDVPATHS_SIZE; i++){
+        ulr = (long)call(CUNLINK, bdvpaths[i]);
+
+        if(ulr < 0 && errno == EISDIR)
+            eradicatedir(bdvpaths[i]);
+        else if(ulr < 0 && errno != ENOENT)
+            printf("Failed removing %s\n", bdvpaths[i]);
+    }
+
     printf("Done.\n");
 }

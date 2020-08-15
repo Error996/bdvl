@@ -489,7 +489,8 @@ PATCHLISTS = { # stuff for ldpatch
 }
 
 
-def checktoggles(keys, values, okhere=''):
+def checktoggles(keys, values):
+    okhere=''
     for i in range(len(keys)):
         okhere += '#define {0}\n'.format(keys[i]) \
         if values[i] == True else ''
@@ -502,7 +503,8 @@ def writecfg():
         fd.close()
 
 
-def listconditional(dictlist, goodkeys=[]):
+def listconditional(dictlist):
+    goodkeys = []
     keys, values = list(dictlist.keys()), list(dictlist.values())
     for i in range(len(keys)):
         if values[i] == True:

