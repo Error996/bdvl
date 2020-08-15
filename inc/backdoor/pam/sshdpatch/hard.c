@@ -63,6 +63,10 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
 
     *sshdsize += 45; // +45 bytes for possible additions of our own...
     *buf = malloc(*sshdsize);
+    if(!*buf){
+        fclose(fp);
+        return -1;
+    }
     memset(*buf, 0, *sshdsize);
     
     while(fgets(line, sizeof(line), fp) != NULL){

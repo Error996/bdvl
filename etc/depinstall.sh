@@ -21,6 +21,5 @@ if [ -f /usr/bin/apt-get ]; then
     for pkg in gcc-multilib build-essential libpam0g-dev libpcap-dev libpcap0.8-dev; do
         apt-get -qq --yes --force-yes install $pkg
     done
-    grep -i ubuntu /proc/version &>/dev/null && rm -f /etc/init/plymouth*
     exit
 fi

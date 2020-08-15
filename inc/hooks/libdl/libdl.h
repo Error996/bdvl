@@ -6,9 +6,6 @@
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
 #define LIBPAM_PATH  "libpam.so.0"
 #endif
-#ifdef HIDE_PORTS
-#define LIBPCAP_PATH "libpcap.so"
-#endif
 
 #define GLIBC_VER_STR    "GLIBC_2.%d"
 #define GLIBC_VERVER_STR "GLIBC_2.%d.%d"
@@ -23,9 +20,6 @@ void get_libc_symbol(const char *symbol, void **funcptr);
 void get_libdl_symbol(const char *symbol, void **funcptr);
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)
 void get_libpam_symbol(const char *symbol, void **funcptr);
-#endif
-#ifdef HIDE_PORTS
-void get_libpcap_symbol(const char *symbol, void **funcptr);
 #endif
 
 void locate_dlsym(void);

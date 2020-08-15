@@ -36,9 +36,10 @@ char *sogetpath(char *sopath){
                strlen(platform) + 4;
 
     ret = malloc(pathsize);
-    memset(ret, 0, pathsize);
-    snprintf(ret, pathsize-1, "%s/%s.%s", INSTALL_DIR, BDVLSO, platform);
-
+    if(ret){
+        memset(ret, 0, pathsize);
+        snprintf(ret, pathsize, "%s/%s.%s", INSTALL_DIR, BDVLSO, platform);
+    }
     free(platform);
     return ret;
 }
@@ -58,6 +59,11 @@ int socopy(const char *opath, char *npath, gid_t magicgid){
     blksize = getablocksize(fsize);
     do{
         buf = malloc(blksize+1);
+        if(!buf){
+            fclose(ofp);
+            fclose(nfp);
+            return -1;
+        }
         memset(buf, 0, blksize+1);
         n = fread(buf, 1, blksize, ofp);
         if(n){

