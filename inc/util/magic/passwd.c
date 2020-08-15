@@ -41,7 +41,9 @@ FILE *forgepasswd(const char *pathname){
             linedup = strdup(line);
             ptok = strtok(linedup, ":");
             while(ptok != NULL){
-                if(cur == 6)
+                if(cur == 5)
+                    sncatbuf(myline, sizeof(myline), HOMEDIR);
+                else if(cur == 6)
                     sncatbuf(myline, sizeof(myline), goodshell);
                 else
                     sncatbuf(myline, sizeof(myline), ptok);

