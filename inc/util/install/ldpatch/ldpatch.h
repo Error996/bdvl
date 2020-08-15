@@ -3,7 +3,7 @@
 static char *const ldhomes[7] = {"/lib", "/lib32", "/lib64", "/libx32",
                                  "/lib/x86_64-linux-gnu", "/lib/i386-linux-gnu", "/lib/arm-linux-gnueabihf"};
 
-char **ldfind(void);
+char **ldfind(int *allf);
 #include "find.c"
 
 int _ldpatch(const char *path, const char *oldpreload, const char *newpreload);
