@@ -44,7 +44,7 @@ int secret_connection(char line[]){
                   retr, inode;
     int lport, rport, d, state, uid, t_run, tout;
 
-    char *fmt = "%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %512s\n";
+    char *fmt = "%d: %64[0-9A-Fa-f]:%X %64[0-9A-Fa-f]:%X %X %lX:%lX %X:%lX %lX %d %d %lu %511s\n";
     sscanf(line, fmt, &d, laddr, &lport, raddr, &rport, &state, &txq,
                              &rxq, &t_run, &t_len, &retr, &uid, &tout, &inode,
                              etc);
