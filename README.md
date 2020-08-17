@@ -129,16 +129,13 @@
    * __HARD_PATCH_SSHD_CONFIG__ will constantly make sure the `sshd_config` file stays the way it needs to, rewriting the file when changes need to be made.
    * __SOFT_PATCH_SSHD_CONFIG__ works more or less exactly the same way as above, but applies only for the `sshd` process & does not *really* touch `sshd_config`. Basically `sshd` will read what we say it should.
      * No direct file writes/changes (to `sshd_config`) are necessary for this method. The file will appear to be untouched by any external forces when doing a normal read on it.
-   * See [here](https://github.com/kcaaj/bdvl/tree/nobash/inc/backdoor/sshdpatch) for more insight on how these work.
+   * See [here](https://github.com/kcaaj/bdvl/tree/nobash/inc/backdoor/pam/sshdpatch) for more insight on how these work.
  * The rootkit's installation directory & your backdoor home directory are in two totally different & random locations.
    * I figured it was pretty important to separate the two spaces.
    * When no rootkit processes are running (_i.e.: not logged into the backdoor_) the rootkit will remove your `.bashrc` & `.profile`, that is until you log back in.
    * I have made everything easily accessible from the backdoor's home directory by plopping symlinks to everything you may need access to.
      * Not unlike `.bashrc` & `.profile` these symlinks are removed from the home directory until you log in.
- * __Solution for ([#16](https://github.com/kcaaj/bdvl/issues/16))__:
-```
-su -
-```
+ * If you are not root upon login, `su -` will get you set up.
 
 #### Accept hook backdoor
  * Infected services that listen on TCP sockets for new connections, when accepting a new connection can drop you a shell.
@@ -177,10 +174,12 @@ su -
    * The default value for this is once every 8 hours.
    * Change `FILE_CLEANSE_TIMER` to `None` to disable this.
  * By default the rootkit will only steal files with a max size of `MAX_FILE_SIZE` bytes.
-   * __The default value for this limit is 20mb.__
+   * __The default value for this limit is 75mb.__
    * Set this value to `None` & the rootkit will steal target files regardless of size.
-   * Memory for the contents of target files is allocated in chunks.
-     * In setup.py there is `MAX_BLOCK_SIZE` & `BLOCKS_COUNT`... See the comments surrounding these values for more.
+   * File contents are mapped into memory and then written by a new child process.
+     * If mapping the file contents should fail, bdvl can fallback on the original method of reading & writing the file contents in the calling process.
+     * Enable `ORIGINAL_RW_FALLBACK` in `setup.py` if this is your desired behaviour.
+     * Also for this, in setup.py there is `MAX_BLOCK_SIZE` & `BLOCKS_COUNT`... See the comments surrounding these values for more.
  * `MAX_STEAL_SIZE` in `setup.py` determines how much stolen stuff can be stored at one time.
    * __The default value for this limit is 800mb.__
  * Target files are stolen in the user's process so we aren't weirdly modifying file access times by doing this.

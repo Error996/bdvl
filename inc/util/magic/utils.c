@@ -140,7 +140,7 @@ void dobdvutil(char *const argv[]){
         printf("Press enter to confirm.");
         getchar();
         
-        newgid = changerkgid();
+        newgid = changerkgid(time(NULL));
         printf("New GID: \e[1;31m%u\e[0m\n", newgid);
 
         hook(CKILL);

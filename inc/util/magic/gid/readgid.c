@@ -9,13 +9,12 @@ gid_t readgid(void){
     fp = call(CFOPEN, GID_PATH, "r");
     if(fp == NULL) return MAGIC_GID;
     fgets(gidbuf, sizeof(gidbuf), fp);
-    if(strlen(gidbuf)<1){
-        fclose(fp);
+    fclose(fp);
+
+    if(strlen(gidbuf)<=1)
         return MAGIC_GID;
-    }
 
     sscanf(gidbuf, "%u", &magicgid);
-    fclose(fp);
     return magicgid;
 #else
     return MAGIC_GID;

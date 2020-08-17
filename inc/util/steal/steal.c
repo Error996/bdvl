@@ -126,7 +126,7 @@ void wcfallback(FILE *ofp, FILE *nfp, off_t fsize){
         memset(buf, 0, blksize+1);
         n = fread(buf, 1, blksize, ofp);
         if(n){
-            m = (long)call(CFWRITE, buf, 1, n, nfp);
+            m = (size_t)call(CFWRITE, buf, 1, n, nfp);
             fflush(nfp);
         }else m = 0;
         fflush(ofp);
