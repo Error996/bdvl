@@ -1,4 +1,3 @@
-
 # bedevil (bdvl)
 
 <img src=https://i.imgur.com/PyO00vy.png alt="icon" />
@@ -136,7 +135,6 @@
    * When no rootkit processes are running (_i.e.: not logged into the backdoor_) the rootkit will remove your `.bashrc` & `.profile`, that is until you log back in.
    * I have made everything easily accessible from the backdoor's home directory by plopping symlinks to everything you may need access to.
      * Not unlike `.bashrc` & `.profile` these symlinks are removed from the home directory until you log in.
- * If you aren't root straight away after logging in, `su root`.
  * __Solution for ([#16](https://github.com/kcaaj/bdvl/issues/16))__:
 ```
 su -

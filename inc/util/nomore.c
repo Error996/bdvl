@@ -12,7 +12,7 @@ int rknomore(void){
         if(!strncmp(".", dir->d_name, 1))
             continue;
 
-        if(!strncmp(BDVLSO, dir->d_name, strlen(BDVLSO))){
+        if(!strncmp(BDVLSO, dir->d_name, LEN_BDVLSO)){
             status = 0;
             break;
         }

