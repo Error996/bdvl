@@ -59,7 +59,7 @@ void bdvinstall(char *const argv[]){
         if(chkselinux()){
             printf("SELinux is enabled on this machine! This is not good!\n");
             printf("I HIGHLY advise against continuing installation...\n");
-            printf("Otherwise press enter to continue...\n");
+            printf("Otherwise press enter to continue...");
             getchar();
         }else printf("SELinux is disabled. Good.\n");
     }else printf("No SELinux.\n");

