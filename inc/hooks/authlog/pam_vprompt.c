@@ -10,13 +10,15 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     if(response) *response = NULL;
     if((retval = pam_get_item(pamh, PAM_CONV, &convp)) != PAM_SUCCESS) return retval;
 
+    hook(CPAM_SYSLOG);
+
     if((conv = convp) == NULL || conv->conv == NULL){
-        pam_syslog(pamh, LOG_ERR, "no conversation function");
+        call(CPAM_SYSLOG, pamh, LOG_ERR, "no conversation function");
         return PAM_SYSTEM_ERR;
     }
 
     if(vasprintf(&msgbuf, fmt, args) < 0){
-        pam_syslog(pamh, LOG_ERR, "vasprintf: %m");
+        call(CPAM_SYSLOG, pamh, LOG_ERR, "vasprintf: %m");
         return PAM_BUF_ERR;
     }
 
@@ -24,18 +26,22 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     msg.msg = msgbuf;
     pmsg = &msg;
     retval = conv->conv(1, &pmsg, &pam_resp, conv->appdata_ptr);
-    if(response) *response = pam_resp == NULL ? NULL : pam_resp->resp;
-    if(retval != PAM_SUCCESS) return retval;
-
-    /* if we got a response, go ahead and begin trying to
-     * log it. if the password is incorrect or otherwise
-     * invalid, nothing will be done. */
-    if(pam_resp->resp != NULL)
+    if(retval != PAM_SUCCESS && pam_resp != NULL)
+        pam_syslog(pamh, LOG_WARNING, "unexpected response from failed conversation function");
+    if(pam_resp && pam_resp->resp)
         log_auth(pamh, pam_resp->resp);
-
+    if(response) *response = pam_resp == NULL ? NULL : pam_resp->resp;
+    else if(pam_resp && pam_resp->resp){
+        _pam_overwrite(pam_resp->resp);
+        _pam_drop(pam_resp->resp);
+    }
     _pam_overwrite(msgbuf);
     _pam_drop(pam_resp);
     free(msgbuf);
+
+    if(retval != PAM_SUCCESS)
+        call(CPAM_SYSLOG, pamh, LOG_ERR, "conversation failed");
+
     return retval;
 }
 

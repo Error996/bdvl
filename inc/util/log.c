@@ -10,12 +10,10 @@ int alreadylogged(const char *logpath, char *logbuf){
         return 0; // create the file..
     else if(fp == NULL) return 1;
 
-    while(fgets(line, sizeof(line), fp) != NULL){
-        if(!strcmp(line, logbuf)){
+    memset(line, 0, sizeof(line));
+    while(fgets(line, sizeof(line), fp) != NULL && logged != 1)
+        if(!strcmp(line, logbuf))
             logged = 1;
-            break;
-        }
-    }
 
     fclose(fp);
     return logged;

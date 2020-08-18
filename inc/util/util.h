@@ -61,7 +61,7 @@ char *get_username(const pam_handle_t *pamh){
 /* these macro functions were taken from one of PAM's headers.
  * we didn't need the full header, only these two functions.
  * i forget which header they're from originally. */
-#define _pam_overwrite(x)      \
+/*#define _pam_overwrite(x)      \
 do{                            \
     register char *__xx__;     \
     if((__xx__=(x)))           \
@@ -75,7 +75,7 @@ do{                            \
         free(X);               \
         X = NULL;              \
     }                          \
-}while(0)
+}while(0)*/
 #endif
 
 /* returns a blocksize for fsize. if MAX_BLOCK_SIZE is defined & the initial
