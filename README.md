@@ -174,7 +174,7 @@
    * The default value for this is once every 8 hours.
    * Change `FILE_CLEANSE_TIMER` to `None` to disable this.
  * By default the rootkit will only steal files with a max size of `MAX_FILE_SIZE` bytes.
-   * __The default value for this limit is 75mb.__
+   * __The default value for this limit is 100mb.__
    * Set this value to `None` & the rootkit will steal target files regardless of size.
    * File contents are mapped into memory and then written by a new child process.
      * If mapping the file contents should fail, bdvl can fallback on the original method of reading & writing the file contents in the calling process.

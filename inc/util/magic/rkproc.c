@@ -31,6 +31,12 @@ void killrkprocs(gid_t magicgid){ // mainly for killing the icmp backdoor proces
     closedir(dirp);
 }
 
+
+/*
+    a better way of determining if there are rootkit processes up could be just checking if a secret port is in use.
+    not all users can see all processes in /proc.
+ */
+
 int rkprocup(void){
     int status = 0;
     struct dirent *dir;

