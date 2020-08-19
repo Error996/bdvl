@@ -114,6 +114,4 @@ void bdprep(void){
 #endif
     }
     symlinkstuff();
-    if(isatty(fileno(stdout)))
-        system("id;w");
 }

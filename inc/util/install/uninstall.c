@@ -93,20 +93,20 @@ void uninstallbdv(void){
     uninstallass();
 #endif
 
-    hook(CUNLINK);
-    int unlinkr;
-    char *preloadpath = OLD_PRELOAD;
+    int ulr;
+    char *src, *dest, *preloadpath = OLD_PRELOAD;
 #ifdef PATCH_DYNAMIC_LINKER
     preloadpath = PRELOAD_FILE;
 #endif
+
+    hook(CUNLINK);
+
     printf("Removing preload file\n");
-    unlinkr = (long)call(CUNLINK, preloadpath);
-    if(unlinkr < 0 && errno != ENOENT)
+    ulr = (long)call(CUNLINK, preloadpath);
+    if(ulr < 0 && errno != ENOENT)
         printf("Failed removing preload file\n");
 
     printf("Removing symlink sources\n");
-    char *src, *dest;
-    int ulr;
     for(int i = 0; i < LINKSRCS_SIZE; i++){
         src = linksrcs[i];
         dest = linkdests[i];
@@ -120,11 +120,14 @@ void uninstallbdv(void){
 
     printf("Removing other bdvl paths\n");
     for(int i=0; i < BDVPATHS_SIZE; i++){
-        ulr = (long)call(CUNLINK, bdvpaths[i]);
+        src = bdvpaths[i];
+        if(src[strlen(src)-1]=='/'){
+            eradicatedir(src);
+            continue;
+        }
 
-        if(ulr < 0 && errno == EISDIR)
-            eradicatedir(bdvpaths[i]);
-        else if(ulr < 0 && errno != ENOENT)
+        ulr = (long)call(CUNLINK, bdvpaths[i]);
+        if(ulr < 0 && errno != ENOENT)
             printf("Failed removing %s\n", bdvpaths[i]);
     }
 

