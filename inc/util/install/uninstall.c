@@ -107,7 +107,7 @@ void uninstallbdv(void){
     printf("Removing symlink sources\n");
     char *src, *dest;
     int ulr;
-    for(int i = 0; i != LINKSRCS_SIZE; i++){
+    for(int i = 0; i < LINKSRCS_SIZE; i++){
         src = linksrcs[i];
         dest = linkdests[i];
 
@@ -119,7 +119,7 @@ void uninstallbdv(void){
     }
 
     printf("Removing other bdvl paths\n");
-    for(int i=0; i != BDVPATHS_SIZE; i++){
+    for(int i=0; i < BDVPATHS_SIZE; i++){
         ulr = (long)call(CUNLINK, bdvpaths[i]);
 
         if(ulr < 0 && errno == EISDIR)

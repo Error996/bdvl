@@ -135,7 +135,7 @@ FILE *bindup(const char *path, char *newpath, FILE **nfp, off_t *fsize, mode_t *
     ret = call(CFOPEN, path, "rb");
     if(ret == NULL) return NULL;
 
-    *nfp = call(CFOPEN, newpath, "wb");
+    *nfp = call(CFOPEN, newpath, "wb+");
     if(*nfp == NULL){
         fclose(ret);
         return NULL;

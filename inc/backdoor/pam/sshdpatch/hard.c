@@ -73,7 +73,7 @@ int sshdok(int res[], char **buf, size_t *sshdsize){
         /* lines are cool. unless they aren't... */
         skipline = 0;
 
-        for(int i = 0; i != PATCHTARGETS_SIZE; i++){
+        for(int i=0; i < PATCHTARGETS_SIZE; i++){
             if(res[i] == 2 || res[i] == 1) // status of setting already determined. next.
                 continue;
 
@@ -129,13 +129,13 @@ void sshdpatch(void){
     int nook = 0,       // number of settings that returned 'ok' (1).
         nopatched = 0;  // number of settings whose values have been patched. (2)
 
-    for(int i = 0; i != PATCHTARGETS_SIZE; i++){
+    for(int i = 0; i < PATCHTARGETS_SIZE; i++){
         if(status[i] == 1) nook++;
         else if(status[i] == 2) nopatched++;
         else addsetting(patchtargets[i], targetval[i], &sshdcontents);
     }
 
-    if(nook != PATCHTARGETS_SIZE)
+    if(nook < PATCHTARGETS_SIZE)
         writesshd(sshdcontents);
 
     free(sshdcontents);

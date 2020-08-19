@@ -13,9 +13,11 @@ typedef struct {
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <malloc.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 #include <fnmatch.h>
 #include <dirent.h>
 #include <time.h>

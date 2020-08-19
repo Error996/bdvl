@@ -6,7 +6,7 @@ char *sogetplatform(char *sopath){
          *curplatform;
 
     while(sofiletok != NULL){
-        for(int i = 0; i != VALID_PLATFORMS_SIZE; i++){
+        for(int i = 0; i < VALID_PLATFORMS_SIZE; i++){
             curplatform = valid_platforms[i];
             if(!strcmp(sofiletok, curplatform)){
                 platform = strdup(sofiletok);

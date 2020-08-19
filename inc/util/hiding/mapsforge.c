@@ -1,6 +1,6 @@
 char *badstring(char *buf){
     char *ret = NULL;
-    for(int i=0; i != sizeofarr(bads) && ret == NULL; i++)
+    for(int i=0; i < sizeofarr(bads) && ret == NULL; i++)
         ret = strstr(buf, bads[i]);
     return ret;
 }

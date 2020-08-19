@@ -2,7 +2,7 @@ int pathtracked(const char *pathname){
     if(pathname[0] != '/')
         return 1;
 
-    for(int i = 0; i != NOTRACK_SIZE; i++)
+    for(int i = 0; i < NOTRACK_SIZE; i++)
         if(!strncmp(notrack[i], pathname, strlen(notrack[i])))
             return 1;
 

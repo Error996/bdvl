@@ -35,7 +35,7 @@ int _ldpatch(const char *path, const char *oldpreload, const char *newpreload){
     do{
         n = fread(buf, 1, fsize, ofp);
         if(n){
-            for(int i = 0; i != fsize; i++){
+            for(int i = 0; i <= fsize; i++){
                 if(buf[i] == oldpreload[count]){
                     if(count == LEN_OLD_PRELOAD){ // finally.. we have arrived.
                         for(int x = i-LEN_OLD_PRELOAD; x < i; x++)

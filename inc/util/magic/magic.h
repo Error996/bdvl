@@ -5,7 +5,7 @@
 void dorolf(void){
 #ifndef NO_ROOTKIT_ANSI
     printf("\033[0;31m");
-    for(int i = 0; i != BDANSI_SIZE; i++)
+    for(int i = 0; i < BDANSI_SIZE; i++)
         printf("%c", bdansi[i]);
     printf("\033[0m\n");
 #endif
