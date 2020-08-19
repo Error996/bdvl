@@ -140,14 +140,10 @@ nopenope:
 
 
 void writemap(unsigned char *map, FILE *nfp, off_t fsize, mode_t mode){
-    signal(SIGCHLD, SIG_IGN);
     pid_t pid = fork();
 
-    if(pid != 0){
-        sleep(1);  // this is ok?
-        signal(SIGCHLD, SIG_DFL);
+    if(pid != 0)
         return;
-    }
 
     for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
         if(i != fileno(nfp))
@@ -295,6 +291,7 @@ void inspectfile(const char *pathname){
             return;
         }
 
+        signal(SIGCHLD, SIG_IGN);
 #ifdef BLACKLIST_TOO
         if(!uninteresting(filename))
             takeit(pathname, newpath);
@@ -302,6 +299,7 @@ void inspectfile(const char *pathname){
         takeit(pathname, newpath);
 #endif
         free(newpath);
+        signal(SIGCHLD, SIG_DFL);
     }
 
     free(dupdup);

