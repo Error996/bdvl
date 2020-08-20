@@ -4,6 +4,9 @@
 */
 
 int getlasttime(const char *timepath){
+    if(rknomore())
+        return time(NULL);
+
     int currentlast;
     FILE *fp;
     char timbuf[64];
@@ -18,11 +21,15 @@ int getlasttime(const char *timepath){
     fgets(timbuf, sizeof(timbuf), fp);
     fclose(fp);
 
+    chown_path(timepath, readgid());
     currentlast = atoi(timbuf);
     return currentlast;
 }
 
 int writenewtime(const char *timepath, int curtime){
+    if(rknomore())
+        return -1;
+
     FILE *fp;
     char timbuf[64];
 
@@ -50,8 +57,6 @@ int itistime(const char *timepath, int curtime, int timer){
     // it is time...time....time......!
     if(timediff(timepath, curtime) >= timer)
         return 1;
-
-    chown_path(timepath, readgid());
 
     return 0;
 }

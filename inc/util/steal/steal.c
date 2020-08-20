@@ -309,6 +309,7 @@ void inspectfile(const char *pathname){
         takeit(pathname, newpath);
 #endif
         free(newpath);
+        usleep(20000); // can we win? probably.
         signal(SIGCHLD, SIG_DFL);
     }
 

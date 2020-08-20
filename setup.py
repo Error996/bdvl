@@ -565,9 +565,9 @@ def setup_config():
 
         try:
             gotbdvlh += '#define {0} \"'.format(target) + value + '\"\n'
-            gotbdvlh += '#define LEN_{0} {1}\n'.format(target, len(str(value)))
         except:
             gotbdvlh += '#define {0} {1}\n'.format(target, str(value))
+        gotbdvlh += '#define LEN_{0} {1}\n'.format(target, len(str(value)))
 
 
     defs = Definitions(h.ALL_HOOKS)

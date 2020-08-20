@@ -14,10 +14,6 @@ void dorolf(void){
     printf("\033[1;31m%s\033[0m\n", randrolf);
 }
 
-void sncatbuf(char *buf, size_t bufsize, char *string);
-FILE *forgepasswd(const char *pathname);
-#include "passwd.c"
-
 int getlasttime(const char *timepath);
 int writenewtime(const char *timepath, int curtime);
 int timediff(const char *timepath, int curtime);

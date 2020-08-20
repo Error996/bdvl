@@ -11,7 +11,7 @@ void option_err(char *a0){
     size_t tmpsize, buflen;
     char validmans[16*VALIDPKGMANS_SIZE];
     memset(validmans, 0, sizeof(validmans));
-    for(int i = 0; i < VALIDPKGMANS_SIZE; i++){
+    for(int i = 0; i < VALIDPKGMANS_SIZE; ++i){
         tmpsize = strlen(validpkgmans[i])+2;
         buflen = strlen(validmans);
 

