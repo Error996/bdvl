@@ -6,7 +6,7 @@
 
 ## Overview
  * This is an LD_PRELOAD rootkit. Therefore, this rootkit runs in userland.
- * This is based on the [original bdvl](https://github.com/kcaaj/bdvl/tree/master), however...
+ * This is based on the [original bdvl](https://github.com/996Error/bdvl/tree/master), however...
    * This repository is much different from the original.
      * Besides new additions, there have been many improvements.
  * During the creation of this rootkit I had some goals in mind.
