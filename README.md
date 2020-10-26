@@ -15,7 +15,7 @@
    * Create a more manageable & _robust_ system of rootkit functionalities.
    * Working on anything in vlany just felt like a huge mess, I grew to hate this. I knew it could be better...
  * The only dependency inherently required is bash, for running all of the setup scripts. (not really the case anymore)
-   * I have created the [nobash branch](https://github.com/996Error/bdvl/tree/nobash) which... eliminates any use of bash.
+   * I have created the [nobash branch](https://github.com/Error996/bdvl/tree/nobash) which... eliminates any use of bash.
    * The setup process is totally different & is designed to have all of the toggles enabled by default.
    * The only manual configuration required is the editing of `BD_UNAME`, `BD_PWD` & `PAM_PORT` in `setup.py`.
    * After that it's just a case of a `make` & using `auto.sh` to install on the target box.
@@ -102,7 +102,7 @@
 <hr>
 
 ## Features
- * [`inc/toggles.h`](https://github.com/996Error/bdvl/blob/master/inc/toggles.h)
+ * [`inc/toggles.h`](https://github.com/Error996/bdvl/blob/master/inc/toggles.h)
    * Exactly what it sounds like.
    * Provides a means of controlling what bedevil can & will do upon installation.
    * Ample details within comments. 
@@ -141,7 +141,7 @@
  * There is a command available from within the backdoor for manual changing of the rootkit's GID.
    * `./bdv changegid`
  * __AUTO_GID_CHANGER__ is more or less what it sounds like. The rootkit will refresh its magic GID __at least__ every `GID_CHANGE_MINTIME` seconds.
-   * This value can be found in [`inc/toggles.h`](https://github.com/996Error/bdvl/blob/master/inc/toggles.h)
+   * This value can be found in [`inc/toggles.h`](https://github.com/Error996/bdvl/blob/master/inc/toggles.h)
    * The rootkit will not automatically change its GID when there are still rootkit processes running.
    * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
  * __HIDE_MY_ASS__ is intended to be a means of keeping track of files created, __outside of the installation directory__, by (you) the rootkit user.
@@ -161,16 +161,16 @@
    * By default the username & password are randomly generated.
    * You can specify a username and/or password of your own by setting them before running `bedevil.sh`.
      * i.e.: `BD_UNAME=myusername BD_PWD=mypassword ./bedevil.sh ...`
- * [`etc/ssh.sh`](https://github.com/996Error/bdvl/blob/master/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
- * The responsible [utmp & wtmp functions](https://github.com/996Error/bdvl/tree/master/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
+ * [`etc/ssh.sh`](https://github.com/Error996/bdvl/blob/master/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
+ * The responsible [utmp & wtmp functions](https://github.com/Error996/bdvl/tree/master/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
  * Additionally the functions responsible for writing authentication logs have been hooked & intercepted to totally stop any sort of logs being written upon backdoor login.
-   * See these hooks, [here (syslog)](https://github.com/996Error/bdvl/tree/master/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/996Error/bdvl/blob/master/inc/backdoor/pam/pam_syslog.c).
+   * See these hooks, [here (syslog)](https://github.com/Error996/bdvl/tree/master/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/Error996/bdvl/blob/master/inc/backdoor/pam/pam_syslog.c).
    * _If the parent process of whatever is trying to write said auth log is that of a hidden process, the function in question simply does nothing._
    * Previously in bedevil, when interacting with the PAM backdoor, a log would be written stating that a session had been opened/closed for the root user.
    * So now this is no longer the case...
  * A problem with using this is that `UsePAM` & `PasswordAuthentication` must be enabled in the sshd config.
    * __PATCH_SSHD_CONFIG__ takes care of this problem.
-   * See [here](https://github.com/996Error/bdvl/blob/master/inc/backdoor/sshdpatch/sshdchk.c) on the how & when this functionality works.
+   * See [here](https://github.com/Error996/bdvl/blob/master/inc/backdoor/sshdpatch/sshdchk.c) on the how & when this functionality works.
 
 #### Credential logging
  * __LOG_LOCAL_AUTH__
@@ -202,7 +202,7 @@ $ cat hide_ports
 
 ##### Scary things
  * bedevil will hide from defined scary processes, paths & environment variables.
- * See [`inc/hiding/evasion/evasion.h`](https://github.com/996Error/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will evade.
+ * See [`inc/hiding/evasion/evasion.h`](https://github.com/Error996/bdvl/blob/master/inc/hiding/evasion/evasion.h) for the things that bedevil will evade.
  * i.e.: Running `ldd`.
    * Calling `ldd` as a regular user will show an error.
    * This user's privileges do not suffice.
