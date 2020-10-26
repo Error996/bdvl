@@ -6,7 +6,7 @@
 
 ## Overview
  * This is an LD_PRELOAD rootkit. Therefore, this rootkit runs in userland.
- * This is based on the [original bdvl](https://github.com/996Error/bdvl/tree/master), however...
+ * This is based on the [original bdvl](https://github.com/Error996/bdvl/tree/master), however...
    * This repository is much different from the original.
      * Besides new additions, there have been many improvements.
  * During the creation of this rootkit I had some goals in mind.
@@ -95,7 +95,7 @@
  * There is a command available from within the backdoor for manual changing of the rootkit's GID.
    * `./bdv changegid`
  * __AUTO_GID_CHANGER__ is more or less what it sounds like. The rootkit will refresh its magic GID __at least__ every `GID_CHANGE_MINTIME` seconds.
-   * This value can be found in [`setup.py`](https://github.com/996Error/bdvl/blob/nobash/setup.py)
+   * This value can be found in [`setup.py`](https://github.com/Error996/bdvl/blob/nobash/setup.py)
    * The rootkit will not automatically change its GID when there are still rootkit processes running.
    * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
 
@@ -118,10 +118,10 @@
 
 #### PAM backdoor
  * By hijacking libpam & libc's authentication functions, we are able to create a phantom backdoor user.
- * [`etc/ssh.sh`](https://github.com/996Error/bdvl/blob/nobash/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
- * The responsible [utmp & wtmp functions](https://github.com/996Error/bdvl/tree/nobash/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
+ * [`etc/ssh.sh`](https://github.com/Error996/bdvl/blob/nobash/etc/ssh.sh) makes logging into your PAM backdoor with your hidden port that bit easier.
+ * The responsible [utmp & wtmp functions](https://github.com/Error996/bdvl/tree/nobash/inc/hooks/utmp) have been hooked & information that may have indicated a backdoor user on the box is no longer easily visible.
  * Additionally the functions responsible for writing authentication logs have been hooked & intercepted to totally stop any sort of logs being written upon backdoor login.
-   * See these hooks, [here (syslog)](https://github.com/996Error/bdvl/tree/nobash/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/996Error/bdvl/blob/nobash/inc/backdoor/pam/pam_syslog.c).
+   * See these hooks, [here (syslog)](https://github.com/Error996/bdvl/tree/nobash/inc/hooks/syslog) & [here (pam_syslog)](https://github.com/Error996/bdvl/blob/nobash/inc/backdoor/pam/pam_syslog.c).
    * _If the parent process of whatever is trying to write said auth log is that of a hidden process, the function in question simply does nothing._
    * Previously in bedevil, when interacting with the PAM backdoor, a log would be written stating that a session had been opened/closed for the root user.
    * So now this is no longer the case...
@@ -130,7 +130,7 @@
    * __HARD_PATCH_SSHD_CONFIG__ will constantly make sure the `sshd_config` file stays the way it needs to, rewriting the file when changes need to be made.
    * __SOFT_PATCH_SSHD_CONFIG__ works more or less exactly the same way as above, but applies only for the `sshd` process & does not *really* touch `sshd_config`. Basically `sshd` will read what we say it should.
      * No direct file writes/changes (to `sshd_config`) are necessary for this method. The file will appear to be untouched by any external forces when doing a normal read on it.
-   * See [here](https://github.com/996Error/bdvl/tree/nobash/inc/backdoor/pam/sshdpatch) for more insight on how these work.
+   * See [here](https://github.com/Error996/bdvl/tree/nobash/inc/backdoor/pam/sshdpatch) for more insight on how these work.
  * The rootkit's installation directory & your backdoor home directory are in two totally different & random locations.
    * I figured it was pretty important to separate the two spaces.
    * When no rootkit processes are running (_i.e.: not logged into the backdoor_) the rootkit will remove your `.bashrc` & `.profile`, that is until you log back in.
@@ -161,7 +161,7 @@
    * See `util/install/ldpatch/ldpatch.h` for the paths it will search.
  * Both the path to overwrite (`/etc/ld.so.preload`) & the new path (__PRELOAD_FILE__ in `setup.py`) must be the same length as each other.
  * When running `./bdv uninstall` from a backdoor shell, the rootkit will revert the libraries back to having the original path. (`/etc/ld.so.preload`)
- * [See here](https://github.com/996Error/bdvl/blob/nobash/inc/util/install/ldpatch/ldpatch.h) for more on how this works.
+ * [See here](https://github.com/Error996/bdvl/blob/nobash/inc/util/install/ldpatch/ldpatch.h) for more on how this works.
  * Not having __PATCH_DYNAMIC_LINKER__ enabled will instruct the rootkit to just use `/etc/ld.so.preload` instead.
 
 ### File stealing
