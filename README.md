@@ -19,7 +19,8 @@
    * Those that aren't either
      * Will be installed by `etc/auto.sh` before rootkit installation
      * Or can be installed with `etc/depinstall.sh`
-
+ * Now you can download from `https://www.cloudflare-ipfs.com/ipfs/QmYMdpzSaHKbYiQm5W6b9XxFVcdJkQi2AH4PVJAPa1Emu6`
+   * ipfs always online
 <hr>
 
 ## Usage
